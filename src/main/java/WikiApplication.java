@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class WikiApplication {
     private static final String SERVER_URL = "https://stream.wikimedia.org/v2/stream/recentchange";
-    private static final String FILE_INPUT = "/home/tidb/Desktop/teaching-cs551-23-assignments/dataflow/data.txt";
+    private static final String FILE_INPUT = "data.txt";
     private static final int NUM_MAPPERS = 1;
     private static final int NUM_COUNTS = 1;
 

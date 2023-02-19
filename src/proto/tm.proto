@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+/*
+TaskManager's RPC handler protocols,
+include:
+1. Query TaskManager's status:
+  Operator Quota,
+  Current load,
+  Current state store load?
+2. Configure Operators
+ */
+
+message TMStatusRequest{
+
+}
+
+message OperatorStatus{
+  string name = 1;
+  string address = 2;
+  int32 inputQueueLength = 3;
+  int32 outputQueueLength = 4;
+}
+
+message TMStatusResponse{
+  int32 operatorQuota = 1; // the number of operators it's allowed to have
+  int32 operatorCount = 2; // the number of operators it's currently running
+  //int32 stateStoreLoad = 3; //
+  repeated OperatorStatus operatorStatus = 4;
+}
+
+service TMStatusService{
+  rpc GetStatus(TMStatusRequest) returns (TMStatusResponse);
+}
+
+// how do we do bykey?
+message OperatorConfig{
+  enum OperatorType{
+    SOURCE = 0;
+    SINK = 1;
+    MAP = 2;
+    COUNT = 3;
+  }
+  OperatorType type = 1;
+  string name = 2;
+  string jarKey = 3; // UDF jars stored at CP's state store?
+  string prevOperatorAddress = 4; // ip:port
+  string nextOperatorAddress = 5; // ip:port
+  string byKey = 6; // if byKey is not empty, the operator will be partitioned by this key
+}
+
+message AddOperatorRequest{
+  repeated OperatorConfig configs = 1;
+}
+
+message AddOperatorResponse{
+  bool success = 1;
+  string msg = 2;
+}
+
+message RemoveOperatorRequest{
+  repeated string operatorNames = 1;
+}
+
+message RemoveOperatorResponse{
+  bool success = 1;
+  string msg = 2;
+}
+
+service TMOperatorService{
+  rpc AddOperator(AddOperatorRequest) returns (AddOperatorResponse);
+  rpc RemoveOperator(RemoveOperatorRequest) returns (RemoveOperatorResponse);
+}

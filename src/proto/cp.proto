@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+/*
+Control Plane's RPC handler protocols,
+include:
+1. TM registry
+2. Routing table RPC (state service)
+3. ...?
+ */
+
+message RegisterTMRequest {
+    string name = 1;
+    string address = 2;
+    string port = 3;
+}
+
+message RegisterTMResponse {
+    string status = 1;
+}
+
+// allow TMs to register at CP
+service RegistryService {
+    rpc RegisterTM(RegisterTMRequest) returns (RegisterTMResponse);
+}
