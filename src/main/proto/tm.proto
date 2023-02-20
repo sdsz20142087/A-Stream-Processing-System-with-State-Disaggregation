@@ -1,4 +1,5 @@
 syntax = "proto3";
+option java_package="pb";
 
 /*
 TaskManager's RPC handler protocols,

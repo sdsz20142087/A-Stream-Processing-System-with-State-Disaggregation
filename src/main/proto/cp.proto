@@ -1,5 +1,5 @@
 syntax = "proto3";
-
+option java_package="pb";
 /*
 Control Plane's RPC handler protocols,
 include:
@@ -18,7 +18,16 @@ message RegisterTMResponse {
     string status = 1;
 }
 
+message UnregisterTMRequest {
+    string name = 1;
+}
+
+message UnregisterTMResponse {
+    string status = 1;
+}
+
 // allow TMs to register at CP
 service RegistryService {
     rpc RegisterTM(RegisterTMRequest) returns (RegisterTMResponse);
+    rpc UnregisterTM(UnregisterTMRequest) returns (UnregisterTMResponse);
 }
