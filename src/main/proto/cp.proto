@@ -18,16 +18,16 @@ message RegisterTMResponse {
     string status = 1;
 }
 
-message UnregisterTMRequest {
+message DeregisterTMRequest {
     string name = 1;
 }
 
-message UnregisterTMResponse {
+message DeregisterTMResponse {
     string status = 1;
 }
 
 // allow TMs to register at CP
 service RegistryService {
     rpc RegisterTM(RegisterTMRequest) returns (RegisterTMResponse);
-    rpc UnregisterTM(UnregisterTMRequest) returns (UnregisterTMResponse);
+    rpc DeregisterTM(DeregisterTMRequest) returns (DeregisterTMResponse);
 }
