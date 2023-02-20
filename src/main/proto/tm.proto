@@ -29,8 +29,10 @@ message TMStatusResponse{
   repeated OperatorStatus operatorStatus = 4;
 }
 
-service TMStatusService{
+service TMService{
   rpc GetStatus(TMStatusRequest) returns (TMStatusResponse);
+  rpc AddOperator(AddOperatorRequest) returns (AddOperatorResponse);
+  rpc RemoveOperator(RemoveOperatorRequest) returns (RemoveOperatorResponse);
 }
 
 // how do we do bykey?
@@ -65,9 +67,4 @@ message RemoveOperatorRequest{
 message RemoveOperatorResponse{
   bool success = 1;
   string msg = 2;
-}
-
-service TMOperatorService{
-  rpc AddOperator(AddOperatorRequest) returns (AddOperatorResponse);
-  rpc RemoveOperator(RemoveOperatorRequest) returns (RemoveOperatorResponse);
 }
