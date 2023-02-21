@@ -31,8 +31,9 @@ message TMStatusResponse{
 
 service TMService{
   rpc GetStatus(TMStatusRequest) returns (TMStatusResponse);
-  rpc AddOperator(AddOperatorRequest) returns (AddOperatorResponse);
-  rpc RemoveOperator(RemoveOperatorRequest) returns (RemoveOperatorResponse);
+  rpc AddOperator(AddOperatorRequest) returns (StdResponse);
+  rpc RemoveOperator(RemoveOperatorRequest) returns (StdResponse);
+  rpc ReConfigOperator(ReConfigOperatorRequest) returns (StdResponse);
 }
 
 // how do we do bykey?
@@ -46,25 +47,37 @@ message OperatorConfig{
   OperatorType type = 1;
   string name = 2;
   string jarKey = 3; // UDF jars stored at CP's state store?
-  string prevOperatorAddress = 4; // ip:port
-  string nextOperatorAddress = 5; // ip:port
+  int32 listenPort = 4; // the port the operator will listen on (accept input)
+  repeated string nextOperatorAddress = 5; // ip:port
   string byKey = 6; // if byKey is not empty, the operator will be partitioned by this key
 }
 
+message StdResponse{
+  bool success = 1;
+  string msg = 2;
+}
+
+// TM should calculate config diff based on this
 message AddOperatorRequest{
   repeated OperatorConfig configs = 1;
 }
 
-message AddOperatorResponse{
-  bool success = 1;
-  string msg = 2;
-}
+//message AddOperatorResponse{
+//  StdResponse resp = 1;
+//}
 
 message RemoveOperatorRequest{
   repeated string operatorNames = 1;
 }
 
-message RemoveOperatorResponse{
-  bool success = 1;
-  string msg = 2;
+//message RemoveOperatorResponse{
+//  StdResponse resp = 1;
+//}
+
+message ReConfigOperatorRequest{
+  repeated OperatorConfig configs = 1;
 }
+
+//message ReConfigOperatorResponse{
+//  StdResponse resp = 1;
+//}

@@ -1,6 +1,9 @@
 syntax = "proto3";
-option java_package="pb";
+option java_package = "pb";
 
-message Tuple1{
+// TODO: The protocol for tuples to talk to each other
 
+// Users take care of serialization and deserialization
+message Tuple{
+  bytes data = 1;
 }
