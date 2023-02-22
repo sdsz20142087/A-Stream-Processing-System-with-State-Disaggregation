@@ -7,7 +7,7 @@ import pb.TMServiceGrpc;
 import pb.Tm;
 
 class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase{
-    private Logger logger = LogManager.getLogger();
+    private final Logger logger = LogManager.getLogger();
     public void getStatus(Tm.TMStatusRequest request,
                           StreamObserver<Tm.TMStatusResponse> responseObserver) {
         logger.info("got status request");
@@ -19,14 +19,23 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase{
 
     /**
      */
+    @Override
     public void addOperator(Tm.AddOperatorRequest request,
-                            StreamObserver<pb.Tm.AddOperatorResponse> responseObserver) {
+                            StreamObserver<Tm.StdResponse> responseObserver) {
+
     }
 
     /**
      */
+    @Override
     public void removeOperator(Tm.RemoveOperatorRequest request,
-                               StreamObserver<pb.Tm.RemoveOperatorResponse> responseObserver) {
+                               StreamObserver<pb.Tm.StdResponse> responseObserver) {
+
+    }
+
+    @Override
+    public void reConfigOperator(Tm.ReConfigOperatorRequest request,
+                                 StreamObserver<Tm.StdResponse> responseObserver) {
 
     }
 }

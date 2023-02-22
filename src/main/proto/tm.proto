@@ -1,5 +1,8 @@
 syntax = "proto3";
 option java_package="pb";
+package pb;
+// include op.proto to get operator type
+import "op.proto";
 
 /*
 TaskManager's RPC handler protocols,
@@ -36,21 +39,7 @@ service TMService{
   rpc ReConfigOperator(ReConfigOperatorRequest) returns (StdResponse);
 }
 
-// how do we do bykey?
-message OperatorConfig{
-  enum OperatorType{
-    SOURCE = 0;
-    SINK = 1;
-    MAP = 2;
-    COUNT = 3;
-  }
-  OperatorType type = 1;
-  string name = 2;
-  string jarKey = 3; // UDF jars stored at CP's state store?
-  int32 listenPort = 4; // the port the operator will listen on (accept input)
-  repeated string nextOperatorAddress = 5; // ip:port
-  string byKey = 6; // if byKey is not empty, the operator will be partitioned by this key
-}
+
 
 message StdResponse{
   bool success = 1;
@@ -75,7 +64,7 @@ message RemoveOperatorRequest{
 //}
 
 message ReConfigOperatorRequest{
-  repeated OperatorConfig configs = 1;
+  OperatorConfig config = 1;
 }
 
 //message ReConfigOperatorResponse{

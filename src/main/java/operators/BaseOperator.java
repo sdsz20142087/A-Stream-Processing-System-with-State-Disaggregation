@@ -1,14 +1,16 @@
 package operators;
 
+import com.google.protobuf.ByteString;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import pb.Op;
 
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public abstract class BaseOperator<IN, OUT> extends Thread{
-    private LinkedBlockingQueue<IN> inputQueue;
-    private LinkedBlockingQueue<OUT> outputQueue;
+public abstract class BaseOperator extends Thread{
+    private LinkedBlockingQueue<Op.Msg> inputQueue;
+    private LinkedBlockingQueue<Op.Msg> outputQueue;
     private List<String> nextOpAddrs;
     private int keyByIndex;
     private String name;
@@ -21,17 +23,31 @@ public abstract class BaseOperator<IN, OUT> extends Thread{
         this.keyByIndex = keyByIndex;
         this.name = name;
     }
-
-    public void addInput(IN input){
+    // external interface for adding input by TM
+    public void addInput(Op.Msg input){
         inputQueue.add(input);
     }
 
-    private void sendOutput(OUT output){
+    private void sendOutput(Op.Msg output){
         outputQueue.add(output);
     }
 
+    private void handleMsg(Op.Msg input){
+        switch (input.getType()){
+            case DATA:
+                processElement(input.getData());
+                break;
+            case CONTROL:
+                // do something about the control msg
+                logger.info("got control msg: " + input);
+                // send it downstream
+                sendOutput(input);
+                break;
+        }
+    }
+
     // emitting output is done in the processElement method
-    protected abstract void processElement(IN input) throws Exception;
+    protected abstract void processElement(ByteString in);
 
     public void run(){
         logger.info("Operator " + name + " started");
@@ -39,7 +55,7 @@ public abstract class BaseOperator<IN, OUT> extends Thread{
         Thread sender = new Thread(() -> {
             try {
                 while (true) {
-                    OUT output = outputQueue.take();
+                    Op.Msg output = outputQueue.take();
 
                 }
             } catch (Exception e) {
@@ -50,8 +66,8 @@ public abstract class BaseOperator<IN, OUT> extends Thread{
 
         try{
             while(true){
-                IN input = inputQueue.take();
-                processElement(input);
+                Op.Msg input = inputQueue.take();
+                handleMsg(input);
             }
         } catch (Exception e) {
             e.printStackTrace();
