@@ -11,11 +11,10 @@ import java.util.concurrent.ExecutionException;
 //import io.etcd.jetcd.test.EtcdClusterExtension;
 //import org.junit.jupiter.api.extension.RegisterExtension;
 public class DBTools {
-    private static final String CLIENT_CONN_PORT = "2379";
-    private static final String CLIENT_PEER_PORT = "2380";
+    private static final String CLIENT_CONN_PORT = "8179";
+    private static final String CLIENT_PEER_PORT = "8180";
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-//        Client client = Client.builder().endpoints("http://etcd0:2379", "http://etcd1:2379", "http://etcd2:2379").build();
-        Client client = Client.builder().endpoints("http://127.0.0.1:" + CLIENT_CONN_PORT).build();
+        Client client = Client.builder().target("ip:///localhost:" + CLIENT_CONN_PORT).build();
         KV kvClient = client.getKVClient();
         ByteSequence key = ByteSequence.from("test_key".getBytes());
         ByteSequence value = ByteSequence.from("test_value".getBytes());
@@ -30,7 +29,7 @@ public class DBTools {
         GetResponse response = getFuture.get();
 
         // delete the key
-        kvClient.delete(key).get();
+//        kvClient.delete(key).get();
         System.out.println(response);
     }
 }
