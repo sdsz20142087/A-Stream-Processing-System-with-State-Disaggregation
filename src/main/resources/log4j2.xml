@@ -10,7 +10,9 @@
     </Appenders>
 
     <Loggers>
-        <logger name="io.grpc.netty" level="warn"/>
+        <logger name="io.grpc" level="warn"/>
+        <logger name="io.netty" level="warn"/>
+        <logger name="io.vertx" level="warn"/>
         <Root level="all">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="logFile"/>

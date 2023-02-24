@@ -12,10 +12,12 @@ import pb.RegistryServiceGrpc;
 class RegistryClient {
     private final Logger logger = LogManager.getLogger();
     private final String target;
+    private final int tm_port;
     private final RegistryServiceGrpc.RegistryServiceStub asyncStub;
 
-    public RegistryClient(String host, int port) {
-        target = host + ":" + port;
+    public RegistryClient(String host, int cp_port, int tm_port) {
+        target = host + ":" + cp_port;
+        this.tm_port = tm_port;
         ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
         asyncStub = RegistryServiceGrpc.newStub(channel);
     }
@@ -25,7 +27,7 @@ class RegistryClient {
         Cp.RegisterTMRequest req = Cp.RegisterTMRequest.newBuilder()
                 .setAddress(localAddress)
                 .setName(name)
-                .setPort(TaskManager.TM_GRPC_PORT)
+                .setPort(this.tm_port)
                 .build();
         asyncStub.registerTM(req, new StreamObserver<>() {
             @Override

@@ -1,0 +1,12 @@
+{
+  "controlPlane": {
+    "etcd_endpoints": ["http://127.0.0.1:2379"],
+    "test_etcd_conn": false,
+    "cp_grpc_port": 8008
+  },
+  "taskManager": {
+    "cp_host": "127.0.0.1",
+    "cp_port": 8008,
+    "operator_thres": 4
+  }
+}
