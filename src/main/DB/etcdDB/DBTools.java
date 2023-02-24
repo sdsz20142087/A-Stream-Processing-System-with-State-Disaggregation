@@ -21,7 +21,6 @@ public class DBTools {
 
         // put the key-value
         kvClient.put(key, value).get();
-//        kvClient.put(key, value).get();
 
         // get the CompletableFuture
         CompletableFuture<GetResponse> getFuture = kvClient.get(key);
