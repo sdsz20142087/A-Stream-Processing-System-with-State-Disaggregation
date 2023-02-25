@@ -1,5 +1,6 @@
 syntax = "proto3";
 option java_package="pb";
+import "google/protobuf/empty.proto";
 package pb;
 // include op.proto to get operator type
 import "op.proto";
@@ -34,39 +35,21 @@ message TMStatusResponse{
 
 service TMService{
   rpc GetStatus(TMStatusRequest) returns (TMStatusResponse);
-  rpc AddOperator(AddOperatorRequest) returns (StdResponse);
-  rpc RemoveOperator(RemoveOperatorRequest) returns (StdResponse);
-  rpc ReConfigOperator(ReConfigOperatorRequest) returns (StdResponse);
-}
-
-
-
-message StdResponse{
-  bool success = 1;
-  string msg = 2;
+  rpc AddOperator(AddOperatorRequest) returns (google.protobuf.Empty);
+  rpc RemoveOperator(RemoveOperatorRequest) returns (google.protobuf.Empty);
+  rpc ReConfigOperator(ReConfigOperatorRequest) returns (google.protobuf.Empty);
 }
 
 // TM should calculate config diff based on this
 message AddOperatorRequest{
-  repeated OperatorConfig configs = 1;
+  OperatorConfig config = 1;
+  bytes obj = 2; // serialized object
 }
-
-//message AddOperatorResponse{
-//  StdResponse resp = 1;
-//}
 
 message RemoveOperatorRequest{
-  repeated string operatorNames = 1;
+  string operatorName = 1;
 }
-
-//message RemoveOperatorResponse{
-//  StdResponse resp = 1;
-//}
 
 message ReConfigOperatorRequest{
   OperatorConfig config = 1;
 }
-
-//message ReConfigOperatorResponse{
-//  StdResponse resp = 1;
-//}

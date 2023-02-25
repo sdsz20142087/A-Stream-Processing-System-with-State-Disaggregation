@@ -3,7 +3,9 @@ package operators;
 import com.google.protobuf.ByteString;
 import pb.Op;
 
-public class SinkOperator extends BaseOperator{
+import java.io.Serializable;
+
+public class SinkOperator extends BaseOperator implements Serializable {
     public SinkOperator(Op.OperatorConfig config) {
         super(config);
     }

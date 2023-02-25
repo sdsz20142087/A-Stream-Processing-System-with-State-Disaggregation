@@ -5,29 +5,33 @@ import operators.ISource;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-public class WikiFileSource implements ISource {
+public class WikiFileSource implements ISource<String>, Serializable {
 
 
     private List<String> data = new ArrayList<>();
     private ListIterator<String> dataIter;
+    private String path;
 
     public WikiFileSource(String path) {
+        this.path = path;
+    }
+
+    @Override
+    public void init() throws Exception {
         // read everything in advance because we are lazy
-        try{
-            BufferedReader reader = new BufferedReader(new FileReader(path));
-            String line = reader.readLine();
-            while (line != null) {
-                data.add(line);
-                line = reader.readLine();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+        BufferedReader reader = new BufferedReader(new FileReader(path));
+        String line = reader.readLine();
+        while (line != null) {
+            data.add(line);
+            line = reader.readLine();
         }
         dataIter = data.listIterator();
+        System.out.println("Wikifilesource: read " + data.size() + " lines from " + path);
     }
 
     @Override
@@ -36,8 +40,8 @@ public class WikiFileSource implements ISource {
     }
 
     @Override
-    public ByteString next() {
+    public String next() {
         String d = dataIter.next();
-        return ByteString.copyFromUtf8(d);
+        return d;
     }
 }
