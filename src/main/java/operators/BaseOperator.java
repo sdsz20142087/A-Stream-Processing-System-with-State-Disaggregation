@@ -11,31 +11,38 @@ import pb.Op;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import pb.OPServiceGrpc;
 
-public abstract class BaseOperator extends Thread implements IOperator {
+public abstract class BaseOperator extends Thread implements IOperator, Serializable {
     private LinkedBlockingQueue<Op.Msg> inputQueue;
     private LinkedBlockingQueue<Op.Msg> outputQueue;
-    private Logger logger = LogManager.getLogger();
+    protected Logger logger = LogManager.getLogger();
     private List<OPServiceGrpc.OPServiceStub> stubs;
     private Op.OperatorConfig config;
     private Server server; // grpc server for receiving input from upstream operators
 
+    // There must not be moving parts (e.g. listening to ports, starting new threads)
+    // in the constructor because we'll be sending this object over grpc.
     public BaseOperator(Op.OperatorConfig config) {
         this.inputQueue = new LinkedBlockingQueue<>();
         this.outputQueue = new LinkedBlockingQueue<>();
         this.config = config;
-        initNextOpClients();
-        startGRPCServer();
+        this.setName(config.getName());
+    }
+
+    public Op.OperatorConfig getConfig(){
+        return this.config;
     }
 
     // external interface for adding input by TM(task manager)
     public void addInput(Op.Msg input) {
         inputQueue.add(input);
+        logger.debug(String.format("OP: input: size=%d", inputQueue.size()));
     }
 
     protected void sendOutput(Op.Msg output) {
@@ -65,9 +72,10 @@ public abstract class BaseOperator extends Thread implements IOperator {
             ManagedChannel channel = ManagedChannelBuilder.forTarget(addr).usePlaintext().build();
             stubs.add(OPServiceGrpc.newStub(channel));
         }
+        logger.info("OP: NextOperatorAddr:"+config.getNextOperatorAddressList());
     }
 
-    private void startGRPCServer() {
+    protected void startGRPCServer() {
         // start a new thread that receives input from upstream operators
         if (this.server != null && !this.server.isShutdown()) {
             this.server.shutdownNow();
@@ -86,6 +94,9 @@ public abstract class BaseOperator extends Thread implements IOperator {
 
     @Override
     public void run() {
+        initNextOpClients();
+        startGRPCServer();
+
         // start another new thread that sends output to next operators
         Thread sender = new Thread(() -> {
             try {
@@ -98,6 +109,7 @@ public abstract class BaseOperator extends Thread implements IOperator {
                 System.exit(1);
             }
         });
+
         sender.start();
 
 

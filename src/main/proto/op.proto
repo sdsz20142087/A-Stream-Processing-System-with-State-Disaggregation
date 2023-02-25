@@ -16,20 +16,21 @@ message Msg{
   optional OperatorConfig config = 3;
 }
 enum PartitionStrategy{
-  NONE = 0;
-  HASH = 1;
-  ROUND_ROBIN = 2;
-  BROADCAST = 3;
-  RANDOM = 4;
+  HASH = 0;
+  ROUND_ROBIN = 1;
+  BROADCAST = 2;
+  RANDOM = 3;
 }
+
+enum OperatorType{
+  SOURCE = 0;
+  SINK = 1;
+  MAP = 2;
+  COUNT = 3;
+}
+
 // how do we do bykey?
 message OperatorConfig{
-  enum OperatorType{
-    SOURCE = 0;
-    SINK = 1;
-    MAP = 2;
-    COUNT = 3;
-  }
   OperatorType type = 1;
   string name = 2;
   string jarKey = 3; // UDF jars stored at CP's state store?
