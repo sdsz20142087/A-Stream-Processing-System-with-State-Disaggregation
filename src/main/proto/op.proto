@@ -15,7 +15,13 @@ message Msg{
   optional bytes data = 2;
   optional OperatorConfig config = 3;
 }
-
+enum PartitionStrategy{
+  NONE = 0;
+  HASH = 1;
+  ROUND_ROBIN = 2;
+  BROADCAST = 3;
+  RANDOM = 4;
+}
 // how do we do bykey?
 message OperatorConfig{
   enum OperatorType{
@@ -30,6 +36,8 @@ message OperatorConfig{
   int32 listenPort = 4; // the port the operator will listen on (accept input)
   repeated string nextOperatorAddress = 5; // ip:port
   string byKey = 6; // if byKey is not empty, the operator will be partitioned by this key
+
+  PartitionStrategy partitionStrategy = 7;
 }
 
 service OPService{
