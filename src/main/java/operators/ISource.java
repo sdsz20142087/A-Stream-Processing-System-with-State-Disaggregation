@@ -1,8 +1,6 @@
 package operators;
 
-import com.google.protobuf.ByteString;
-
-public interface ISource{
+public interface ISource<T>{
     boolean hasNext();
-    ByteString next();
+    T next();
 }
