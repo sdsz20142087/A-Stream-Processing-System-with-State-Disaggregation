@@ -38,7 +38,7 @@ public abstract class BaseOperator extends Thread implements IOperator {
         inputQueue.add(input);
     }
 
-    private void sendOutput(Op.Msg output) {
+    protected void sendOutput(Op.Msg output) {
         outputQueue.add(output);
     }
 
@@ -147,7 +147,7 @@ public abstract class BaseOperator extends Thread implements IOperator {
         }
     }
 
-    private synchronized void handleConfigUpdate(Op.OperatorConfig config) {
+    public synchronized void handleConfigUpdate(Op.OperatorConfig config) {
         Op.OperatorConfig oldConfig = this.config;
         this.config = config;
         // TODO: other types of re-init
