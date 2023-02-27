@@ -1,6 +1,6 @@
 {
   "controlPlane": {
-    "etcd_endpoints": ["http://127.0.0.1:2379"],
+    "etcd_endpoints": ["http://127.0.0.1:8179"],
     "test_etcd_conn": false,
     "cp_grpc_port": 8008
   },

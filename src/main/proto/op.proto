@@ -5,7 +5,7 @@ package pb;
 // TODO: The protocol for tuples to talk to each other
 
 // Users take care of serialization and deserialization
-// the operator is reponsible for calculating the delta on the new config
+// the operator is responsible for calculating the data on the new config
 message Msg{
   enum MsgType {
     DATA = 0;
@@ -33,7 +33,7 @@ enum OperatorType{
 message OperatorConfig{
   OperatorType type = 1;
   string name = 2;
-  string jarKey = 3; // UDF jars stored at CP's state store?
+  string jarKey = 3; // UDF jars stored at CP's state store? fixme
   int32 listenPort = 4; // the port the operator will listen on (accept input)
   repeated string nextOperatorAddress = 5; // ip:port
   string byKey = 6; // if byKey is not empty, the operator will be partitioned by this key
