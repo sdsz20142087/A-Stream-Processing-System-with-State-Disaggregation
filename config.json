@@ -7,6 +7,6 @@
   "taskManager": {
     "cp_host": "127.0.0.1",
     "cp_port": 8008,
-    "operator_thres": 4
+    "operator_quota": 4
   }
 }
