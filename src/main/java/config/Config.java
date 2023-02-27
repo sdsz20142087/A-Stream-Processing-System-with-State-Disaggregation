@@ -11,7 +11,6 @@ public class Config {
     public CPConfig controlPlane;
     public TMConfig taskManager;
     private static Config instance;
-    private Logger logger = LogManager.getLogger();
     public static void LoadConfig(String configPath){
         try{
             // read from file
@@ -23,7 +22,6 @@ public class Config {
         } catch (Exception e) {
             throw new RuntimeException("Failed to load "+configPath, e);
         }
-        instance.logger.info("Config loaded:"+instance);
     }
 
     public static Config getInstance(){
