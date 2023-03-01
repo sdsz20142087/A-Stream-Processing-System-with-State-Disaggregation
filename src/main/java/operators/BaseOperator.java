@@ -25,6 +25,7 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
     private List<OPServiceGrpc.OPServiceStub> stubs;
     private Op.OperatorConfig config;
     private Server server; // grpc server for receiving input from upstream operators
+    private int bufferSize = 1000; // UDF buffer size, can change in runtime
 
     // There must not be moving parts (e.g. listening to ports, starting new threads)
     // in the constructor because we'll be sending this object over grpc.
@@ -56,6 +57,7 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
                 break;
             case CONTROL:
                 // do something about the control msg
+                // Change buffer size ?
                 logger.info("got control msg: " + input);
                 // send it downstream
                 sendOutput(input);
@@ -101,7 +103,7 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
         Thread sender = new Thread(() -> {
             try {
                 while (true) {
-                    // send output to next operators
+                    // send output to next operators with the specified strategy
                     sendWithStrategy();
                 }
             } catch (InterruptedException e) {
@@ -112,7 +114,7 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
 
         sender.start();
 
-
+        // receive input from upstream operators
         try {
             while (true) {
                 Op.Msg input = inputQueue.take();
@@ -169,6 +171,10 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
         if(oldConfig.getNextOperatorAddressList().equals(config.getNextOperatorAddressList())){
             this.initNextOpClients();
         }
+
+    }
+    public boolean checkBuffer(){
+        return inputQueue.size() > bufferSize;
     }
 
 }
