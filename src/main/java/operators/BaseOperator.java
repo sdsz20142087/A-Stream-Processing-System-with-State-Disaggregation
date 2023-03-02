@@ -57,7 +57,7 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
                 break;
             case CONTROL:
                 // do something about the control msg
-                // Change buffer size ?
+                handleConfigUpdate(input.getConfig());
                 logger.info("got control msg: " + input);
                 // send it downstream
                 sendOutput(input);
@@ -171,7 +171,9 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
         if(oldConfig.getNextOperatorAddressList().equals(config.getNextOperatorAddressList())){
             this.initNextOpClients();
         }
-
+        if(oldConfig.getBufferSize()!=config.getBufferSize()) {
+            this.bufferSize = config.getBufferSize();
+        }
     }
     public boolean checkBuffer(){
         return inputQueue.size() > bufferSize;

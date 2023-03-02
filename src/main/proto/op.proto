@@ -29,6 +29,7 @@ enum OperatorType{
   COUNT = 3;
 }
 
+
 // how do we do bykey?
 message OperatorConfig{
   OperatorType type = 1;
@@ -39,6 +40,7 @@ message OperatorConfig{
   string byKey = 6; // if byKey is not empty, the operator will be partitioned by this key
 
   PartitionStrategy partitionStrategy = 7;
+  int32 bufferSize = 100;
 }
 
 service OPService{

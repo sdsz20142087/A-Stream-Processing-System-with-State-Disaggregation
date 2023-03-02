@@ -11,10 +11,10 @@ import operators.BaseOperator;
 public class Filter<T> extends BaseOperator implements Serializable {
     private Predicate<T> predicate;
     private SerDe<T> serde;
-    public Filter(Op.OperatorConfig config) {
+    public Filter(Op.OperatorConfig config,SerDe<T> serde) {
         super(config);
         this.predicate = UDFpredicate;
-
+        this.serde = serde;
     }
     @Override
     public void run(){
