@@ -14,6 +14,7 @@ message Msg{
   MsgType type = 1;
   optional bytes data = 2;
   optional OperatorConfig config = 3;
+  optional int32 partitionId = 4;
 }
 enum PartitionStrategy{
   HASH = 0;
