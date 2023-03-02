@@ -166,7 +166,7 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
         if(oldConfig.getListenPort()!=config.getListenPort()){
             this.startGRPCServer();
         }
-        if(oldConfig.getNextOperatorAddressList().equals(config.getNextOperatorAddressList())){
+        if(!oldConfig.getNextOperatorAddressList().equals(config.getNextOperatorAddressList())){ //fixme, should be not equal?
             this.initNextOpClients();
         }
     }

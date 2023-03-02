@@ -9,7 +9,9 @@ import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
 
-class TMClient {
+import java.io.Serializable;
+
+public class TMClient implements Serializable {
     private final Logger logger = LogManager.getLogger();
     private final TMServiceGrpc.TMServiceStub asyncStub;
     private final TMServiceGrpc.TMServiceBlockingStub blockingStub;
@@ -47,5 +49,13 @@ class TMClient {
 //            }
 //        });
         return resp.toString();
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public int getPort() {
+        return port;
     }
 }
