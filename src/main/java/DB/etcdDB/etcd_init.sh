@@ -3,12 +3,16 @@ if docker ps -a --format '{{.Names}}' | grep -q '^etcd-gcr-v3.4.24$'; then
 else
     echo "Container not found"
 fi
+
+docker network create cp_etcd || true
+
 rm -rf /tmp/etcd-data.tmp && mkdir -p /tmp/etcd-data.tmp && \
 docker rmi gcr.io/etcd-development/etcd:v3.4.24 || true && \
 docker run \
   -p 8179:2379 \
   -p 8180:2380 \
   --mount type=bind,source=/tmp/etcd-data.tmp,destination=/etcd-data \
+  --network cp_etcd \
   --name etcd-gcr-v3.4.24 \
   gcr.io/etcd-development/etcd:v3.4.24 \
   /usr/local/bin/etcd \

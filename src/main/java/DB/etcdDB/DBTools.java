@@ -49,7 +49,7 @@ public class DBTools {
 
     private static void getDBClient() {
         if (DBClient == null) {
-            Client client = Client.builder().target("ip:///localhost:" + CLIENT_CONN_PORT).build();
+            Client client = Client.builder().target("host.docker.internal:" + CLIENT_CONN_PORT).build();
             DBClient = client.getKVClient();
             logger.info("Connected to etcd server, client address: ip:///localhost:" + CLIENT_CONN_PORT);
 //            try {
@@ -80,6 +80,8 @@ public class DBTools {
 
         ByteSequence key = ByteSequence.from(clientNameBytes);
         ByteSequence value = ByteSequence.from(tmClientBytes);
+//        logger.info("try to get response");
+
         CompletableFuture<GetResponse> keyExistsOrNot = DBClient.get(key);
         GetResponse response = null;
         try {
@@ -88,8 +90,13 @@ public class DBTools {
             throw new RuntimeException(e);
         }
         if (response.getCount() == 1) {
+            logger.info("connected successfully");
             logger.info("Key exists, don't need to register this TM again");
             return "Failed";
+        } else if (response.getCount() == 0) {
+            logger.info("connected successfully");
+        } else {
+            logger.info("connected failed");
         }
         try {
             DBClient.put(key, value).get();
@@ -133,18 +140,19 @@ public class DBTools {
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
 //        DBTools.getInstance().startDBToolsServer();
 //        TMClient tmClient = new TMClient()
-
-//        ByteSequence key = ByteSequence.from("test_key".getBytes());
-//        ByteSequence value = ByteSequence.from("test_value".getBytes());
+//        if (DBClient == null) getDBClient();
+//        ByteSequence key = ByteSequence.from("test_key3".getBytes());
+//        ByteSequence value = ByteSequence.from("test_value2".getBytes());
 //
 //        // put the key-value
-//        kvClient.put(key, value).get();
+//        DBClient.put(key, value).get();
 //
 //        // get the CompletableFuture
-//        CompletableFuture<GetResponse> getFuture = kvClient.get(key);
+//        CompletableFuture<GetResponse> getFuture = DBClient.get(key);
 //
 //        // get the value from CompletableFuture
 //        GetResponse response = getFuture.get();
+//        System.out.println(response);
 //
 //        // delete the key
 ////        kvClient.delete(key).get();
