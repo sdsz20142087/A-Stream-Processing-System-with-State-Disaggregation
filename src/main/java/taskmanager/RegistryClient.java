@@ -16,7 +16,8 @@ class RegistryClient {
     private final RegistryServiceGrpc.RegistryServiceStub asyncStub;
 
     public RegistryClient(String host, int cp_port, int tm_port) {
-        target = host + ":" + cp_port;
+//        target = host + ":" + cp_port;
+        target = "172.20.0.2" + ":" + cp_port;
         this.tm_port = tm_port;
         ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
         asyncStub = RegistryServiceGrpc.newStub(channel);

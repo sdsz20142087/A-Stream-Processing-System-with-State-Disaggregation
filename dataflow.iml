@@ -57,20 +57,11 @@
     <orderEntry type="library" name="Maven: io.etcd:jetcd-grpc:0.7.5" level="project" />
     <orderEntry type="library" name="Maven: io.vertx:vertx-grpc:4.3.5" level="project" />
     <orderEntry type="library" name="Maven: io.vertx:vertx-core:4.3.5" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty-common:4.1.85.Final" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty-buffer:4.1.85.Final" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty-transport:4.1.85.Final" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty-handler:4.1.85.Final" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-codec-http:4.1.85.Final" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty-resolver:4.1.85.Final" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty-resolver-dns:4.1.85.Final" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty-codec-dns:4.1.85.Final" level="project" />
     <orderEntry type="library" name="Maven: io.grpc:grpc-netty:1.51.0" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-codec-http2:4.1.79.Final" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty-codec:4.1.79.Final" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-handler-proxy:4.1.79.Final" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-codec-socks:4.1.79.Final" level="project" />
-    <orderEntry type="library" name="Maven: io.netty:netty-transport-native-unix-common:4.1.79.Final" level="project" />
     <orderEntry type="library" name="Maven: io.grpc:grpc-grpclb:1.51.0" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: com.google.protobuf:protobuf-java-util:3.21.7" level="project" />
     <orderEntry type="library" name="Maven: io.etcd:jetcd-api:0.7.5" level="project" />
@@ -81,5 +72,16 @@
     <orderEntry type="library" name="Maven: com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava" level="project" />
     <orderEntry type="library" name="Maven: org.checkerframework:checker-qual:3.12.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.j2objc:j2objc-annotations:1.3" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-resolver-dns-native-macos:osx-aarch_64:4.1.89.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-resolver-dns-classes-macos:4.1.89.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-common:4.1.89.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-resolver-dns:4.1.89.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-buffer:4.1.89.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-resolver:4.1.89.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-transport:4.1.89.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-codec:4.1.89.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-codec-dns:4.1.89.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-handler:4.1.89.Final" level="project" />
+    <orderEntry type="library" name="Maven: io.netty:netty-transport-native-unix-common:4.1.89.Final" level="project" />
   </component>
 </module>

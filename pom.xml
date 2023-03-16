@@ -87,6 +87,12 @@
             <artifactId>guava</artifactId>
             <version>31.1-jre</version>
         </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns-native-macos</artifactId>
+            <version>4.1.89.Final</version>
+            <classifier>osx-aarch_64</classifier>
+        </dependency>
     </dependencies>
 
     <properties>
@@ -110,17 +116,20 @@
 
                 <executions>
                     <execution>
-                        <id>WikiApplication</id>
+                        <id>TaskManager</id>
                         <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>WikiApplication</finalName>
+                            <finalName>TaskManager</finalName>
                             <archive>
                                 <manifest>
-                                    <mainClass>WikiApplication</mainClass>
+                                    <mainClass>taskmanager.TaskManager</mainClass>
                                 </manifest>
+                                <manifestEntries>
+                                    <Multi-Release>true</Multi-Release>
+                                </manifestEntries>
                             </archive>
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>

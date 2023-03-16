@@ -23,6 +23,8 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
+import static java.lang.Thread.sleep;
+
 public class TaskManager extends NodeBase {
     private static TaskManager instance;
     private final RegistryClient registryClient;
@@ -54,7 +56,7 @@ public class TaskManager extends NodeBase {
 
             // simulate control plane requests
             // ------------------------------------------
-            Thread.sleep(1000);
+            sleep(1000);
             logger.info("starting ops simulation");
             ArrayList<String> addrs = new ArrayList<>();
             addrs.add("127.0.0.1:9002");
@@ -108,7 +110,7 @@ public class TaskManager extends NodeBase {
                     }
                 });
                 logger.info("sleeping 2");
-                Thread.sleep(2000);
+                sleep(2000);
                 logger.info("woke up");
             }
             // ------------------------------------------
@@ -127,6 +129,14 @@ public class TaskManager extends NodeBase {
     }
 
     public static void main(String[] args) {
-        TaskManager.getInstance().start();
+//        TaskManager.getInstance().start();
+        TaskManager.getInstance();
+        while (true) {
+            try {
+                sleep(5);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
