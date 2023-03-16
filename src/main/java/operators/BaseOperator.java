@@ -25,6 +25,8 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
     private List<OPServiceGrpc.OPServiceStub> stubs;
     private Op.OperatorConfig config;
     private Server server; // grpc server for receiving input from upstream operators
+    private int bufferSize = 1000; // UDF buffer size, can change in runtime
+    private static int paritionID = 0; // use for Round Robin
 
     // There must not be moving parts (e.g. listening to ports, starting new threads)
     // in the constructor because we'll be sending this object over grpc.
@@ -56,6 +58,7 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
                 break;
             case CONTROL:
                 // do something about the control msg
+                handleConfigUpdate(input.getConfig());
                 logger.info("got control msg: " + input);
                 // send it downstream
                 sendOutput(input);
@@ -100,8 +103,12 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
         // start another new thread that sends output to next operators
         Thread sender = new Thread(() -> {
             try {
+                int currentPartitionId;
+                if(config.getPartitionStrategy()==Op.PartitionStrategy.ROUND_ROBIN){
+                    currentPartitionId= 0;
+                }
                 while (true) {
-                    // send output to next operators
+                    // send output to next operators with the specified strategy
                     sendWithStrategy();
                 }
             } catch (InterruptedException e) {
@@ -112,7 +119,7 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
 
         sender.start();
 
-
+        // receive input from upstream operators
         try {
             while (true) {
                 Op.Msg input = inputQueue.take();
@@ -127,8 +134,48 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
 
     private void sendWithStrategy() throws InterruptedException {
         Op.Msg msg = outputQueue.take();
+        OPServiceGrpc.OPServiceStub targetStub;
         switch (config.getPartitionStrategy()) {
             case ROUND_ROBIN:
+                targetStub= stubs.get(paritionID);
+                targetStub.pushMsg(msg, new StreamObserver<>() {
+                    @Override
+                    public void onNext(Empty e) {
+                        // do nothing
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        logger.error("Error in sending output to next operator: " + throwable.getMessage());
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        // do nothing
+                    }
+                });
+                paritionID = (paritionID + 1) % stubs.size();
+                break;
+            case HASH:
+                targetStub= stubs.get(msg.getPartitionId());
+                targetStub.pushMsg(msg, new StreamObserver<>() {
+                    @Override
+                    public void onNext(Empty e) {
+                        // do nothing
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+                        logger.error("Error in sending output to next operator: " + throwable.getMessage());
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                        // do nothing
+                    }
+                });
+                break;
+            case BROADCAST:
                 for (OPServiceGrpc.OPServiceStub stub : stubs) {
                     stub.pushMsg(msg, new StreamObserver<>() {
                         @Override
@@ -148,10 +195,6 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
                     });
                 }
                 break;
-            case HASH:
-                break;
-            case BROADCAST:
-                break;
             case RANDOM:
                 break;
             default:
@@ -169,6 +212,12 @@ public abstract class BaseOperator extends Thread implements IOperator, Serializ
         if(!oldConfig.getNextOperatorAddressList().equals(config.getNextOperatorAddressList())){ //fixme, should be not equal?
             this.initNextOpClients();
         }
+        if(oldConfig.getBufferSize()!=config.getBufferSize()) {
+            this.bufferSize = config.getBufferSize();
+        }
+    }
+    public boolean checkBuffer(){
+        return inputQueue.size() > bufferSize;
     }
 
 }
