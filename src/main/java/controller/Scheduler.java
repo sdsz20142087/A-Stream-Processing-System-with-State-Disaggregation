@@ -1,11 +1,14 @@
 package controller;
 
 import kotlin.Pair;
+import kotlin.Triple;
 import operators.BaseOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.Tm;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,20 +30,30 @@ public class Scheduler extends Thread{
         // TODO: deploy the query plan to TMs
         // FIXME: naive implementation
         int i=0;
-        List<Pair<Tm.OperatorConfig, BaseOperator>> flatList = plan.getFlatList();
+        List<Triple<Integer, Tm.OperatorConfig, BaseOperator>> flatList = plan.getFlatList();
+        int stageDepth = plan.getStages().size();
+        HashMap<Integer, List<String>> stageToTm = new HashMap<>();
+        for(int j=0; j<stageDepth; j++){
+            stageToTm.put(j, new ArrayList<>());
+        }
         while(i<flatList.size()){
             // read the clients on the fly since cluster membership may change
-            String[] clients = (String[]) tmClients.keySet().toArray();
+            Collection<TMClient> clients = tmClients.values();
 
             // TODO: assign operator config's outputAddress and bufferSize
-            
-            for(int j=0; j<clients.length; j++){
+            for(TMClient tmClient: clients){
                 while(i<flatList.size()){
-                    TMClient tmClient = tmClients.get(clients[j]);
-                    BaseOperator op = plan.getOperators().get(i);
-                    Tm.OperatorConfig cfg = plan.getStages().get(i).get(0);
+                    // !! deploy the operators in reverse order so we know the outputAddress of the next stage
+                    Triple<Integer, Tm.OperatorConfig, BaseOperator> item = flatList.get(flatList.size()-1-i);
+                    if(item.getFirst() != stageDepth-1){
+                        // assign the outputAddress and bufferSize
+                        // FIXME: in cases like keyby, the stream is not fully connected between stages, extra impl is needed
+                        Tm.OperatorConfig cfg = item.getSecond();
+                        cfg.getOutputAddressList().addAll(stageToTm.get(item.getFirst()+1));
+                    }
                     try{
-                        tmClient.addOperator(cfg, op);
+                        tmClient.addOperator(item.getSecond(), item.getThird());
+                        stageToTm.get(item.getFirst()).add(tmClient.getAddress());
                         i++;
                     } catch (Exception e){
                         logger.error("Failed to add operator to TM at " + tmClient.getHost()+tmClient.getPort(), e);
@@ -48,6 +61,7 @@ public class Scheduler extends Thread{
                     }
                 }
             }
+
             logger.warn("Did not sucessfully deploy all operators to TMs. Retrying in 2 seconds...");
             try {
                 Thread.sleep(2000);

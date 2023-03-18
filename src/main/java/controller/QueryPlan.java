@@ -1,6 +1,7 @@
 package controller;
 
 import kotlin.Pair;
+import kotlin.Triple;
 import operators.BaseOperator;
 import pb.Tm;
 
@@ -24,6 +25,7 @@ public class QueryPlan {
             Tm.OperatorConfig cfg = Tm.OperatorConfig.newBuilder()
                     .setName(op.getName() + "-" + i)
                     .setPartitionStrategy(partitionStrategy)
+                    .addAllOutputAddress(new ArrayList<>())
                     .build();
             list.add(cfg);
         }
@@ -40,11 +42,11 @@ public class QueryPlan {
         return operators;
     }
 
-    public List<Pair<Tm.OperatorConfig, BaseOperator>> getFlatList() {
-        List<Pair<Tm.OperatorConfig, BaseOperator>> list = new ArrayList<>();
+    public List<Triple<Integer, Tm.OperatorConfig, BaseOperator>> getFlatList() {
+        List<Triple<Integer, Tm.OperatorConfig, BaseOperator>> list = new ArrayList<>();
         for (int i = 0; i < stages.size(); i++) {
             for (int j = 0; j < stages.get(i).size(); j++) {
-                list.add(new Pair<>(stages.get(i).get(j), operators.get(i)));
+                list.add(new Triple<>(i, stages.get(i).get(j), operators.get(i)));
             }
         }
         return list;

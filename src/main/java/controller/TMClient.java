@@ -73,4 +73,8 @@ public class TMClient implements Serializable {
     public int getPort() {
         return port;
     }
+
+    public String getAddress(){
+        return host + ":" + port;
+    }
 }
