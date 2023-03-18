@@ -9,8 +9,7 @@ import java.io.Serializable;
 
 public class Map<T> extends BaseOperator implements Serializable {
     private SerDe<T> serde;
-    public Map(Tm.OperatorConfig config, SerDe<T> serde) {
-        super(config);
+    public Map(SerDe<T> serde) {
         this.serde = serde;
     }
 

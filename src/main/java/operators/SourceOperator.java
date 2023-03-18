@@ -11,8 +11,8 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
     private ISource<T> source;
     private SerDe<T> serde;
 
-    public SourceOperator(Tm.OperatorConfig config, ISource<T> source, SerDe<T> serde) {
-        super(config);
+    public SourceOperator(ISource<T> source, SerDe<T> serde) {
+        super();
         this.source = source;
         this.serde = serde;
         // start a new thread to emit data and store them in the input queue

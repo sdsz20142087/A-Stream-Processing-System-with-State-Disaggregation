@@ -72,7 +72,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
         LinkedBlockingQueue<Tm.Msg> inputQueue = new LinkedBlockingQueue<>();
         this.opInputQueues.put(op.getName(), inputQueue);
         // the queues must be initialized before the operator starts
-        op.init(inputQueue, msgQueue);
+        op.init(request.getConfig(), inputQueue, msgQueue);
         op.start();
         logger.info(String.format("Started operator %s", op.getName()));
         operators.put(op.getName(), op);

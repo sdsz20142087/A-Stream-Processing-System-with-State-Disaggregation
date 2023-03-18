@@ -27,13 +27,13 @@ public abstract class BaseOperator extends Thread implements Serializable {
 
     // There must not be moving parts (e.g. listening to ports, starting new threads)
     // in the constructor because we'll be sending this object over grpc.
-    public BaseOperator(Tm.OperatorConfig config) {
-        this.config = config;
-        this.setName(config.getName());
+    public BaseOperator() {
     }
 
-    public final void init(LinkedBlockingQueue<Tm.Msg> inputQueue,
+    public final void init(Tm.OperatorConfig config, LinkedBlockingQueue<Tm.Msg> inputQueue,
                            LinkedBlockingQueue<Pair<String,Tm.Msg>> outputQueue){
+        this.config = config;
+        this.setName(config.getName());
         this.inputQueue = inputQueue;
         this.outputQueue = outputQueue;
     }
@@ -65,6 +65,10 @@ public abstract class BaseOperator extends Thread implements Serializable {
     protected abstract void processElement(ByteString in);
     @Override
     public void run() {
+        if(config==null){
+            logger.fatal("Operator not initialized");
+            System.exit(1);
+        }
         // receive input from upstream operators
         try {
             while (true) {

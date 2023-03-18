@@ -12,8 +12,7 @@ import java.util.List;
 public class FlatMap<T> extends BaseOperator implements Serializable{
     private SerDe<T> serde;
     List<T> output= new ArrayList<>();
-    public FlatMap(Tm.OperatorConfig config,SerDe<T> serde) {
-        super(config);
+    public FlatMap(SerDe<T> serde) {
         this.serde = serde;
     }
     @Override

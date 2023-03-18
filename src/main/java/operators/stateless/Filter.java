@@ -11,8 +11,7 @@ import operators.BaseOperator;
 public class Filter<T> extends BaseOperator implements Serializable {
     private Predicate<T> predicate;
     private SerDe<T> serde;
-    public Filter(Tm.OperatorConfig config,SerDe<T> serde) {
-        super(config);
+    public Filter(SerDe<T> serde) {
         this.predicate = UDFpredicate;
         this.serde = serde;
     }
