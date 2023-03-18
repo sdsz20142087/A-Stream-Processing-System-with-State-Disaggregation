@@ -47,6 +47,7 @@ public class TaskManager extends NodeBase {
         try {
             // register at control plane
             logger.info("Registering at control plane=" + tmcfg.cp_host + ":" + tmcfg.cp_port);
+            logger.info(getHost());
             registryClient.registerTM(getHost(), getName());
             this.tmServer.start();
             logger.info("TaskManager started on " + tmcfg.tm_port);
