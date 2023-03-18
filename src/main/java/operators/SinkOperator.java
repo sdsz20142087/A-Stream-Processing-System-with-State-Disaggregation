@@ -1,12 +1,12 @@
 package operators;
 
 import com.google.protobuf.ByteString;
-import pb.Op;
+import pb.Tm;
 
 import java.io.Serializable;
 
 public class SinkOperator extends BaseOperator implements Serializable {
-    public SinkOperator(Op.OperatorConfig config) {
+    public SinkOperator(Tm.OperatorConfig config) {
         super(config);
     }
 
