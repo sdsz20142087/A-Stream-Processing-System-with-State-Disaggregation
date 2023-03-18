@@ -19,7 +19,7 @@ public class QueryPlan {
 
     // We are assuming that the first item of the planConfig is source, and last is sink
     // The outputAddress and bufferSize are adjusted by the scheduler after the plan is submitted
-    public QueryPlan addStage(BaseOperator op, int parallelism, Tm.PartitionStrategy partitionStrategy) {
+    public QueryPlan addStage(BaseOperator op, int parallelism, int parallelMax, Tm.PartitionStrategy partitionStrategy) {
         List<Tm.OperatorConfig> list = new ArrayList<>();
         for (int i = 0; i < parallelism; i++) {
             Tm.OperatorConfig cfg = Tm.OperatorConfig.newBuilder()
