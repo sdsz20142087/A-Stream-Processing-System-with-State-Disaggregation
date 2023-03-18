@@ -45,13 +45,15 @@ public class ControlPlane extends NodeBase {
         }
         logger.info("initialized etcd kvclient, endpoints="+Arrays.toString(cpcfg.etcd_endpoints));
 
+        CPServiceImpl svc = new CPServiceImpl();
+
         // start the grpc server
         cpServer = ServerBuilder.forPort(cpcfg.cp_grpc_port)
-                .addService(new RegistryServiceImpl()).build();
+                .addService(svc).build();
         logger.info("ControlPlane gRPC server on port " + cpcfg.cp_grpc_port);
 
         // start the scheduler thread
-        this.scheduler = new Scheduler(App.getInstance().getQueryPlan());
+        this.scheduler = new Scheduler(App.getInstance().getQueryPlan(), svc.getTMClients());
         logger.info("ControlPlane scheduler init");
     }
 

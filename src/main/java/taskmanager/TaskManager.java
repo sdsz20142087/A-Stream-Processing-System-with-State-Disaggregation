@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public class TaskManager extends NodeBase {
     private static TaskManager instance;
-    private final RegistryClient registryClient;
+    private final CPClient registryClient;
     private final Server tmServer;
     private final TMConfig tmcfg;
     private final TMServiceImpl tmService;
@@ -20,11 +20,11 @@ public class TaskManager extends NodeBase {
 
         tmcfg = Config.getInstance().taskManager;
 
-        // !!!!tm_port is assigned in runtime to make things simple
+        // !!!!tm_port is assigned at runtime to make things simple
         tmcfg.tm_port = grpcPort;
 
         logger.info("tm_port=" + Config.getInstance().taskManager.tm_port);
-        registryClient = new RegistryClient(tmcfg.cp_host, tmcfg.cp_port, tmcfg.tm_port);
+        registryClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, tmcfg.tm_port);
         tmService = new TMServiceImpl(tmcfg.operator_quota);
         tmServer = ServerBuilder.forPort(tmcfg.tm_port).addService(tmService).build();
     }

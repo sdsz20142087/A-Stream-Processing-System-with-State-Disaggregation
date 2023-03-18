@@ -1,14 +1,18 @@
 package controller;
 
+import com.google.protobuf.ByteString;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
+import operators.BaseOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
 
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 public class TMClient implements Serializable {
@@ -49,6 +53,17 @@ public class TMClient implements Serializable {
 //            }
 //        });
         return resp.toString();
+    }
+
+    public void addOperator(Tm.OperatorConfig config, BaseOperator operator) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(operator);
+        byte[] bytes = baos.toByteArray();
+        ByteString bs = ByteString.copyFrom(bytes);
+        Tm.AddOperatorRequest req = Tm.AddOperatorRequest.newBuilder().setConfig(config).setObj(bs).build();
+        blockingStub.addOperator(req);
+        logger.info("deployed operator " + operator.getName() + " bytes, size=" + bytes.length + "");
     }
 
     public String getHost() {
