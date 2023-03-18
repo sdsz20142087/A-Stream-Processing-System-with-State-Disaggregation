@@ -57,7 +57,6 @@ enum OperatorType{
 }
 
 message OperatorConfig{
-  OperatorType type = 1;
   string name = 2;
   repeated string outputAddress = 3; // The next TM's address: ip:port
   PartitionStrategy partitionStrategy = 4;
