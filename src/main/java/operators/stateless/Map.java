@@ -3,15 +3,13 @@ package operators.stateless;
 import com.google.protobuf.ByteString;
 import exec.SerDe;
 import operators.BaseOperator;
-import pb.Op;
+import pb.Tm;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Map<T> extends BaseOperator implements Serializable {
     private SerDe<T> serde;
-    public Map(Op.OperatorConfig config, SerDe<T> serde) {
+    public Map(Tm.OperatorConfig config, SerDe<T> serde) {
         super(config);
         this.serde = serde;
     }
@@ -21,7 +19,7 @@ public class Map<T> extends BaseOperator implements Serializable {
         T data = serde.deserialize(in);
         T output= UDFmap(data);
         ByteString bs = serde.serialize(output);
-        sendOutput(Op.Msg.newBuilder().setType(Op.Msg.MsgType.DATA).setData(bs).build());
+        sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs).build());
     }
 
 
