@@ -17,7 +17,6 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
     private long slideStep;
     private ArrayList<IN> windowData;
     public TimeSlidingWindow(Tm.OperatorConfig config, SerDe<IN> serde, SerDe<OUT> serdeOut, long windowSize, long slideStep) {
-        super(config);
         this.serde = serde;
         this.windowSize = windowSize;
         this.slideStep = slideStep;
@@ -37,7 +36,7 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
             if(trigger()){
                 OUT result = UDF(data);
                 ByteString output=serdeOut.serialize(result);
-                sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(output).build());
+                sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(output));
             }
         }else{
             moveWindow();
