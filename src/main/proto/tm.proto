@@ -56,9 +56,14 @@ enum OperatorType{
   COUNT = 3;
 }
 
+message OutputMetadata{
+  string name = 1;
+  string address = 2;
+}
+
 message OperatorConfig{
   string name = 2;
-  repeated string outputAddress = 3; // The next TM's address: ip:port
+  repeated OutputMetadata outputMetadata = 3; // The next TM's address: ip:port
   PartitionStrategy partitionStrategy = 4;
   int32 bufferSize = 5;
 }

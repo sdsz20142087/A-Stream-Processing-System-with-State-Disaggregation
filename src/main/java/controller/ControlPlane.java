@@ -61,6 +61,8 @@ public class ControlPlane extends NodeBase {
         try {
             this.cpServer.start();
             logger.info("ControlPlane gRPC server started");
+            logger.info("ControlPlane scheduler starting in 5s...");
+            Thread.sleep(5000);
             this.scheduler.start();
             logger.info("ControlPlane scheduler started");
             // let this thread block until server termination

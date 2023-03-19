@@ -9,8 +9,7 @@ import java.io.Serializable;
 
 public class Map<T> extends BaseOperator implements Serializable {
     private SerDe<T> serde;
-    public Map(Tm.OperatorConfig config, SerDe<T> serde) {
-        super(config);
+    public Map(SerDe<T> serde) {
         this.serde = serde;
     }
 
@@ -19,7 +18,7 @@ public class Map<T> extends BaseOperator implements Serializable {
         T data = serde.deserialize(in);
         T output= UDFmap(data);
         ByteString bs = serde.serialize(output);
-        sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs).build());
+        sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs));
     }
 
 

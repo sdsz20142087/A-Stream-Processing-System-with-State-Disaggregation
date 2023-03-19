@@ -6,8 +6,9 @@ import pb.Tm;
 import java.io.Serializable;
 
 public class SinkOperator extends BaseOperator implements Serializable {
-    public SinkOperator(Tm.OperatorConfig config) {
-        super(config);
+    public SinkOperator() {
+        super();
+        this.setName("SinkOperator");
     }
 
     @Override

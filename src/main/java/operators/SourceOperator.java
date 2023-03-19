@@ -11,8 +11,9 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
     private ISource<T> source;
     private SerDe<T> serde;
 
-    public SourceOperator(Tm.OperatorConfig config, ISource<T> source, SerDe<T> serde) {
-        super(config);
+    public SourceOperator(ISource<T> source, SerDe<T> serde) {
+        super();
+        this.setName("SourceOperator-");
         this.source = source;
         this.serde = serde;
         // start a new thread to emit data and store them in the input queue
@@ -42,6 +43,6 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
     @Override
     // simply move whatever we have in the input queue to the output queue
     protected void processElement(ByteString in) {
-        sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(in).build());
+        sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(in));
     }
 }
