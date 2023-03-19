@@ -6,8 +6,9 @@ import java.util.Map;
 
 public class MapStateAccessor<T> implements StateAccessor<T> {
 
-    private final Map<String, BaseState> stateMap = new HashMap<>();
+
     private final Class<T> stateType;
+    private RemoteKVProvider remoteKVProvider = new RemoteKVProvider();
 
     public MapStateAccessor(Class<T> stateType) {
         this.stateType = stateType;
@@ -15,17 +16,12 @@ public class MapStateAccessor<T> implements StateAccessor<T> {
 
     @Override
     public BaseState getState(String key) throws InstantiationException, IllegalAccessException {
-        BaseState state = stateMap.get(key);
+        BaseState state = remoteKVProvider.get(key);
         if (state == null) {
             state = new BaseState<>(stateType.newInstance());
-            stateMap.put(key, state);
+            remoteKVProvider.put(key, state);
         }
         return state;
-    }
-
-    @Override
-    public T value(String key) throws InstantiationException, IllegalAccessException {
-        return StateAccessor.super.value(key);
     }
 
     @Override
@@ -39,14 +35,8 @@ public class MapStateAccessor<T> implements StateAccessor<T> {
     }
 
     @Override
-    public List<String> getKeys() {
-        return null;
+    public T value(String key) throws InstantiationException, IllegalAccessException {
+        return (T) getState(key).value();
     }
-
-    @Override
-    public List<T> getValues() {
-        return StateAccessor.super.getValues();
-    }
-
 
 }
