@@ -1,4 +1,4 @@
-package operators.stateless;
+package operators.stateful;
 
 import com.google.protobuf.ByteString;
 import exec.SerDe;
