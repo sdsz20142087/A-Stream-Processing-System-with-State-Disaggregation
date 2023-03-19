@@ -30,7 +30,9 @@ public abstract class BaseOperator extends Thread implements Serializable {
     public String getOpName() {
     	return opName;
     }
-
+    public void setOpName(String opName) {
+    	this.opName = opName;
+    }
     // There must not be moving parts (e.g. listening to ports, starting new threads)
     // in the constructor because we'll be sending this object over grpc.
     public BaseOperator() {

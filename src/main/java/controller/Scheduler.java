@@ -16,7 +16,8 @@ public class Scheduler extends Thread{
 
     private QueryPlan plan;
     private HashMap<String, TMClient> tmClients;
-
+    // auto-increment
+    private HashMap<Class<? extends BaseOperator>, Integer> operatorIdMap = new HashMap<>();
     private Logger logger = LogManager.getLogger();
 
     public Scheduler(QueryPlan plan, HashMap<String, TMClient> tmClients){
@@ -52,7 +53,14 @@ public class Scheduler extends Thread{
                         cfgBuilder.addAllOutputMetadata(stageToTm.get(item.getFirst()+1));
                     }
                     try{
-                        tmClient.addOperator(item.getSecond().build(), item.getThird());
+                        // assign a real name first
+                        BaseOperator op = item.getThird();
+                        this.operatorIdMap.put(op.getClass(), this.operatorIdMap.getOrDefault(op.getClass(), 0)+1);
+                        String realName = op.getName()+"_"+this.operatorIdMap.get(op.getClass());
+                        op.setOpName(realName);
+                        Tm.OperatorConfig.Builder cfgBuilder = item.getSecond();
+                        cfgBuilder.setName(realName);
+                        tmClient.addOperator(cfgBuilder.build(), op);
                         Tm.OutputMetadata meta = Tm.OutputMetadata.
                                 newBuilder().
                                 setAddress(tmClient.getAddress()).
