@@ -19,11 +19,17 @@ import pb.Tm;
 
 public abstract class BaseOperator extends Thread implements Serializable {
     protected transient LinkedBlockingQueue<Tm.Msg> inputQueue;
-    private transient LinkedBlockingQueue<Pair<String,Tm.Msg>> outputQueue;
+    private transient LinkedBlockingQueue<Pair<String,Tm.Msg.Builder>> outputQueue;
     protected transient Logger logger = LogManager.getLogger();
     private Tm.OperatorConfig config;
     private int bufferSize = 1000; // UDF buffer size, can change in runtime
     private static int paritionID = 0; // use for Round Robin
+
+    private String opName;
+
+    public String getOpName() {
+    	return opName;
+    }
 
     // There must not be moving parts (e.g. listening to ports, starting new threads)
     // in the constructor because we'll be sending this object over grpc.
@@ -31,9 +37,9 @@ public abstract class BaseOperator extends Thread implements Serializable {
     }
 
     public final void init(Tm.OperatorConfig config, LinkedBlockingQueue<Tm.Msg> inputQueue,
-                           LinkedBlockingQueue<Pair<String,Tm.Msg>> outputQueue){
+                           LinkedBlockingQueue<Pair<String,Tm.Msg.Builder>> outputQueue){
         this.config = config;
-        this.setName(config.getName());
+        this.opName = config.getName();
         this.inputQueue = inputQueue;
         this.outputQueue = outputQueue;
     }
@@ -42,7 +48,7 @@ public abstract class BaseOperator extends Thread implements Serializable {
         return this.config;
     }
 
-    protected void sendOutput(Tm.Msg output) {
+    protected final void sendOutput(Tm.Msg.Builder output) {
         outputQueue.add(new Pair<>(config.getName(), output));
     }
 

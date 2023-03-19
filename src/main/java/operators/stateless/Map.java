@@ -18,7 +18,7 @@ public class Map<T> extends BaseOperator implements Serializable {
         T data = serde.deserialize(in);
         T output= UDFmap(data);
         ByteString bs = serde.serialize(output);
-        sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs).build());
+        sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs));
     }
 
 

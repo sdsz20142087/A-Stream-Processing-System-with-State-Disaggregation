@@ -31,12 +31,12 @@ class PushMsgClient {
 
             @Override
             public void onError(Throwable t) {
-                logger.fatal("Failed to push message to TM at " + target, t);
+                logger.error("TM: pushClient: Failed to push message to TM at " + target
+                        + "-->"+ t.getMessage());
             }
 
             @Override
             public void onCompleted() {
-                logger.info("pushMsg Completed");
             }
         });
     }

@@ -30,9 +30,9 @@ public class Scheduler extends Thread{
         // TODO: deploy the query plan to TMs
         // FIXME: naive implementation
         int i=0;
-        List<Triple<Integer, Tm.OperatorConfig, BaseOperator>> flatList = plan.getFlatList();
+        List<Triple<Integer, Tm.OperatorConfig.Builder, BaseOperator>> flatList = plan.getFlatList();
         int stageDepth = plan.getStages().size();
-        HashMap<Integer, List<String>> stageToTm = new HashMap<>();
+        HashMap<Integer, List<Tm.OutputMetadata>> stageToTm = new HashMap<>();
         for(int j=0; j<stageDepth; j++){
             stageToTm.put(j, new ArrayList<>());
         }
@@ -44,16 +44,21 @@ public class Scheduler extends Thread{
             for(TMClient tmClient: clients){
                 while(i<flatList.size()){
                     // !! deploy the operators in reverse order so we know the outputAddress of the next stage
-                    Triple<Integer, Tm.OperatorConfig, BaseOperator> item = flatList.get(flatList.size()-1-i);
+                    Triple<Integer, Tm.OperatorConfig.Builder, BaseOperator> item = flatList.get(flatList.size()-1-i);
                     if(item.getFirst() != stageDepth-1){
                         // assign the outputAddress and bufferSize
                         // FIXME: in cases like keyby, the stream is not fully connected between stages, extra impl is needed
-                        Tm.OperatorConfig cfg = item.getSecond();
-                        cfg.getOutputAddressList().addAll(stageToTm.get(item.getFirst()+1));
+                        Tm.OperatorConfig.Builder cfgBuilder = item.getSecond();
+                        cfgBuilder.addAllOutputMetadata(stageToTm.get(item.getFirst()+1));
                     }
                     try{
-                        tmClient.addOperator(item.getSecond(), item.getThird());
-                        stageToTm.get(item.getFirst()).add(tmClient.getAddress());
+                        tmClient.addOperator(item.getSecond().build(), item.getThird());
+                        Tm.OutputMetadata meta = Tm.OutputMetadata.
+                                newBuilder().
+                                setAddress(tmClient.getAddress()).
+                                setName(item.getSecond().getName()).
+                                build();
+                        stageToTm.get(item.getFirst()).add(meta);
                         i++;
                     } catch (Exception e){
                         logger.error("Failed to add operator to TM at " + tmClient.getHost()+tmClient.getPort(), e);
@@ -61,12 +66,15 @@ public class Scheduler extends Thread{
                     }
                 }
             }
-
-            logger.warn("Did not sucessfully deploy all operators to TMs. Retrying in 2 seconds...");
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+            if(i<flatList.size()){
+                logger.warn("Did not sucessfully deploy all operators to TMs. Retrying in 2 seconds...");
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                break;
             }
         }
 
@@ -74,6 +82,7 @@ public class Scheduler extends Thread{
         // TODO: check the status and see if scaling is needed
         while(true){
             try {
+                logger.info("CP: check status");
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);

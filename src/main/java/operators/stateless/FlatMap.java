@@ -25,7 +25,7 @@ public class FlatMap<T> extends BaseOperator implements Serializable{
         output= UDFflatmap(data);
         for (T t: output){
             ByteString bs = serde.serialize(t);
-            sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs).build());
+            sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs));
         }
     }
     private List<T> UDFflatmap(T t){
