@@ -11,6 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
+import stateapis.BaseState;
+import stateapis.State;
 import utils.TMException;
 
 import java.io.ByteArrayInputStream;
@@ -26,6 +28,7 @@ import java.util.stream.Collectors;
 class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
     private final int operatorQuota;
     private final HashMap<String, BaseOperator> operators;
+    private HashMap<String, State> states;
     private final Logger logger = LogManager.getLogger();
 
     // map of< TM's address, PushMsgClient>
@@ -144,6 +147,29 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
     public void reConfigOperator(Tm.ReConfigOperatorRequest request,
                                  StreamObserver<Empty> responseObserver) {
 
+    }
+
+    public void addState(Tm.AddStateRequest request, StreamObserver <Empty> responseObserver){
+        String stateKey = request.getStateKey();
+        //TODO: how to get state
+        State state = request.getState();
+        states.put(stateKey, state);
+    }
+
+
+    //TODO: how to get state
+    public State getState(Tm.GetStateRequest request, StreamObserver<Tm.GetStateResponse> responseObserver){
+        String stateKey = request.getStateKey();
+        return states.get(stateKey);
+    }
+
+
+
+
+
+    public void removeState(Tm.RemoveStateRequest request, StreamObserver <Empty> responseObserver){
+        String stateKey = request.getStateKey();
+        states.remove(stateKey);
     }
 
     private void sendLoop() throws InterruptedException {

@@ -6,9 +6,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.CPServiceGrpc;
 import pb.Cp;
+import stateapis.State;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Random;
 
 class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
     private Logger logger = LogManager.getLogger();
@@ -19,6 +21,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
     public HashMap<String, TMClient> getTMClients(){
         return tmClients;
     }
+    private HashMap<String, String> RoutingTable = new HashMap<>();
 
     @Override
     public void registerTM(Cp.RegisterTMRequest request,
@@ -54,4 +57,40 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
                              StreamObserver<Cp.DeregisterTMResponse> responseObserver) {
         responseObserver.onError(new Exception("not implemented yet!"));
     }
+
+    public String findRemoteStateAddress(String stateKey){
+        return RoutingTable.get(stateKey);
+    }
+
+    public String addRemoteStateAddress(Cp.addRemoteStateRequest req,
+                                        StreamObserver<Cp.addRemoteStateResponse> responseObserver){
+        // find a random TM
+        String[] keys= tmClients.keySet().toArray(new String[0]);
+        Random random = new Random();
+        String randomKey = keys[random.nextInt(keys.length)];
+        TMClient tmClient = tmClients.get(randomKey);
+        String randomAddress = tmClient.getHost();
+        RoutingTable.put(req.getStateKey(), randomAddress);
+        // TODO: put state into TM
+        tmClient.addState(req.getStateKey(), req.getState());
+        return randomAddress;
+    }
+
+    public void removeRemoteStateAddress(Cp.removeRemoteStateRequest req,
+                                         StreamObserver<Cp.removeRemoteStateResponse> responseObserver){
+        String address = RoutingTable.get(req.getStateKey());
+        RoutingTable.remove(req.getStateKey());
+        // TODO: remove state from TM
+        TMClient tmClient= tmClients.get(address);
+        tmClient.removeState(req.getStateKey());
+    }
+
+    public State getRemoteState(Cp.getRemoteStateRequest req,
+                                StreamObserver<Cp.getRemoteStateResponse> responseObserver){
+        String address = RoutingTable.get(req.getStateKey());
+        TMClient tmClient= tmClients.get(address);
+        // TODO: get state from TM
+        return tmClient.getState(req.getStateKey());
+    }
+
 }

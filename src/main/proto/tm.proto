@@ -68,12 +68,20 @@ message OperatorConfig{
   int32 bufferSize = 5;
 }
 
+message StateConfig{
+  string stateKey = 1;
+  repeated OutputMetadata outputMetadata = 3; // The next TM's address: ip:port
+}
+
 service TMService{
   rpc GetStatus(TMStatusRequest) returns (TMStatusResponse);
   rpc AddOperator(AddOperatorRequest) returns (google.protobuf.Empty);
   rpc RemoveOperator(RemoveOperatorRequest) returns (google.protobuf.Empty);
   rpc ReConfigOperator(ReConfigOperatorRequest) returns (google.protobuf.Empty);
   rpc PushMsg(Msg) returns (google.protobuf.Empty);
+  rpc AddState(AddStateRequest) returns (google.protobuf.Empty);
+  rpc RemoveState(RemoveStateRequest) returns (google.protobuf.Empty);
+  rpc getState(GetStateRequest) returns (GetStateResponse);
 }
 
 // TM should calculate config diff based on this
@@ -88,4 +96,25 @@ message RemoveOperatorRequest{
 
 message ReConfigOperatorRequest{
   OperatorConfig config = 1;
+}
+
+message State{
+
+}
+
+message AddStateRequest{
+  string stateKey = 1;
+  repeated State state =2;
+}
+
+message RemoveStateRequest{
+  string stateKey = 1;
+}
+
+message GetStateRequest{
+  string stateKey = 1;
+}
+
+message GetStateResponse{
+  repeated State state = 1;
 }

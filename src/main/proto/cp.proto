@@ -31,3 +31,39 @@ service CPService {
     rpc RegisterTM(RegisterTMRequest) returns (RegisterTMResponse);
     rpc DeregisterTM(DeregisterTMRequest) returns (DeregisterTMResponse);
 }
+
+service RoutingTableService {
+    rpc getRemoteState(getRemoteStateRequest) returns (getRemoteStateResponse);
+    rpc addRemoteState(addRemoteStateRequest) returns (addRemoteStateResponse);
+    rpc removeRemoteState(removeRemoteStateRequest) returns (removeRemoteStateResponse);
+}
+
+message getRemoteStateRequest{
+    string stateKey=1;
+}
+
+message getRemoteStateResponse{
+
+}
+
+message State{
+
+}
+
+message addRemoteStateRequest{
+    string stateKey=1;
+    repeated State state = 2;
+}
+
+message addRemoteStateResponse{
+
+}
+
+message removeRemoteStateRequest{
+    string stateKey=1;
+}
+
+message removeRemoteStateResponse{
+
+}
+
