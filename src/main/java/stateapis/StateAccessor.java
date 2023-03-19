@@ -33,11 +33,4 @@ public interface StateAccessor<T> {
     default void clear(String key) throws InstantiationException, IllegalAccessException {
         getState(key).clear();
     }
-
-    List<String> getKeys();
-
-    default List<T> getValues() {
-        return null;
-    }
-
 }
