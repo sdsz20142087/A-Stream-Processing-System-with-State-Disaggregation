@@ -88,13 +88,11 @@ public class TMClient implements Serializable {
         ByteString bs = ByteString.copyFrom(bytes);
         Tm.AddStateRequest req = Tm.AddStateRequest.newBuilder().setConfig(config).setObj(bs).build();
         blockingStub.addState(req);
-
     }
 
     public void removeState(Tm.StateConfig config) throws Exception{
 
         Tm.RemoveStateRequest req = Tm.RemoveStateRequest.newBuilder().build();
-        // TODO:
         blockingStub.removeState(req);
     }
 

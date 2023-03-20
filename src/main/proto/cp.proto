@@ -31,43 +31,43 @@ message DeregisterTMResponse {
 service CPService {
     rpc RegisterTM(RegisterTMRequest) returns (RegisterTMResponse);
     rpc DeregisterTM(DeregisterTMRequest) returns (DeregisterTMResponse);
-    rpc findRemoteStateAddress(findRemoteStateAddressRequest) returns (findRemoteStateAddressResponse);
-    rpc addRemoteStateAddress(addRemoteStateAddressRequest) returns (addRemoteStateAddressResponse);
-    rpc removeRemoteStateAddress(removeRemoteStateAddressRequest) returns (removeRemoteStateAddressResponse);
-    rpc updateRemoteStateAddress(updateRemoteStateAddressRequest) returns (updateRemoteStateAddressResponse);
+    rpc FindRemoteStateAddress(FindRemoteStateAddressRequest) returns (FindRemoteStateAddressResponse);
+    rpc AddRemoteStateAddress(AddRemoteStateAddressRequest) returns (AddRemoteStateAddressResponse);
+    rpc RemoveRemoteStateAddress(RemoveRemoteStateAddressRequest) returns (RemoveRemoteStateAddressResponse);
+    rpc UpdateRemoteStateAddress(UpdateRemoteStateAddressRequest) returns (UpdateRemoteStateAddressResponse);
 }
 
-message findRemoteStateAddressRequest{
+message FindRemoteStateAddressRequest{
     string stateKey=1;
 }
 
-message findRemoteStateAddressResponse{
+message FindRemoteStateAddressResponse{
     string address=1;
 }
 
-message addRemoteStateAddressRequest{
+message AddRemoteStateAddressRequest{
     string stateKey=1;
     string address=2;
 }
 
-message addRemoteStateAddressResponse{
+message AddRemoteStateAddressResponse{
     string address=1;
 }
 
-message removeRemoteStateAddressRequest{
+message RemoveRemoteStateAddressRequest{
     string stateKey=1;
 }
 
-message removeRemoteStateAddressResponse{
+message RemoveRemoteStateAddressResponse{
 
 }
 
-message updateRemoteStateAddressRequest{
+message UpdateRemoteStateAddressRequest{
     string stateKey=1;
     string address=2;
 }
 
-message updateRemoteStateAddressResponse{
+message UpdateRemoteStateAddressResponse{
 
 }
 

@@ -60,11 +60,11 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         responseObserver.onError(new Exception("not implemented yet!"));
     }
 
-    public void findRemoteStateAddress(Cp.findRemoteStateAddressRequest req,
-                                         StreamObserver<Cp.findRemoteStateAddressResponse> responseObserver){
-        Cp.findRemoteStateAddressResponse.Builder b = Cp.findRemoteStateAddressResponse.newBuilder();
+    public void findRemoteStateAddress(Cp.FindRemoteStateAddressRequest req,
+                                         StreamObserver<Cp.FindRemoteStateAddressResponse> responseObserver){
+        Cp.FindRemoteStateAddressResponse.Builder b = Cp.FindRemoteStateAddressResponse.newBuilder();
         if(!RoutingTable.containsKey(req.getStateKey())){
-            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state address not found")));
             return;
         }
         try {
@@ -76,14 +76,14 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
             return;
         }
-        Cp.findRemoteStateAddressResponse response = b.build();
+        Cp.FindRemoteStateAddressResponse response = b.build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
 
-    public void addRemoteStateAddress(Cp.addRemoteStateAddressRequest req,
-                                        StreamObserver<Cp.addRemoteStateAddressResponse> responseObserver){
-        Cp.addRemoteStateAddressResponse.Builder b = Cp.addRemoteStateAddressResponse.newBuilder();
+    public void addRemoteStateAddress(Cp.AddRemoteStateAddressRequest req,
+                                        StreamObserver<Cp.AddRemoteStateAddressResponse> responseObserver){
+        Cp.AddRemoteStateAddressResponse.Builder b = Cp.AddRemoteStateAddressResponse.newBuilder();
         // find a random TM
         String[] keys= tmClients.keySet().toArray(new String[0]);
         Random random = new Random();
@@ -106,9 +106,9 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         responseObserver.onCompleted();
     }
 
-    public void removeRemoteStateAddress(Cp.removeRemoteStateAddressRequest req,
-                                         StreamObserver<Cp.removeRemoteStateAddressResponse> responseObserver){
-        Cp.removeRemoteStateAddressResponse.Builder b = Cp.removeRemoteStateAddressResponse.newBuilder();
+    public void removeRemoteStateAddress(Cp.RemoveRemoteStateAddressRequest req,
+                                         StreamObserver<Cp.RemoveRemoteStateAddressResponse> responseObserver){
+        Cp.RemoveRemoteStateAddressResponse.Builder b = Cp.RemoveRemoteStateAddressResponse.newBuilder();
         if(!RoutingTable.containsKey(req.getStateKey())){
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
             return;
@@ -125,9 +125,9 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         responseObserver.onCompleted();
     }
 
-    public void updateRemoteStateAddress(Cp.updateRemoteStateAddressRequest req,
-                                         StreamObserver<Cp.updateRemoteStateAddressResponse> responseObserver){
-        Cp.updateRemoteStateAddressResponse.Builder b = Cp.updateRemoteStateAddressResponse.newBuilder();
+    public void updateRemoteStateAddress(Cp.UpdateRemoteStateAddressRequest req,
+                                         StreamObserver<Cp.UpdateRemoteStateAddressResponse> responseObserver){
+        Cp.UpdateRemoteStateAddressResponse.Builder b = Cp.UpdateRemoteStateAddressResponse.newBuilder();
         if(!RoutingTable.containsKey(req.getStateKey())){
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
             return;
