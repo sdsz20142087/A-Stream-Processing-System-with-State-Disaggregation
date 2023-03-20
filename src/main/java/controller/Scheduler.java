@@ -63,6 +63,9 @@ public class Scheduler extends Thread{
     private transient LinkedBlockingQueue<Triple<String, String, Integer>> inputQueue;
     private transient LinkedBlockingQueue<Triple<String, String, Integer>> outputQueue;
 
+    // auto-increment
+    private HashMap<Class<? extends BaseOperator>, Integer> operatorIdMap = new HashMap<>();
+
     private Logger logger = LogManager.getLogger();
 
     public Scheduler(QueryPlan plan, HashMap<String, TMClient> tmClients){
@@ -97,6 +100,7 @@ public class Scheduler extends Thread{
                 pq.offer(new Triple<Integer, String, TMClient>(0, key, client));
             }
             // TODO: assign operator config's outputAddress and bufferSize
+
             while(i<flatList.size()) {
                 // !! deploy the operators in reverse order, so we know the outputAddress of the next stage
                 QueryPlan.OperatorInfo item = flatList.get(flatList.size() - 1 - i);
@@ -129,6 +133,38 @@ public class Scheduler extends Thread{
                 } catch (Exception e) {
                     logger.error("Failed to add operator to TM at " + tmClient.getHost() + tmClient.getPort(), e);
                     break;
+
+            for(TMClient tmClient: clients){
+                while(i<flatList.size()){
+                    // !! deploy the operators in reverse order so we know the outputAddress of the next stage
+                    Triple<Integer, Tm.OperatorConfig.Builder, BaseOperator> item = flatList.get(flatList.size()-1-i);
+                    if(item.getFirst() != stageDepth-1){
+                        // assign the outputAddress and bufferSize
+                        // FIXME: in cases like keyby, the stream is not fully connected between stages, extra impl is needed
+                        Tm.OperatorConfig.Builder cfgBuilder = item.getSecond();
+                        cfgBuilder.addAllOutputMetadata(stageToTm.get(item.getFirst()+1));
+                    }
+                    try{
+                        // assign a real name first
+                        BaseOperator op = item.getThird();
+                        this.operatorIdMap.put(op.getClass(), this.operatorIdMap.getOrDefault(op.getClass(), 0)+1);
+                        String realName = op.getName()+"_"+this.operatorIdMap.get(op.getClass());
+                        op.setOpName(realName);
+                        Tm.OperatorConfig.Builder cfgBuilder = item.getSecond();
+                        cfgBuilder.setName(realName);
+                        tmClient.addOperator(cfgBuilder.build(), op);
+                        Tm.OutputMetadata meta = Tm.OutputMetadata.
+                                newBuilder().
+                                setAddress(tmClient.getAddress()).
+                                setName(item.getSecond().getName()).
+                                build();
+                        stageToTm.get(item.getFirst()).add(meta);
+                        i++;
+                    } catch (Exception e){
+                        logger.error("Failed to add operator to TM at " + tmClient.getHost()+tmClient.getPort(), e);
+                        break;
+                    }
+
                 }
             }
             if(i<flatList.size()){
