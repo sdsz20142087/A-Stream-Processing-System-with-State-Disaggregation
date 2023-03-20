@@ -17,6 +17,8 @@ public class ControlPlane extends NodeBase {
     private final CPConfig cpcfg;
     private static ControlPlane instance;
 
+    private final Scheduler scheduler;
+
     public static ControlPlane getInstance() {
         if (instance == null)
             instance = new ControlPlane();
@@ -43,15 +45,26 @@ public class ControlPlane extends NodeBase {
 //        }
 //        logger.info("initialized etcd kvclient, endpoints="+Arrays.toString(cpcfg.etcd_endpoints));
 
+        CPServiceImpl svc = new CPServiceImpl();
+
         // start the grpc server
         cpServer = ServerBuilder.forPort(cpcfg.cp_grpc_port)
-                .addService(new RegistryServiceImpl()).build();
-        logger.info("ControlPlane gRPC server started on port " + cpcfg.cp_grpc_port);
+                .addService(svc).build();
+        logger.info("ControlPlane gRPC server on port " + cpcfg.cp_grpc_port);
+
+        // start the scheduler thread
+        this.scheduler = new Scheduler(App.getInstance().getQueryPlan(), svc.getTMClients());
+        logger.info("ControlPlane scheduler init");
     }
 
-    public void start() {
+    public void init() {
         try {
             this.cpServer.start();
+            logger.info("ControlPlane gRPC server started");
+            logger.info("ControlPlane scheduler starting in 5s...");
+            Thread.sleep(5000);
+            this.scheduler.start();
+            logger.info("ControlPlane scheduler started");
             // let this thread block until server termination
             this.cpServer.awaitTermination();
         } catch (IOException | InterruptedException e) {
@@ -61,6 +74,6 @@ public class ControlPlane extends NodeBase {
     }
 
     public static void main(String[] args) {
-        ControlPlane.getInstance().start();
+        ControlPlane.getInstance().init();
     }
 }

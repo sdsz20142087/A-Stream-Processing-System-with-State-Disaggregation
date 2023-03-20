@@ -6,21 +6,20 @@ import io.grpc.ManagedChannel;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import pb.CPServiceGrpc;
 import pb.Cp;
-import pb.RegistryServiceGrpc;
 
-class RegistryClient {
+class CPClient {
     private final Logger logger = LogManager.getLogger();
     private final String target;
     private final int tm_port;
-    private final RegistryServiceGrpc.RegistryServiceStub asyncStub;
+    private final CPServiceGrpc.CPServiceStub asyncStub;
 
-    public RegistryClient(String host, int cp_port, int tm_port) {
-//        target = host + ":" + cp_port;
-        target = "172.20.0.2" + ":" + cp_port;
+    public CPClient(String host, int cp_port, int tm_port) {
+        target = host + ":" + cp_port;
         this.tm_port = tm_port;
         ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
-        asyncStub = RegistryServiceGrpc.newStub(channel);
+        asyncStub = CPServiceGrpc.newStub(channel);
     }
 
     public void registerTM(String localAddress, String name) {

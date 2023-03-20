@@ -2,8 +2,6 @@ syntax = "proto3";
 option java_package="pb";
 import "google/protobuf/empty.proto";
 package pb;
-// include op.proto to get operator type
-import "op.proto";
 
 /*
 TaskManager's RPC handler protocols,
@@ -33,11 +31,49 @@ message TMStatusResponse{
   repeated OperatorStatus operatorStatus = 4;
 }
 
+message Msg{
+  enum MsgType {
+    DATA = 0;
+    CONTROL = 1;
+  }
+  MsgType type = 1;
+  optional string operatorName = 2;
+  optional bytes data = 3;
+  optional OperatorConfig config = 4;
+  optional int32 partitionId = 5; // what is this for?
+}
+enum PartitionStrategy{
+  HASH = 0;
+  ROUND_ROBIN = 1;
+  BROADCAST = 2;
+  RANDOM = 3;
+}
+
+enum OperatorType{
+  SOURCE = 0;
+  SINK = 1;
+  MAP = 2;
+  COUNT = 3;
+}
+
+message OutputMetadata{
+  string name = 1;
+  string address = 2;
+}
+
+message OperatorConfig{
+  string name = 2;
+  repeated OutputMetadata outputMetadata = 3; // The next TM's address: ip:port
+  PartitionStrategy partitionStrategy = 4;
+  int32 bufferSize = 5;
+}
+
 service TMService{
   rpc GetStatus(TMStatusRequest) returns (TMStatusResponse);
   rpc AddOperator(AddOperatorRequest) returns (google.protobuf.Empty);
   rpc RemoveOperator(RemoveOperatorRequest) returns (google.protobuf.Empty);
   rpc ReConfigOperator(ReConfigOperatorRequest) returns (google.protobuf.Empty);
+  rpc PushMsg(Msg) returns (google.protobuf.Empty);
 }
 
 // TM should calculate config diff based on this

@@ -3,7 +3,7 @@ package operators.stateless;
 import com.google.protobuf.ByteString;
 import exec.SerDe;
 import operators.BaseOperator;
-import pb.Op;
+import pb.Tm;
 
 import java.io.Serializable;
 
@@ -11,11 +11,13 @@ public class KeyBy<T,K> extends BaseOperator implements Serializable {
     private SerDe<T> serde;
     private  K key; // position or name
 
+    private int numOfPartitions;
 
 
-    public KeyBy(Op.OperatorConfig config) {
-        super(config);
-        this.serde=serde;
+
+    public KeyBy(int numOfPartitions, SerDe<T> serde) {
+        this.serde = serde;
+        this.numOfPartitions = numOfPartitions;
     }
 
     @Override
@@ -29,6 +31,6 @@ public class KeyBy<T,K> extends BaseOperator implements Serializable {
         this.key = key;
     }
     private int getNumOfPartitions(){
-        return super.getConfig().getNextOperatorAddressList().size();
+        return this.numOfPartitions;
     }
 }

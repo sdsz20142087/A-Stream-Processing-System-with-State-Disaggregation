@@ -20,6 +20,7 @@ public class NodeBase {
         // get the ip of current node
         try{
             InetAddress addr = InetAddress.getLocalHost();
+
             return addr.getHostAddress();
         } catch (Exception e) {
             LogManager.getLogger().fatal("Failed to get host address" ,e);

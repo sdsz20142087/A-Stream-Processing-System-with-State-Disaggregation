@@ -5,14 +5,13 @@ import java.util.function.Predicate;
 
 import com.google.protobuf.ByteString;
 import exec.SerDe;
-import pb.Op;
+import pb.Tm;
 import operators.BaseOperator;
 
 public class Filter<T> extends BaseOperator implements Serializable {
     private Predicate<T> predicate;
     private SerDe<T> serde;
-    public Filter(Op.OperatorConfig config,SerDe<T> serde) {
-        super(config);
+    public Filter(SerDe<T> serde) {
         this.predicate = UDFpredicate;
         this.serde = serde;
     }
@@ -24,7 +23,7 @@ public class Filter<T> extends BaseOperator implements Serializable {
     protected void processElement(ByteString in) {
         T data = serde.deserialize(in);
         if (predicate.test(data)) {
-            sendOutput(Op.Msg.newBuilder().setType(Op.Msg.MsgType.DATA).setData(in).build());
+            sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(in));
         }
     }
 

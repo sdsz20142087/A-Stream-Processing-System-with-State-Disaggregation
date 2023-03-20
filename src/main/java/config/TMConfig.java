@@ -5,4 +5,6 @@ public class TMConfig {
     public String cp_host;
     public int cp_port;
     public int tm_port;
+
+    public String tm_host;
 }

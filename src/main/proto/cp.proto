@@ -27,7 +27,7 @@ message DeregisterTMResponse {
 }
 
 // allow TMs to register at CP
-service RegistryService {
+service CPService {
     rpc RegisterTM(RegisterTMRequest) returns (RegisterTMResponse);
     rpc DeregisterTM(DeregisterTMRequest) returns (DeregisterTMResponse);
 }

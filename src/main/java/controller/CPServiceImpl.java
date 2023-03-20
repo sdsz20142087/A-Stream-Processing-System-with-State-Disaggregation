@@ -4,17 +4,21 @@ import DB.etcdDB.DBTools;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import pb.CPServiceGrpc;
 import pb.Cp;
-import pb.RegistryServiceGrpc;
 
 import java.io.IOException;
 import java.util.HashMap;
 
-class RegistryServiceImpl extends RegistryServiceGrpc.RegistryServiceImplBase {
+class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
     private Logger logger = LogManager.getLogger();
     private HashMap<String, TMClient> tmClients = new HashMap<>();
 
     private DBTools dbTools = DBTools.getInstance();
+
+    public HashMap<String, TMClient> getTMClients(){
+        return tmClients;
+    }
 
     @Override
     public void registerTM(Cp.RegisterTMRequest request,
