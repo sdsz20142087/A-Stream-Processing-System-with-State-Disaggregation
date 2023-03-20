@@ -90,7 +90,6 @@ public class TMClient implements Serializable {
     }
 
     public void removeState(Tm.StateConfig config) throws Exception{
-
         Tm.RemoveStateRequest req = Tm.RemoveStateRequest.newBuilder().build();
         blockingStub.removeState(req);
     }
@@ -110,6 +109,5 @@ public class TMClient implements Serializable {
         State state = (State) ois.readObject();
         return state;
     }
-
 
 }
