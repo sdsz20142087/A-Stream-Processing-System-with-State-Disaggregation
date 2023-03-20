@@ -98,7 +98,7 @@ public class TMClient implements Serializable {
 
     public State getState(String key){
         logger.info("get state from TM at " + host + ":" + port);
-        Tm.GetStateRequest req = Tm.GetStateRequest.newBuilder().build();
+        Tm.GetStateRequest req = Tm.GetStateRequest.newBuilder().setStateKey(key).build();
         // TODO:
         Tm.GetStateResponse res= blockingStub.getState(req);
         //return res.getState();

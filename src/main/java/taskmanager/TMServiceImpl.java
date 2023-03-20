@@ -186,7 +186,6 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
             responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription("Failed to serialize state object")));
             return;
         }
-
         Tm.GetStateResponse response = Tm.GetStateResponse.newBuilder().setObj(stateBytes).build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();
@@ -210,6 +209,28 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
         }
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
+    }
+
+    public void updateState(Tm.UpdateStateRequest request, StreamObserver <Empty> responseObserver){
+        if (!states.containsKey(request.getConfig().getStateKey())){
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
+            return;
+        }
+        String stateKey = request.getConfig().getStateKey();
+        byte[] stateBytes = request.getObj().toByteArray();
+        BaseState state = null;
+        try {
+            ByteArrayInputStream bais = new ByteArrayInputStream(stateBytes);
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            state = (BaseState) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription("Failed to deserialize state object")));
+            return;
+        }
+        states.replace(stateKey, state);
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
+
     }
 
     private void sendLoop() throws InterruptedException {
