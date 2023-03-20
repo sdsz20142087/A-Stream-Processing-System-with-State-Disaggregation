@@ -149,24 +149,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
     }
 
 
-    public void addState(Tm.AddStateRequest request, StreamObserver <Empty> responseObserver){
-        String stateKey = request.getConfig().getStateKey();
-        byte[] stateBytes = request.getObj().toByteArray();
-        BaseState state = null;
-        try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(stateBytes);
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            state = (BaseState) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription("Failed to deserialize state object")));
-            return;
-        }
-        states.put(stateKey, state);
-        responseObserver.onNext(Empty.getDefaultInstance());
-        responseObserver.onCompleted();
-    }
-
-
+    @Override
     public void getState(Tm.GetStateRequest request, StreamObserver<Tm.GetStateResponse> responseObserver){
         if (!states.containsKey(request.getStateKey())){
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
@@ -192,7 +175,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
 
     }
 
-
+    @Override
     public void removeState(Tm.RemoveStateRequest request, StreamObserver <Empty> responseObserver){
         if (!states.containsKey(request.getStateKey())){
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
@@ -211,12 +194,9 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    @Override
     public void updateState(Tm.UpdateStateRequest request, StreamObserver <Empty> responseObserver){
-        if (!states.containsKey(request.getConfig().getStateKey())){
-            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
-            return;
-        }
-        String stateKey = request.getConfig().getStateKey();
+        String stateKey = request.getStateKey();
         byte[] stateBytes = request.getObj().toByteArray();
         BaseState state = null;
         try {
@@ -232,6 +212,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
         responseObserver.onCompleted();
 
     }
+
 
     private void sendLoop() throws InterruptedException {
         while (true) {

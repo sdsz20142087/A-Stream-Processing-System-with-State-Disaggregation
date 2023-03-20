@@ -79,26 +79,17 @@ public class TMClient implements Serializable {
         return host + ":" + port;
     }
 
-    public void addState(Tm.StateConfig config, BaseState state) throws Exception{
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(state);
-        byte[] bytes = baos.toByteArray();
-        ByteString bs = ByteString.copyFrom(bytes);
-        Tm.AddStateRequest req = Tm.AddStateRequest.newBuilder().setConfig(config).setObj(bs).build();
-        blockingStub.addState(req);
-    }
+    public void removeState(String stateKey) throws IOException, ClassNotFoundException{
+        logger.info("remove state from TM at " + host + ":" + port);
 
-    public void removeState(Tm.StateConfig config) throws Exception{
-
-        Tm.RemoveStateRequest req = Tm.RemoveStateRequest.newBuilder().build();
+        Tm.RemoveStateRequest req = Tm.RemoveStateRequest.newBuilder().setStateKey(stateKey).build();
         blockingStub.removeState(req);
     }
 
     // get state from TM
-    public State getState(String key) throws IOException, ClassNotFoundException {
+    public State getState(String stateKey) throws IOException, ClassNotFoundException {
         logger.info("get state from TM at " + host + ":" + port);
-        Tm.GetStateRequest req = Tm.GetStateRequest.newBuilder().setStateKey(key).build();
+        Tm.GetStateRequest req = Tm.GetStateRequest.newBuilder().setStateKey(stateKey).build();
         Tm.GetStateResponse res= blockingStub.getState(req);
 
         //deserialize
@@ -109,6 +100,16 @@ public class TMClient implements Serializable {
         ois = new ObjectInputStream(bis);
         State state = (State) ois.readObject();
         return state;
+    }
+
+    public void updateState(String stateKey, BaseState state) throws IOException, ClassNotFoundException{
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(state);
+        byte[] bytes = baos.toByteArray();
+        ByteString bs = ByteString.copyFrom(bytes);
+        Tm.UpdateStateRequest req = Tm.UpdateStateRequest.newBuilder().setStateKey(stateKey).setObj(bs).build();
+        blockingStub.updateState(req);
     }
 
 

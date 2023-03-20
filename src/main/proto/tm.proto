@@ -68,18 +68,12 @@ message OperatorConfig{
   int32 bufferSize = 5;
 }
 
-message StateConfig{
-  string stateKey = 1;
-  repeated OutputMetadata outputMetadata = 2; // The next TM's address: ip:port
-}
-
 service TMService{
   rpc GetStatus(TMStatusRequest) returns (TMStatusResponse);
   rpc AddOperator(AddOperatorRequest) returns (google.protobuf.Empty);
   rpc RemoveOperator(RemoveOperatorRequest) returns (google.protobuf.Empty);
   rpc ReConfigOperator(ReConfigOperatorRequest) returns (google.protobuf.Empty);
   rpc PushMsg(Msg) returns (google.protobuf.Empty);
-  rpc AddState(AddStateRequest) returns (google.protobuf.Empty);
   rpc RemoveState(RemoveStateRequest) returns (google.protobuf.Empty);
   rpc GetState(GetStateRequest) returns (GetStateResponse);
   rpc UpdateState(UpdateStateRequest) returns (google.protobuf.Empty);
@@ -99,12 +93,6 @@ message ReConfigOperatorRequest{
   OperatorConfig config = 1;
 }
 
-
-message AddStateRequest{
-  StateConfig config = 1;
-  bytes obj = 2;
-}
-
 message RemoveStateRequest{
   string stateKey = 1;
 }
@@ -118,6 +106,6 @@ message GetStateResponse{
 }
 
 message UpdateStateRequest{
-  StateConfig config = 1;
+  string stateKey = 1;
   bytes obj = 2;
 }
