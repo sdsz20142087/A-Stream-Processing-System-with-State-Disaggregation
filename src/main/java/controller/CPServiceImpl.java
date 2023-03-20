@@ -1,12 +1,14 @@
 package controller;
 
 import DB.etcdDB.DBTools;
+import com.fasterxml.jackson.databind.introspect.TypeResolutionContext;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.CPServiceGrpc;
 import pb.Cp;
-import stateapis.State;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -58,39 +60,90 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         responseObserver.onError(new Exception("not implemented yet!"));
     }
 
-    public String findRemoteStateAddress(String stateKey){
-        return RoutingTable.get(stateKey);
+    public void findRemoteStateAddress(Cp.findRemoteStateAddressRequest req,
+                                         StreamObserver<Cp.findRemoteStateAddressResponse> responseObserver){
+        Cp.findRemoteStateAddressResponse.Builder b = Cp.findRemoteStateAddressResponse.newBuilder();
+        if(!RoutingTable.containsKey(req.getStateKey())){
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
+            return;
+        }
+        try {
+            String address = RoutingTable.get(req.getStateKey());
+            b.setAddress(address);
+        } catch (Exception e) {
+            String msg = String.format("can not find state address in routing table");
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        Cp.findRemoteStateAddressResponse response = b.build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
-    public String addRemoteStateAddress(Cp.addRemoteStateRequest req,
-                                        StreamObserver<Cp.addRemoteStateResponse> responseObserver){
+    public void addRemoteStateAddress(Cp.addRemoteStateAddressRequest req,
+                                        StreamObserver<Cp.addRemoteStateAddressResponse> responseObserver){
+        Cp.addRemoteStateAddressResponse.Builder b = Cp.addRemoteStateAddressResponse.newBuilder();
         // find a random TM
         String[] keys= tmClients.keySet().toArray(new String[0]);
         Random random = new Random();
         String randomKey = keys[random.nextInt(keys.length)];
         TMClient tmClient = tmClients.get(randomKey);
         String randomAddress = tmClient.getHost();
-        RoutingTable.put(req.getStateKey(), randomAddress);
-        // TODO: put state into TM
-        tmClient.addState(req.getStateKey(), req.getState());
-        return randomAddress;
+        if(RoutingTable.containsKey(req.getStateKey())){
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state already exist")));
+            return;
+        }
+        try {
+            RoutingTable.put(req.getStateKey(), randomAddress);
+        } catch (Exception e) {
+            String msg = String.format("can not add state address in routing table");
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        responseObserver.onNext(b.build());
+        responseObserver.onCompleted();
     }
 
-    public void removeRemoteStateAddress(Cp.removeRemoteStateRequest req,
-                                         StreamObserver<Cp.removeRemoteStateResponse> responseObserver){
-        String address = RoutingTable.get(req.getStateKey());
-        RoutingTable.remove(req.getStateKey());
-        // TODO: remove state from TM
-        TMClient tmClient= tmClients.get(address);
-        tmClient.removeState(req.getStateKey());
+    public void removeRemoteStateAddress(Cp.removeRemoteStateAddressRequest req,
+                                         StreamObserver<Cp.removeRemoteStateAddressResponse> responseObserver){
+        Cp.removeRemoteStateAddressResponse.Builder b = Cp.removeRemoteStateAddressResponse.newBuilder();
+        if(!RoutingTable.containsKey(req.getStateKey())){
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
+            return;
+        }
+        try {
+            RoutingTable.remove(req.getStateKey());
+        } catch (Exception e) {
+            String msg = String.format("can not remove state address from routing table");
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        responseObserver.onNext(b.build());
+        responseObserver.onCompleted();
     }
 
-    public State getRemoteState(Cp.getRemoteStateRequest req,
-                                StreamObserver<Cp.getRemoteStateResponse> responseObserver){
-        String address = RoutingTable.get(req.getStateKey());
-        TMClient tmClient= tmClients.get(address);
-        // TODO: get state from TM
-        return tmClient.getState(req.getStateKey());
+    public void updateRemoteStateAddress(Cp.updateRemoteStateAddressRequest req,
+                                         StreamObserver<Cp.updateRemoteStateAddressResponse> responseObserver){
+        Cp.updateRemoteStateAddressResponse.Builder b = Cp.updateRemoteStateAddressResponse.newBuilder();
+        if(!RoutingTable.containsKey(req.getStateKey())){
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
+            return;
+        }
+        try {
+            String stateKey = req.getStateKey();
+            String address =req.getAddress();
+            RoutingTable.replace(stateKey,address);
+        } catch (Exception e) {
+            String msg = String.format("can not update state address in routing table");
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        responseObserver.onNext(b.build());
+        responseObserver.onCompleted();
     }
 
 }

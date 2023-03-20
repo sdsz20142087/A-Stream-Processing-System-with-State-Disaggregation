@@ -70,7 +70,7 @@ message OperatorConfig{
 
 message StateConfig{
   string stateKey = 1;
-  repeated OutputMetadata outputMetadata = 3; // The next TM's address: ip:port
+  repeated OutputMetadata outputMetadata = 2; // The next TM's address: ip:port
 }
 
 service TMService{
@@ -98,13 +98,10 @@ message ReConfigOperatorRequest{
   OperatorConfig config = 1;
 }
 
-message State{
-
-}
 
 message AddStateRequest{
-  string stateKey = 1;
-  repeated State state =2;
+  StateConfig config = 1;
+  bytes obj = 2;
 }
 
 message RemoveStateRequest{
@@ -116,5 +113,5 @@ message GetStateRequest{
 }
 
 message GetStateResponse{
-  repeated State state = 1;
+  bytes obj = 1;
 }

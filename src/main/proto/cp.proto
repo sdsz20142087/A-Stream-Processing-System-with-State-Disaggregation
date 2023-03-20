@@ -1,5 +1,6 @@
 syntax = "proto3";
 option java_package="pb";
+import "google/protobuf/empty.proto";
 /*
 Control Plane's RPC handler protocols,
 include:
@@ -30,40 +31,43 @@ message DeregisterTMResponse {
 service CPService {
     rpc RegisterTM(RegisterTMRequest) returns (RegisterTMResponse);
     rpc DeregisterTM(DeregisterTMRequest) returns (DeregisterTMResponse);
+    rpc findRemoteStateAddress(findRemoteStateAddressRequest) returns (findRemoteStateAddressResponse);
+    rpc addRemoteStateAddress(addRemoteStateAddressRequest) returns (addRemoteStateAddressResponse);
+    rpc removeRemoteStateAddress(removeRemoteStateAddressRequest) returns (removeRemoteStateAddressResponse);
+    rpc updateRemoteStateAddress(updateRemoteStateAddressRequest) returns (updateRemoteStateAddressResponse);
 }
 
-service RoutingTableService {
-    rpc getRemoteState(getRemoteStateRequest) returns (getRemoteStateResponse);
-    rpc addRemoteState(addRemoteStateRequest) returns (addRemoteStateResponse);
-    rpc removeRemoteState(removeRemoteStateRequest) returns (removeRemoteStateResponse);
-}
-
-message getRemoteStateRequest{
+message findRemoteStateAddressRequest{
     string stateKey=1;
 }
 
-message getRemoteStateResponse{
-
+message findRemoteStateAddressResponse{
+    string address=1;
 }
 
-message State{
-
-}
-
-message addRemoteStateRequest{
+message addRemoteStateAddressRequest{
     string stateKey=1;
-    repeated State state = 2;
+    string address=2;
 }
 
-message addRemoteStateResponse{
-
+message addRemoteStateAddressResponse{
+    string address=1;
 }
 
-message removeRemoteStateRequest{
+message removeRemoteStateAddressRequest{
     string stateKey=1;
 }
 
-message removeRemoteStateResponse{
+message removeRemoteStateAddressResponse{
+
+}
+
+message updateRemoteStateAddressRequest{
+    string stateKey=1;
+    string address=2;
+}
+
+message updateRemoteStateAddressResponse{
 
 }
 

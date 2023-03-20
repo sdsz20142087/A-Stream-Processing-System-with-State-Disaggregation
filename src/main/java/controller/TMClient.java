@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
+import stateapis.BaseState;
 import stateapis.State;
 
 import java.io.ByteArrayOutputStream;
@@ -79,16 +80,19 @@ public class TMClient implements Serializable {
         return host + ":" + port;
     }
 
-    public void addState(String key, State state){
-        logger.info("Store state to TM at " + host + ":" + port);
-        Tm.AddStateRequest req = Tm.AddStateRequest.newBuilder().build();
-        // TODO:
+    public void addState(Tm.StateConfig config, BaseState state) throws Exception{
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(baos);
+        oos.writeObject(state);
+        byte[] bytes = baos.toByteArray();
+        ByteString bs = ByteString.copyFrom(bytes);
+        Tm.AddStateRequest req = Tm.AddStateRequest.newBuilder().setConfig(config).setObj(bs).build();
         blockingStub.addState(req);
 
     }
 
-    public void removeState(String key){
-        logger.info("Remove state from TM at " + host + ":" + port);
+    public void removeState(Tm.StateConfig config) throws Exception{
+
         Tm.RemoveStateRequest req = Tm.RemoveStateRequest.newBuilder().build();
         // TODO:
         blockingStub.removeState(req);

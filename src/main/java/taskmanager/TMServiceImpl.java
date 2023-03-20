@@ -149,19 +149,25 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
 
     }
 
+
     public void addState(Tm.AddStateRequest request, StreamObserver <Empty> responseObserver){
-        String stateKey = request.getStateKey();
+        String stateKey = request.getConfig().getStateKey();
         //TODO: how to get state
-        State state = request.getState();
-        states.put(stateKey, state);
+        //State state = request.getObj();
+        //states.put(stateKey, state);
     }
 
 
+
+
+    /*
     //TODO: how to get state
     public State getState(Tm.GetStateRequest request, StreamObserver<Tm.GetStateResponse> responseObserver){
         String stateKey = request.getStateKey();
         return states.get(stateKey);
     }
+
+     */
 
 
 
