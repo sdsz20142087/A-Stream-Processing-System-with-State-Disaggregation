@@ -1,5 +1,7 @@
 package controller;
 
+import config.Config;
+import config.TMConfig;
 import exec.SerDe;
 import operators.ISource;
 import operators.SinkOperator;
@@ -10,6 +12,7 @@ import utils.WikiFileSource;
 
 public class App {
     private static App instance;
+    private final TMConfig tmcfg;
     private QueryPlan queryPlan;
 
     public static App getInstance() {
@@ -20,14 +23,15 @@ public class App {
 
     private App(){
         this.queryPlan = new QueryPlan();
+        this.tmcfg = Config.getInstance().taskManager;
         // TODO: build the query plan here
         ISource<String> src = new WikiFileSource("data.txt");
         SerDe<String> serde = new StringSerde();
         SourceOperator<String> source = new SourceOperator<>(src, serde);
-        this.queryPlan.addStage(source, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN);
+        this.queryPlan.addStage(0, source, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         SinkOperator sink = new SinkOperator();
-        this.queryPlan.addStage(sink, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN);
+        this.queryPlan.addStage(1, sink, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
     }
 
     public QueryPlan getQueryPlan() {

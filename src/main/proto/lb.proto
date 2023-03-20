@@ -1,0 +1,6 @@
+syntax = "proto3";
+option java_package="pb";
+
+message RegisterOpRequest {
+  String OpName
+}
