@@ -151,13 +151,8 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
 
     @Override
     public void getState(Tm.GetStateRequest request, StreamObserver<Tm.GetStateResponse> responseObserver){
-        if (!states.containsKey(request.getStateKey())){
-            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
-            return;
-        }
         String stateKey = request.getStateKey();
         BaseState state= states.get(stateKey);
-
         ByteString stateBytes = null;
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
