@@ -16,6 +16,7 @@ public class KeyBy<T,K> extends BaseOperator implements Serializable {
 
 
     public KeyBy(int numOfPartitions, SerDe<T> serde) {
+        this.setName("KeyBy-");
         this.serde = serde;
         this.numOfPartitions = numOfPartitions;
     }

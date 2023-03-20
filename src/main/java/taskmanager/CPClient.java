@@ -41,9 +41,7 @@ class CPClient {
             public void onError(Throwable t) {
                 logger.fatal("Failed to register TM at Control Plane " + target, t);
                 System.exit(1);
-
             }
-
             @Override
             public void onCompleted() {
                 logger.info("registerTM Completed");

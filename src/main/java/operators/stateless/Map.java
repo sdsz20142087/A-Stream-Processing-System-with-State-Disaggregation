@@ -10,6 +10,7 @@ import java.io.Serializable;
 public class Map<T> extends BaseOperator implements Serializable {
     private SerDe<T> serde;
     public Map(SerDe<T> serde) {
+        this.setName("Map-");
         this.serde = serde;
     }
 
