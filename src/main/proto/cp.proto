@@ -1,5 +1,6 @@
 syntax = "proto3";
 option java_package="pb";
+import "google/protobuf/empty.proto";
 /*
 Control Plane's RPC handler protocols,
 include:
@@ -30,4 +31,43 @@ message DeregisterTMResponse {
 service CPService {
     rpc RegisterTM(RegisterTMRequest) returns (RegisterTMResponse);
     rpc DeregisterTM(DeregisterTMRequest) returns (DeregisterTMResponse);
+    rpc FindRemoteStateAddress(FindRemoteStateAddressRequest) returns (FindRemoteStateAddressResponse);
+    rpc AddRemoteStateAddress(AddRemoteStateAddressRequest) returns (AddRemoteStateAddressResponse);
+    rpc RemoveRemoteStateAddress(RemoveRemoteStateAddressRequest) returns (RemoveRemoteStateAddressResponse);
+    rpc UpdateRemoteStateAddress(UpdateRemoteStateAddressRequest) returns (UpdateRemoteStateAddressResponse);
 }
+
+message FindRemoteStateAddressRequest{
+    string stateKey=1;
+}
+
+message FindRemoteStateAddressResponse{
+    string address=1;
+}
+
+message AddRemoteStateAddressRequest{
+    string stateKey=1;
+    string address=2;
+}
+
+message AddRemoteStateAddressResponse{
+    string address=1;
+}
+
+message RemoveRemoteStateAddressRequest{
+    string stateKey=1;
+}
+
+message RemoveRemoteStateAddressResponse{
+
+}
+
+message UpdateRemoteStateAddressRequest{
+    string stateKey=1;
+    string address=2;
+}
+
+message UpdateRemoteStateAddressResponse{
+
+}
+
