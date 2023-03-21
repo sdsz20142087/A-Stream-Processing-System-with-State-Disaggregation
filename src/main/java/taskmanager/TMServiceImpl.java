@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
+import stateapis.KVProvider;
 import stateapis.ListStateAccessor;
 import stateapis.MapStateAccessor;
 import stateapis.ValueStateAccessor;
@@ -26,7 +27,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDescriptorProvider {
     private final int operatorQuota;
     private final HashMap<String, BaseOperator> operators;
-    private HashMap<String, BaseState> states;
+    private final KVProvider kvProvider;
     private final Logger logger = LogManager.getLogger();
 
     // map of< TM's address, PushMsgClient>
@@ -37,8 +38,9 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     // map of <operator name, message>
     private final LinkedBlockingQueue<Pair<String, Tm.Msg.Builder>> msgQueue = new LinkedBlockingQueue<>();
 
-    public TMServiceImpl(int operatorQuota) {
+    public TMServiceImpl(int operatorQuota, KVProvider kvProvider) {
         super();
+        this.kvProvider = kvProvider;
         this.operatorQuota = operatorQuota;
         operators = new HashMap<>();
         logger.info("TM service started with operator quota: " + operatorQuota);
@@ -179,7 +181,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     @Override
     public void getState(Tm.GetStateRequest request, StreamObserver<Tm.GetStateResponse> responseObserver){
         String stateKey = request.getStateKey();
-        BaseState state= states.get(stateKey);
+        Object state = this.kvProvider.get(stateKey);
         ByteString stateBytes = null;
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -199,13 +201,9 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
 
     @Override
     public void removeState(Tm.RemoveStateRequest request, StreamObserver <Empty> responseObserver){
-        if (!states.containsKey(request.getStateKey())){
-            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
-            return;
-        }
         try {
             String stateKey = request.getStateKey();
-            states.remove(stateKey);
+            kvProvider.delete(stateKey);
         } catch (Exception e) {
             String msg = String.format("can not remove state in TM");
             logger.error(msg);
@@ -217,22 +215,13 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     }
 
     @Override
+    // EQUIVALENT TO "PUT"
     public void updateState(Tm.UpdateStateRequest request, StreamObserver <Empty> responseObserver){
         String stateKey = request.getStateKey();
         byte[] stateBytes = request.getObj().toByteArray();
-        BaseState state = null;
-        try {
-            ByteArrayInputStream bais = new ByteArrayInputStream(stateBytes);
-            ObjectInputStream ois = new ObjectInputStream(bais);
-            state = (BaseState) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription("Failed to deserialize state object")));
-            return;
-        }
-        states.replace(stateKey, state);
+        kvProvider.put(stateKey, stateBytes);
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
-
     }
 
 

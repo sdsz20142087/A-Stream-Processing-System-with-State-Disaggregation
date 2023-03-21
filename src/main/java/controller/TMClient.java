@@ -8,12 +8,8 @@ import io.grpc.stub.StreamObserver;
 import operators.BaseOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import pb.Cp;
-import pb.CPServiceGrpc;
 import pb.TMServiceGrpc;
 import pb.Tm;
-import stateapis.BaseState;
-import stateapis.State;
 
 import java.io.*;
 import java.io.Serializable;
@@ -133,7 +129,7 @@ public class TMClient implements Serializable {
     }
 
     // get state from TM
-    public State getState(String stateKey) throws IOException, ClassNotFoundException {
+    public Object getState(String stateKey) throws IOException, ClassNotFoundException {
         logger.info("get state from TM at " + host + ":" + port);
         Tm.GetStateRequest req = Tm.GetStateRequest.newBuilder().setStateKey(stateKey).build();
         Tm.GetStateResponse res= blockingStub.getState(req);
@@ -144,11 +140,10 @@ public class TMClient implements Serializable {
         ObjectInputStream ois;
 
         ois = new ObjectInputStream(bis);
-        State state = (State) ois.readObject();
-        return state;
+        return ois.readObject();
     }
 
-    public void updateState(String stateKey, BaseState state) throws IOException, ClassNotFoundException{
+    public void updateState(String stateKey, Object state) throws IOException, ClassNotFoundException{
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ObjectOutputStream oos = new ObjectOutputStream(baos);
         oos.writeObject(state);

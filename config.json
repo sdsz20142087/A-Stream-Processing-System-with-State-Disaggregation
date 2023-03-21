@@ -10,6 +10,7 @@
     "cp_port": 8008,
     "operator_quota": 6,
     "tm_host": "127.0.0.1",
-    "operator_bufferSize": 20
+    "operator_bufferSize": 20,
+    "useHybrid": false
   }
 }
