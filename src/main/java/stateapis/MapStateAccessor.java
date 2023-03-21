@@ -15,8 +15,7 @@ public class MapStateAccessor<K, V> extends BaseStateAccessor<IDataflowMap<K, V>
     public IDataflowMap<K, V> value() {
         return new MapProxy<>(descriptorName, this.kvProvider);
     }
-
-
+    
     @Override
     /*
     update re-writes the entire new map, equivalent to PUT
