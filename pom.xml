@@ -136,6 +136,48 @@
                             </descriptorRefs>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>ControlPlane</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>ControlPlane</finalName>
+                            <archive>
+                                <manifest>
+                                    <mainClass>controller.ControlPlane</mainClass>
+                                </manifest>
+                                <manifestEntries>
+                                    <Multi-Release>true</Multi-Release>
+                                </manifestEntries>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>DBTools</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>DBTools</finalName>
+                            <archive>
+                                <manifest>
+                                    <mainClass>DB.etcdDB.DBTools</mainClass>
+                                </manifest>
+                                <manifestEntries>
+                                    <Multi-Release>true</Multi-Release>
+                                </manifestEntries>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                        </configuration>
+                    </execution>
                 </executions>
 
             </plugin>

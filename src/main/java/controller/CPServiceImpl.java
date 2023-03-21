@@ -14,8 +14,6 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
     private Logger logger = LogManager.getLogger();
     private HashMap<String, TMClient> tmClients = new HashMap<>();
 
-    private DBTools dbTools = DBTools.getInstance();
-
     public HashMap<String, TMClient> getTMClients(){
         return tmClients;
     }
@@ -29,14 +27,14 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         tmClients.put(request.getName(),tmClient);
         logger.info("a");
         String status = null;
-        try {
-            status = dbTools.registerTM(request.getName(), tmClient);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        logger.info("DB_status: " + status);
+//        try {
+//            //status = dbTools.registerTM(request.getName(), tmClient);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+        //logger.info("DB_status: " + status);
         logger.info("b");
-        dbTools.getTM(request.getName());
+        //dbTools.getTM(request.getName());
         logger.info("c");
         try{
             logger.info("status:"+tmClient.getStatus());

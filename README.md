@@ -2,6 +2,11 @@
 
 This is a simple Java-based prototype that implements a multi-thread dataflow.
 
+## Run the project
+```bash
+docker compose up
+```
+
 ## Intro
 
 In this prototype, we implemented a simple dataflow application that continuously read from Wikipedia edit history stream (either from a URL or a local file), and count the number of events on each server name.
