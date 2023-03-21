@@ -1,39 +1,42 @@
 package stateapis;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.Iterator;
-
 public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
 
-    public ListStateAccessor(String descriptorName, KVProvider kvProvider){
-        super(descriptorName,kvProvider);
+    public ListStateAccessor(String descriptorName, KVProvider kvProvider) {
+        super(descriptorName, kvProvider);
     }
 
+    /*
+    value() returns a proxy object, the object MUST NOT be null
+     */
     @Override
     public IDataflowDeque<T> value() {
-        return new DequeProxy<>(descriptorName);
+        return new DequeProxy<>(descriptorName, this.kvProvider);
     }
 
     @Override
+    /*
+    update re-writes the entire new list, equivalent to PUT
+     */
     public void update(IDataflowDeque<T> value) {
-
+        // TODO: implement this
     }
 
     @Override
     public void clear() {
-
+        // TODO: implement this
     }
 
 }
 
-class DequeProxy<T> implements IDataflowDeque<T>{
+// dequeproxy translates the deque interface to the kvprovider interface
+class DequeProxy<T> implements IDataflowDeque<T> {
     private String keyBase;
-    public DequeProxy(String keyBase){
+    private KVProvider kvProvider;
+
+    public DequeProxy(String keyBase, KVProvider kvProvider) {
         this.keyBase = keyBase;
+        this.kvProvider = kvProvider;
     }
 
     @Override
@@ -80,7 +83,4 @@ class DequeProxy<T> implements IDataflowDeque<T>{
     public int size() {
         return 0;
     }
-}
-
-
 }

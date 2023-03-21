@@ -3,40 +3,48 @@ package stateapis;
 import java.util.List;
 
 public class MapStateAccessor<K, V> extends BaseStateAccessor<IDataflowMap<K, V>> {
-    private RemoteKVProvider remoteKVProvider = new RemoteKVProvider();
-
 
     public MapStateAccessor(String descriptorName, KVProvider kvProvider) {
         super(descriptorName, kvProvider);
     }
 
+    /*
+    value() returns a proxy object, the object MUST NOT be null
+     */
     @Override
     public IDataflowMap<K, V> value() {
-        return new MapProxy<>(descriptorName);
+        return new MapProxy<>(descriptorName, this.kvProvider);
     }
 
 
     @Override
-    public void update(IDataflowMap value) {
+    /*
+    update re-writes the entire new map, equivalent to PUT
+     */
+    public void update(IDataflowMap<K, V> value) {
         // FIXME: this should be atomic
-        for(Object key : value.keys()){
-            remoteKVProvider.put(descriptorName + "." + key, value.get(key));
+        for (K key : value.keys()) {
+            this.kvProvider.put(descriptorName + "." + key, value.get(key));
         }
     }
 
     @Override
     public void clear() {
-        remoteKVProvider.clear();
+        // TODO: implement this
     }
 }
-// TODO: implement this
 
-class MapProxy<K,V> implements IDataflowMap<K,V>{
+
+// mapproxy translates the map interface to the kvprovider interface
+
+class MapProxy<K, V> implements IDataflowMap<K, V> {
 
     private String keyBase;
+    private KVProvider kvProvider;
 
-    public MapProxy(String keyBase){
+    public MapProxy(String keyBase, KVProvider kvProvider) {
         this.keyBase = keyBase;
+        this.kvProvider = kvProvider;
     }
 
 
