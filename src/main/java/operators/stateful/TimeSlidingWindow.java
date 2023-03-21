@@ -5,6 +5,7 @@ import exec.SerDe;
 import operators.BaseOperator;
 import pb.Tm;
 import stateapis.MapStateAccessor;
+import stateapis.ValueState;
 
 import java.io.Serializable;
 import java.util.*;
@@ -17,7 +18,8 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
     private long slideStep;
     private ArrayList<IN> windowData;
 
-    private MapStateAccessor someStateAccessor;
+    private MapStateAccessor someMapStateAccessor;
+    private ValueState<Integer> intStateAccessor;
     public TimeSlidingWindow(Tm.OperatorConfig config, SerDe<IN> serde, SerDe<OUT> serdeOut, long windowSize, long slideStep) {
         this.serde = serde;
         this.windowSize = windowSize;
@@ -26,13 +28,14 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
         this.windowData = new ArrayList<>();
 
         //
-        someStateAccessor = stateDescriptorProvider.getMapStateAccessor(this, "some-state");
+        someMapStateAccessor = stateDescriptorProvider.getMapStateAccessor(this, "some-map-state");
+        intStateAccessor = stateDescriptorProvider.getValueStateAccessor(this, "some-int-state");
     }
 
     @Override
     protected void processElement(ByteString in) {
 
-        Map m = someStateAccessor.value();
+        Map m = someMapStateAccessor.value();
         if (m == null) {
             m = new HashMap();
         }
@@ -45,7 +48,7 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
         m.put("123",345);
 
         // 把本地的状态更新到kvprovider
-        someStateAccessor.update(m);
+        someMapStateAccessor.update(m);
 
 
 

@@ -1,10 +1,6 @@
 package stateapis;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-public class MapStateAccessor<T> implements StateAccessor<T> {
+public class MapStateAccessor<T> implements State<T> {
 
 
     private final Class<T> stateType;
@@ -15,10 +11,10 @@ public class MapStateAccessor<T> implements StateAccessor<T> {
     }
 
     @Override
-    public BaseState getState(String key) throws InstantiationException, IllegalAccessException {
-        BaseState state = remoteKVProvider.get(key);
+    public ValueState getState(String key) throws InstantiationException, IllegalAccessException {
+        ValueState state = remoteKVProvider.get(key);
         if (state == null) {
-            state = new BaseState<>(stateType.newInstance());
+            state = new ValueState<>(stateType.newInstance());
             remoteKVProvider.put(key, state);
         }
         return state;
@@ -26,12 +22,12 @@ public class MapStateAccessor<T> implements StateAccessor<T> {
 
     @Override
     public void update(String key, T value) throws InstantiationException, IllegalAccessException {
-        StateAccessor.super.update(key, value);
+        IStateAccessor.super.update(key, value);
     }
 
     @Override
     public void clear(String key) throws InstantiationException, IllegalAccessException {
-        StateAccessor.super.clear(key);
+        IStateAccessor.super.clear(key);
     }
 
     @Override

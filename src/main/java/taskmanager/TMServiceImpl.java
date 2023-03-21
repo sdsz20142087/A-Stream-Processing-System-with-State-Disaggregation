@@ -1,7 +1,6 @@
 package taskmanager;
 
 import com.google.protobuf.Empty;
-import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -12,8 +11,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
-import stateapis.StateAccessor;
-import utils.TMException;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -23,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
 class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDescriptorProvider {
     private final int operatorQuota;
@@ -51,10 +47,6 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
                 throw new RuntimeException(e);
             }
         }).start();
-    }
-
-    public StateAccessor getStateAccessor(BaseOperator op) {
-        return null;
     }
 
     public void getStatus(Tm.TMStatusRequest request,
