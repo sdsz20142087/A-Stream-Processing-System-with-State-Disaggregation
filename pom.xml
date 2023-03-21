@@ -87,7 +87,14 @@
             <artifactId>guava</artifactId>
             <version>31.1-jre</version>
         </dependency>
+        <dependency>
+            <groupId>org.rocksdb</groupId>
+            <artifactId>rocksdbjni</artifactId>
+            <version>7.7.3</version>
+        </dependency>
     </dependencies>
+
+
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
