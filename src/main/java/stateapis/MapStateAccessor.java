@@ -16,6 +16,34 @@ public class MapStateAccessor<K, V> extends BaseStateAccessor<IDataflowMap<K, V>
         return new MapProxy<>(descriptorName, this.kvProvider);
     }
 
+    @Override
+    public Map<K, V> value() {
+        Map<K, V> stateMap = new HashMap<>();
+
+        // Retrieve the serialized state bytes from the key-value store
+        byte[] stateBytes = kvProvider.get(descriptorName);
+
+        if (stateBytes != null) {
+            try {
+                // Deserialize the state bytes into a Map object
+                ByteArrayInputStream bis = new ByteArrayInputStream(stateBytes);
+                ObjectInputStream ois = new ObjectInputStream(bis);
+                stateMap = (Map<K, V>) ois.readObject();
+                ois.close();
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return stateMap;
+    }
+
+//    @Override
+//    public void update(Map value) {
+//        // FIXME: this should be atomic
+//        for(Map.Entry<K, V> entry : (Iterable<Map.Entry<K, V>>) value.entrySet()){
+//            remoteKVProvider.put(entry.getKey().toString(), entry.getValue().toString());
+//        }
+//    }
 
     @Override
     /*
