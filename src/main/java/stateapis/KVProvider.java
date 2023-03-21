@@ -5,6 +5,8 @@ public interface KVProvider {
     void put(String stateKey, Object rawObject);
 
     void delete(String stateKey);
+
+    void clear();
 }
 
 

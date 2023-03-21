@@ -1,16 +1,16 @@
 package stateapis;
 
 
-public class ValueState<T> implements State<T> {
+public class ValueState<T> extends BaseStateAccessor<T> {
 
     private String descriptorName;
 
     private KVProvider kvProvider;
 
     public ValueState(String descriptorName, KVProvider kvProvider) {
-        this.descriptorName = descriptorName;
-        this.kvProvider = kvProvider;
+        super(descriptorName, kvProvider);
     }
+
     @Override
     public T value() {
         T value = (T) kvProvider.get(descriptorName);
