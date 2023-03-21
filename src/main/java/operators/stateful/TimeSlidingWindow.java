@@ -4,10 +4,10 @@ import com.google.protobuf.ByteString;
 import exec.SerDe;
 import operators.BaseOperator;
 import pb.Tm;
+import stateapis.MapStateAccessor;
+
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializable {
     private SerDe<IN> serde;
@@ -16,16 +16,43 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
     private long windowSize;
     private long slideStep;
     private ArrayList<IN> windowData;
+
+    private MapStateAccessor someStateAccessor;
     public TimeSlidingWindow(Tm.OperatorConfig config, SerDe<IN> serde, SerDe<OUT> serdeOut, long windowSize, long slideStep) {
         this.serde = serde;
         this.windowSize = windowSize;
         this.slideStep = slideStep;
         this.serdeOut = serdeOut;
         this.windowData = new ArrayList<>();
+
+        //
+        someStateAccessor = stateDescriptorProvider.getMapStateAccessor(this, "some-state");
     }
 
     @Override
     protected void processElement(ByteString in) {
+
+        Map m = someStateAccessor.value();
+        if (m == null) {
+            m = new HashMap();
+        }
+
+        // 隐式地从kvprovider拉取state
+        Object o = m.get("999");
+        Object o = m.getMany("999","888","777");
+
+        // 本地更新state
+        m.put("123",345);
+
+        // 把本地的状态更新到kvprovider
+        someStateAccessor.update(m);
+
+
+
+
+
+
+
         IN data = serde.deserialize(in);
         long timestamp = getDataTimestamp(data);
         if(currentWindow == null){

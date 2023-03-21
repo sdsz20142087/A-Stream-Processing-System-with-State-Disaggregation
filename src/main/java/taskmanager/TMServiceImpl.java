@@ -7,10 +7,12 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import kotlin.Pair;
 import operators.BaseOperator;
+import operators.StateDescriptorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
+import stateapis.StateAccessor;
 import utils.TMException;
 
 import java.io.ByteArrayInputStream;
@@ -23,7 +25,7 @@ import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
-class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
+class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDescriptorProvider {
     private final int operatorQuota;
     private final HashMap<String, BaseOperator> operators;
     private final Logger logger = LogManager.getLogger();
@@ -51,6 +53,10 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
         }).start();
     }
 
+    public StateAccessor getStateAccessor(BaseOperator op) {
+        return null;
+    }
+
     public void getStatus(Tm.TMStatusRequest request,
                           StreamObserver<Tm.TMStatusResponse> responseObserver) {
         logger.info("got status request");
@@ -75,7 +81,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
         BaseOperator op = (BaseOperator) ois.readObject();
         LinkedBlockingQueue<Tm.Msg> inputQueue = new LinkedBlockingQueue<>();
         // the queues must be initialized before the operator starts
-        op.init(request.getConfig(), inputQueue, msgQueue);
+        op.init(request.getConfig(), inputQueue, msgQueue, this);
         op.start();
         this.opInputQueues.put(op.getOpName(), inputQueue);
         operators.put(op.getOpName(), op);
