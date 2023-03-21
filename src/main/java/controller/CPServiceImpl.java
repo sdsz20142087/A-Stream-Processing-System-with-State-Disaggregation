@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.introspect.TypeResolutionContext;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
+import okhttp3.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.CPServiceGrpc;
@@ -17,7 +18,6 @@ import java.util.Random;
 class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
     private Logger logger = LogManager.getLogger();
     private HashMap<String, TMClient> tmClients = new HashMap<>();
-
     private DBTools dbTools = DBTools.getInstance();
 
     public HashMap<String, TMClient> getTMClients(){
@@ -60,6 +60,16 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         responseObserver.onError(new Exception("not implemented yet!"));
     }
 
+    @Override
+    public void reportStatus(Cp.ReportQueueStatusRequest req,
+                             StreamObserver<Cp.ReportQueueStatusResponse> responseObserver) {
+        logger.info("get status push msg from " + req.getTmName() + ":" + req.getOpName());
+        if (!tmClients.containsKey(req.getTmName())) {
+            responseObserver.onError(new Exception("TM doesn't exist"));
+        }
+        Cp.ReportQueueStatusResponse.Builder responseBuilder = Cp.ReportQueueStatusResponse.newBuilder();
+        responseBuilder.setStatus(ControlPlane.getInstance().reportTMStatus(req.getTmName(), req.getOpName(), req.getInputQueueLength()));
+    }
     public void findRemoteStateAddress(Cp.FindRemoteStateAddressRequest req,
                                          StreamObserver<Cp.FindRemoteStateAddressResponse> responseObserver){
         Cp.FindRemoteStateAddressResponse.Builder b = Cp.FindRemoteStateAddressResponse.newBuilder();
@@ -145,5 +155,4 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         responseObserver.onNext(b.build());
         responseObserver.onCompleted();
     }
-
 }

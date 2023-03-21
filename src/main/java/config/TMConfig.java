@@ -7,4 +7,6 @@ public class TMConfig {
     public int tm_port;
 
     public String tm_host;
+
+    public int operator_bufferSize;
 }

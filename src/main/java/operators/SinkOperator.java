@@ -9,6 +9,7 @@ public class SinkOperator extends BaseOperator implements Serializable {
     public SinkOperator() {
         super();
         this.setName("SinkOperator");
+        this.setOpName("SinkOperator");
     }
 
     @Override

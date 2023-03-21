@@ -62,6 +62,18 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    public void getOperatorStatus(Tm.OPStatusRequest request,
+                                  StreamObserver<Tm.OperatorStatus> responseObserver) {
+        logger.info("got operator status query request");
+        Tm.OperatorStatus.Builder status = Tm.OperatorStatus.newBuilder();
+        BaseOperator baseOperator = operators.get(request.getName());
+        status.setInputQueueLength(baseOperator.getInputQueueLength())
+                .setOutputQueueLength(baseOperator.getOutputQueueLength())
+                .setName(baseOperator.getOpName());
+        responseObserver.onNext(status.build());
+        responseObserver.onCompleted();
+    }
+
     /**
      *
      */
@@ -98,6 +110,12 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator quota exceeded")));
             return;
         }
+        logger.info("Display operators why key exists");
+        for (String key : operators.keySet())  {
+            logger.info(key);
+        }
+        logger.info("Finish");
+
         if (operators.containsKey(request.getConfig().getName())) {
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator already exists")));
             return;
@@ -145,7 +163,17 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
     @Override
     public void reConfigOperator(Tm.ReConfigOperatorRequest request,
                                  StreamObserver<Empty> responseObserver) {
+        Tm.OperatorConfig config = request.getConfig();
+        try {
+            operators.get(config.getName()).setConfig(config);
 
+        } catch (Exception e) {
+            String msg = "invalid op name.";
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+        }
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
     }
 
 
