@@ -13,10 +13,10 @@ import java.util.concurrent.ExecutionException;
 
 //import io.etcd.jetcd.test.EtcdClusterExtension;
 //import org.junit.jupiter.api.extension.RegisterExtension;
-public class DBTools {
+public class ETCDHelper {
     private static final String CLIENT_CONN_PORT = "8179";
     private static final String CLIENT_PEER_PORT = "8180";
-    private static DBTools instance;
+    private static ETCDHelper instance;
     private static KV DBClient;
 //    private Server DBToolsServer;
     private static final Logger logger = LogManager.getLogger();
@@ -30,11 +30,11 @@ public class DBTools {
         }
     }
 
-    private DBTools() {}
+    private ETCDHelper() {}
 
-    public static DBTools getInstance() {
+    public static ETCDHelper getInstance() {
         if (instance == null) {
-            instance = new DBTools();
+            instance = new ETCDHelper();
             getDBClient();
         }
         return instance;

@@ -1,11 +1,9 @@
 package controller;
 
-import DB.etcdDB.DBTools;
-import com.fasterxml.jackson.databind.introspect.TypeResolutionContext;
+import DB.etcdDB.ETCDHelper;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import okhttp3.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.CPServiceGrpc;
@@ -18,7 +16,7 @@ import java.util.Random;
 class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
     private Logger logger = LogManager.getLogger();
     private HashMap<String, TMClient> tmClients = new HashMap<>();
-    private DBTools dbTools = DBTools.getInstance();
+    //private ETCDHelper ETCDHelper = ETCDHelper.getInstance();
 
     public HashMap<String, TMClient> getTMClients(){
         return tmClients;
@@ -34,14 +32,14 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         tmClients.put(request.getName(),tmClient);
 
         String status = null;
-        try {
-            status = dbTools.registerTM(request.getName(), tmClient);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        logger.info("DB_status: " + status);
-
-        dbTools.getTM(request.getName());
+//        try {
+//            status = ETCDHelper.registerTM(request.getName(), tmClient);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//        logger.info("DB_status: " + status);
+//
+//        ETCDHelper.getTM(request.getName());
 
         try{
             logger.info("status:"+tmClient.getStatus());

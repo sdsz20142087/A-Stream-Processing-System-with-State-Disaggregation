@@ -31,6 +31,8 @@ public class App {
         ISource<String> src = new WikiFileSource("data.txt");
         SerDe<String> serde = new StringSerde();
         SourceOperator<String> source = new SourceOperator<>(src, serde);
+
+        // FIXME: the stages should actually be topologically sorted
         this.queryPlan.addStage(0, source, 3, 3, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         SinkOperator sink = new SinkOperator();
