@@ -189,11 +189,21 @@ public class OperatorLoadBalancer{
             operators_distribution.get(op_name).offer(opTS);
             logger.info("register operator: " + cfg.getName());
             tmClient.addOperator(cfg.build(), op);
+            outputDownStreamOpInfo(cfg, tmClient.getAddress());
             op_configs.put(cfg.getName(), cfg);
         } catch (Exception e) {
             logger.error("Failed to add operator to TM at " + tmClient.getHost() + tmClient.getPort(), e);
         }
         return cfg;
+    }
+
+    public void outputDownStreamOpInfo(Tm.OperatorConfig.Builder cfg, String tmClientAddr) {
+        logger.info(cfg.getName() + ": " + tmClientAddr);
+        logger.info("DownStream Operators: " + cfg.getOutputMetadataCount());
+        for (int i = 0; i < cfg.getOutputMetadataCount(); i++) {
+            Tm.OutputMetadata outputMetadata = cfg.getOutputMetadata(i);
+            logger.info("       -->" + outputMetadata.getName() + ": " + outputMetadata.getAddress());
+        }
     }
 
     public boolean reRouteOperator(String tm_name, String op_name) {

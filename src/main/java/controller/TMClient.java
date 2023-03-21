@@ -77,7 +77,6 @@ public class TMClient implements Serializable {
         byte[] bytes = baos.toByteArray();
         ByteString bs = ByteString.copyFrom(bytes);
         Tm.AddOperatorRequest req = Tm.AddOperatorRequest.newBuilder().setConfig(config).setObj(bs).build();
-        logger.info("real: " + req.getConfig().getName());
         blockingStub.addOperator(req);
         logger.info("deployed operator " + operator.getOpName() + " bytes, size=" + bytes.length + "");
     }
