@@ -6,8 +6,7 @@ public class ListStateAccessor<T> extends BaseStateAccessor<DoublyLinkedList<T>>
     public ListStateAccessor(String descriptorName, KVProvider kvProvider){
         super(descriptorName,kvProvider);
     }
-
-
+    
     @Override
     public DoublyLinkedList<T> value() {
         return (DoublyLinkedList<T>) kvProvider.get(descriptorName);
@@ -15,10 +14,8 @@ public class ListStateAccessor<T> extends BaseStateAccessor<DoublyLinkedList<T>>
 
     @Override
     public void update(DoublyLinkedList<T> value) {
-
+        kvProvider.put(descriptorName,value);
     }
-
-
 
     @Override
     public void clear() {
@@ -26,11 +23,18 @@ public class ListStateAccessor<T> extends BaseStateAccessor<DoublyLinkedList<T>>
     }
 
     public void addFront(T value) {
-
+        DoublyLinkedList<T> doublyLinkedList = this.value();
+        doublyLinkedList.addFront(value);
     }
 
     public void addBack(T value) {
+        DoublyLinkedList<T> doublyLinkedList = this.value();
+        doublyLinkedList.addBack(value);
+    }
 
+    public void remove(T value) {
+        DoublyLinkedList<T> doublyLinkedList = this.value();
+        doublyLinkedList.remove(value);
     }
 }
 
