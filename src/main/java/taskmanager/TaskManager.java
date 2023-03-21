@@ -3,6 +3,9 @@ package taskmanager;
 import config.Config;
 import config.TMConfig;
 import io.grpc.*;
+import stateapis.KVProvider;
+import stateapis.LocalKVProvider;
+import stateapis.RemoteKVProvider;
 import utils.NodeBase;
 import java.io.IOException;
 
@@ -25,7 +28,9 @@ public class TaskManager extends NodeBase {
 
         logger.info("tm_port=" + Config.getInstance().taskManager.tm_port);
         registryClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, tmcfg.tm_port);
-        tmService = new TMServiceImpl(tmcfg.operator_quota);
+        KVProvider kvProvider = tmcfg.useHybrid ? new RemoteKVProvider() : new LocalKVProvider();
+        logger.info("State config: using " + kvProvider.getClass().getName());
+        tmService = new TMServiceImpl(tmcfg.operator_quota, kvProvider);
         tmServer = ServerBuilder.forPort(tmcfg.tm_port).addService(tmService).build();
     }
 

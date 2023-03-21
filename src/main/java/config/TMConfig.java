@@ -9,4 +9,6 @@ public class TMConfig {
     public String tm_host;
 
     public int operator_bufferSize;
+
+    public boolean useHybrid;
 }
