@@ -79,6 +79,9 @@ service TMService{
   rpc ReConfigOperator(ReConfigOperatorRequest) returns (google.protobuf.Empty);
   rpc PushMsg(Msg) returns (google.protobuf.Empty);
   rpc GetOperatorStatus(OPStatusRequest) returns (OperatorStatus);
+  rpc RemoveState(RemoveStateRequest) returns (google.protobuf.Empty);
+  rpc GetState(GetStateRequest) returns (GetStateResponse);
+  rpc UpdateState(UpdateStateRequest) returns (google.protobuf.Empty);
 }
 
 // TM should calculate config diff based on this
@@ -93,4 +96,21 @@ message RemoveOperatorRequest{
 
 message ReConfigOperatorRequest{
   OperatorConfig config = 1;
+}
+
+message RemoveStateRequest{
+  string stateKey = 1;
+}
+
+message GetStateRequest{
+  string stateKey = 1;
+}
+
+message GetStateResponse{
+  bytes obj = 1;
+}
+
+message UpdateStateRequest{
+  string stateKey = 1;
+  bytes obj = 2;
 }

@@ -1,5 +1,6 @@
 package taskmanager;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
 import io.grpc.Metadata;
 import io.grpc.Status;
@@ -11,11 +12,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
+import stateapis.BaseState;
+import stateapis.State;
 import utils.TMException;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
     private final int operatorQuota;
     private final HashMap<String, BaseOperator> operators;
+    private HashMap<String, BaseState> states;
     private final Logger logger = LogManager.getLogger();
 
     // map of< TM's address, PushMsgClient>
@@ -173,6 +175,67 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
     }
+
+
+    @Override
+    public void getState(Tm.GetStateRequest request, StreamObserver<Tm.GetStateResponse> responseObserver){
+        String stateKey = request.getStateKey();
+        BaseState state= states.get(stateKey);
+        ByteString stateBytes = null;
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(state);
+            oos.flush();
+            stateBytes = ByteString.copyFrom(baos.toByteArray());
+        } catch (IOException e) {
+            responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription("Failed to serialize state object")));
+            return;
+        }
+        Tm.GetStateResponse response = Tm.GetStateResponse.newBuilder().setObj(stateBytes).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+
+    }
+
+    @Override
+    public void removeState(Tm.RemoveStateRequest request, StreamObserver <Empty> responseObserver){
+        if (!states.containsKey(request.getStateKey())){
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state not found")));
+            return;
+        }
+        try {
+            String stateKey = request.getStateKey();
+            states.remove(stateKey);
+        } catch (Exception e) {
+            String msg = String.format("can not remove state in TM");
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void updateState(Tm.UpdateStateRequest request, StreamObserver <Empty> responseObserver){
+        String stateKey = request.getStateKey();
+        byte[] stateBytes = request.getObj().toByteArray();
+        BaseState state = null;
+        try {
+            ByteArrayInputStream bais = new ByteArrayInputStream(stateBytes);
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            state = (BaseState) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription("Failed to deserialize state object")));
+            return;
+        }
+        states.replace(stateKey, state);
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
+
+    }
+
 
     private void sendLoop() throws InterruptedException {
         while (true) {
