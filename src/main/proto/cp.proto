@@ -27,10 +27,21 @@ message DeregisterTMResponse {
     string status = 1;
 }
 
+message ReportQueueStatusRequest {
+    string tm_name = 1;
+    string op_name = 2;
+    int32 inputQueueLength = 3;
+}
+
+message ReportQueueStatusResponse {
+    string status = 1;
+}
+
 // allow TMs to register at CP
 service CPService {
     rpc RegisterTM(RegisterTMRequest) returns (RegisterTMResponse);
     rpc DeregisterTM(DeregisterTMRequest) returns (DeregisterTMResponse);
+    rpc ReportStatus(ReportQueueStatusRequest) returns (ReportQueueStatusResponse);
     rpc FindRemoteStateAddress(FindRemoteStateAddressRequest) returns (FindRemoteStateAddressResponse);
     rpc AddRemoteStateAddress(AddRemoteStateAddressRequest) returns (AddRemoteStateAddressResponse);
     rpc RemoveRemoteStateAddress(RemoveRemoteStateAddressRequest) returns (RemoveRemoteStateAddressResponse);

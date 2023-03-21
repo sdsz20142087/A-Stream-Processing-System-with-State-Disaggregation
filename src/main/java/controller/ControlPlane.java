@@ -19,6 +19,8 @@ public class ControlPlane extends NodeBase {
 
     private final Scheduler scheduler;
 
+    public OperatorLoadBalancer opLB;
+
     public static ControlPlane getInstance() {
         if (instance == null)
             instance = new ControlPlane();
@@ -54,6 +56,7 @@ public class ControlPlane extends NodeBase {
 
         // start the scheduler thread
         this.scheduler = new Scheduler(App.getInstance().getQueryPlan(), svc.getTMClients());
+        this.opLB = OperatorLoadBalancer.getInstance(App.getInstance().getQueryPlan());
         logger.info("ControlPlane scheduler init");
     }
 
@@ -71,6 +74,11 @@ public class ControlPlane extends NodeBase {
             logger.fatal("Failed to start ControlPlane", e);
             System.exit(1);
         }
+    }
+
+    public String reportTMStatus(String tm_name, String op_name, int inputQueueLength) {
+        scheduler.scaleTMOperator(tm_name, op_name, inputQueueLength);
+        return "getStatus";
     }
 
     public static void main(String[] args) {
