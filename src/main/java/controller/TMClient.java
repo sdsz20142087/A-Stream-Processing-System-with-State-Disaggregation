@@ -16,6 +16,7 @@ import stateapis.BaseState;
 import stateapis.State;
 
 import java.io.*;
+import java.io.Serializable;
 
 public class TMClient implements Serializable {
     private final Logger logger = LogManager.getLogger();
@@ -156,6 +157,5 @@ public class TMClient implements Serializable {
         Tm.UpdateStateRequest req = Tm.UpdateStateRequest.newBuilder().setStateKey(stateKey).setObj(bs).build();
         blockingStub.updateState(req);
     }
-
 
 }
