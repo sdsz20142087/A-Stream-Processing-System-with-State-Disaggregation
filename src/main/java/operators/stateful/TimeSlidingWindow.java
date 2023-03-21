@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import exec.SerDe;
 import operators.BaseOperator;
 import pb.Tm;
+import stateapis.IDataflowMap;
 import stateapis.MapStateAccessor;
 import stateapis.ValueStateAccessor;
 
@@ -35,14 +36,12 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
     @Override
     protected void processElement(ByteString in) {
 
-        Map m = someMapStateAccessor.value();
-        if (m == null) {
-            m = new HashMap();
-        }
+        IDataflowMap m = someMapStateAccessor.value();
 
-        // 隐式地从kvprovider拉取state
+
+        // pull state from stateAccessor, return value of value() WILL NOT BE NULL
+        // THE STATE ACCESSOR is responsible for creating a new one
         Object o = m.get("999");
-        Object o = m.getMany("999","888","777");
 
         // 本地更新state
         m.put("123",345);
