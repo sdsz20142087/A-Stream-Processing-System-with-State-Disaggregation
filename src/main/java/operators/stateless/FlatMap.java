@@ -13,7 +13,9 @@ public class FlatMap<T> extends BaseOperator implements Serializable{
     private SerDe<T> serde;
     List<T> output= new ArrayList<>();
     public FlatMap(SerDe<T> serde) {
+        this.setName("FlatMap-");
         this.serde = serde;
+
     }
     @Override
     public void run(){
