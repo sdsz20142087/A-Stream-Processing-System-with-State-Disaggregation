@@ -11,12 +11,17 @@ public class RemoteKVProvider implements KVProvider{
     }
 
     @Override
-    public void put(String stateKey, String serializedState) {
+    public void put(String stateKey, Object rawObject) {
 
     }
 
     @Override
     public void delete(String stateKey) {
+
+    }
+
+    @Override
+    public void clear() {
 
     }
 }
