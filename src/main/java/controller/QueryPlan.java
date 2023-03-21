@@ -3,15 +3,16 @@ package controller;
 import kotlin.Pair;
 import kotlin.Triple;
 import operators.BaseOperator;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import pb.Tm;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class QueryPlan {
-
-//    private List<List<Tm.OperatorConfig.Builder>> stages;
     static class OperatorInfo{
     public OperatorInfo(int stageIdx, int parallelism, Tm.OperatorConfig.Builder cfg, BaseOperator op) {
         this.stageIdx = stageIdx;
@@ -55,61 +56,64 @@ public class QueryPlan {
     private Tm.OperatorConfig.Builder cfg;
     private BaseOperator op;
 }
-    private ConcurrentHashMap<Integer, List<OperatorInfo>> stages;
-//    private List<Pair<Integer, BaseOperator>> operators;
+
+    public HashMap<Class<? extends BaseOperator>, Integer> getOperatorIdMap() {
+        return operatorIdMap;
+    }
+
+    private ConcurrentHashMap<Integer, ConcurrentHashMap<String, OperatorInfo>> stages;
+    private HashMap<Class<? extends BaseOperator>, Integer> operatorIdMap = new HashMap<>();
+    private final Logger logger = LogManager.getLogger();
 
     public QueryPlan() {
-//        this.stages = new ArrayList<>();
         this.stages = new ConcurrentHashMap<>();
-//        this.operators = new ArrayList<>();
     }
 
     // We are assuming that the first item of the planConfig is source, and last is sink
     // The outputAddress and bufferSize are adjusted by the scheduler after the plan is submitted
     public QueryPlan addStage(int stageIdx, BaseOperator op, int parallelism, int parallelMax, Tm.PartitionStrategy partitionStrategy, int bufferSize) {
-//        List<Tm.OperatorConfig.Builder> list = new ArrayList<>();
-//        for (int i = 0; i < parallelism; i++) {
-//            Tm.OperatorConfig.Builder cfg = Tm.OperatorConfig.newBuilder()
-//                    .setName(op.getName() + "-" + i)
-//                    .setPartitionStrategy(partitionStrategy)
-//                    .setBufferSize(bufferSize)
-//                    .addAllOutputMetadata(new ArrayList<>());
-//            list.add(cfg);
-//        }
-//        operators.add(op);
-//        stages.add(stageIdx, list);
+        logger.info("add "+ op.getOpName() + "to query plan");
+        this.operatorIdMap.put(op.getClass(), this.operatorIdMap.getOrDefault(op.getClass(), 0) + 1);
+        String realName = op.getOpName()+"_"+this.operatorIdMap.get(op.getClass());
+        op.setOpName(realName);
         Tm.OperatorConfig.Builder cfg = Tm.OperatorConfig.newBuilder()
-                .setName(op.getName())
+                .setName(op.getOpName())
                 .setPartitionStrategy(partitionStrategy)
                 .setBufferSize(bufferSize)
                 .addAllOutputMetadata(new ArrayList<>());
-//        operators.add(new Pair<>(stageIdx, op));
-        stages.get(stageIdx).add(new OperatorInfo(stageIdx, parallelism, cfg, op));
-
+        if (!stages.containsKey(stageIdx)) {
+            stages.put(stageIdx, new ConcurrentHashMap<>());
+        }
+        stages.get(stageIdx).put(op.getOpName(), new OperatorInfo(stageIdx, parallelism, cfg, op));
         return this;
     }
 
-//    public List<List<Tm.OperatorConfig.Builder>> getStages() {
-//        return stages;
-//    }
-
-    public ConcurrentHashMap<Integer, List<OperatorInfo>> getStages() {
+    public ConcurrentHashMap<Integer, ConcurrentHashMap<String, OperatorInfo>> getStages() {
         return stages;
+    }
+
+    public void addDownStreamOp(int stageIdx, BaseOperator op, List<String> downStreamNames) {
+        logger.info("load " + op.getOpName() + " downStream relations");
+        List<Tm.OutputMetadata> downStreamMetaData = new ArrayList<>();
+        for (int i = 0; i < downStreamNames.size(); i++) {
+            Tm.OutputMetadata meta = Tm.OutputMetadata.
+                    newBuilder().
+                    setName(downStreamNames.get(i)).
+                    build();
+            downStreamMetaData.add(meta);
+        }
+        stages.get(stageIdx).get(op.getOpName()).getCfg().addAllOutputMetadata(downStreamMetaData);
     }
 
 
     public List<OperatorInfo> getFlatList() {
         List<OperatorInfo> list = new ArrayList<>();
         for (Integer key : stages.keySet()) {
-            List<OperatorInfo> stageOperators = stages.get(key);
-            list.addAll(stageOperators);
+            ConcurrentHashMap<String, OperatorInfo> stageOperators = stages.get(key);
+            for (String name : stageOperators.keySet()) {
+                list.add(stageOperators.get(name));
+            }
         }
-
-//        for (int i = 0; i < stages.size(); i++) {
-//            for (int j = 0; j < stages.get(i).size(); j++) {
-//                list.add(new Triple<>(i, stages.get(i).get(j), operators.get(i)));
-//            }
-//        }
         return list;
     }
 }

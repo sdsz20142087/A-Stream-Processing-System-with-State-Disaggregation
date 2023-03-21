@@ -50,6 +50,10 @@ public abstract class BaseOperator extends Thread implements Serializable {
         return this.config;
     }
 
+    public void setConfig(Tm.OperatorConfig config) {
+        this.config = config;
+    }
+
     protected final void sendOutput(Tm.Msg.Builder output) {
         outputQueue.add(new Pair<>(config.getName(), output));
     }
@@ -91,6 +95,14 @@ public abstract class BaseOperator extends Thread implements Serializable {
     }
     public boolean checkBuffer(){
         return inputQueue.size() > bufferSize;
+    }
+
+    public int getInputQueueLength() {
+        return inputQueue.size();
+    }
+
+    public int getOutputQueueLength() {
+        return outputQueue.size();
     }
 
 }

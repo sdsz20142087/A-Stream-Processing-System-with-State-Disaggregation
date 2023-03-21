@@ -13,7 +13,8 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
 
     public SourceOperator(ISource<T> source, SerDe<T> serde) {
         super();
-        this.setName("SourceOperator-");
+        this.setName("SourceOperator");
+        this.setOpName("SourceOperator");
         this.source = source;
         this.serde = serde;
         // start a new thread to emit data and store them in the input queue
