@@ -25,6 +25,8 @@ public abstract class BaseOperator extends Thread implements Serializable {
     private int bufferSize = 1000; // UDF buffer size, can change in runtime
     private static int paritionID = 0; // use for Round Robin
 
+    protected StateDescriptorProvider stateDescriptorProvider;
+
     private String opName;
 
     public String getOpName() {
@@ -39,11 +41,13 @@ public abstract class BaseOperator extends Thread implements Serializable {
     }
 
     public final void init(Tm.OperatorConfig config, LinkedBlockingQueue<Tm.Msg> inputQueue,
-                           LinkedBlockingQueue<Pair<String,Tm.Msg.Builder>> outputQueue){
+                           LinkedBlockingQueue<Pair<String,Tm.Msg.Builder>> outputQueue,
+                           StateDescriptorProvider stateDescriptorProvider){
         this.config = config;
         this.opName = config.getName();
         this.inputQueue = inputQueue;
         this.outputQueue = outputQueue;
+        this.stateDescriptorProvider = stateDescriptorProvider;
     }
 
     public Tm.OperatorConfig getConfig(){

@@ -2,19 +2,19 @@ package taskmanager;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
-import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import kotlin.Pair;
 import operators.BaseOperator;
+import operators.StateDescriptorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
-import stateapis.BaseState;
-import stateapis.State;
-import utils.TMException;
+import stateapis.ListStateAccessor;
+import stateapis.MapStateAccessor;
+import stateapis.ValueStateAccessor;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -22,9 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
-class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
+class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDescriptorProvider {
     private final int operatorQuota;
     private final HashMap<String, BaseOperator> operators;
     private HashMap<String, BaseState> states;
@@ -89,7 +88,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
         BaseOperator op = (BaseOperator) ois.readObject();
         LinkedBlockingQueue<Tm.Msg> inputQueue = new LinkedBlockingQueue<>();
         // the queues must be initialized before the operator starts
-        op.init(request.getConfig(), inputQueue, msgQueue);
+        op.init(request.getConfig(), inputQueue, msgQueue, this);
         op.start();
         this.opInputQueues.put(op.getOpName(), inputQueue);
         operators.put(op.getOpName(), op);
@@ -267,5 +266,21 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
             }
             logger.info("sendloop: sending msg to"+targetOutput);
         }
+    }
+
+    // TODO: IMPLEMENT THIS
+    @Override
+    public ValueStateAccessor getValueStateAccessor(BaseOperator op, String stateName) {
+        return null;
+    }
+
+    @Override
+    public MapStateAccessor getMapStateAccessor(BaseOperator op, String stateName) {
+        return null;
+    }
+
+    @Override
+    public ListStateAccessor getListStateAccessor(BaseOperator op, String stateName) {
+        return null;
     }
 }

@@ -1,19 +1,24 @@
 package stateapis;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class RemoteKVProvider implements KVProvider{
-    private final Map<String, BaseState> stateMap = new HashMap<>();
 
     @Override
-    public BaseState get(String state) {
-        return stateMap.get(state);
+    public String get(String stateKey) {
+        return null;
     }
 
     @Override
-    public void put(String state, BaseState baseState) {
-        stateMap.put(state, baseState);
+    public void put(String stateKey, Object rawObject) {
+
     }
 
+    @Override
+    public void delete(String stateKey) {
+
+    }
+
+    @Override
+    public void clear() {
+
+    }
 }

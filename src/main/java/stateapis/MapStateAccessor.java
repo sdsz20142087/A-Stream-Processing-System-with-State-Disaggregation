@@ -1,42 +1,90 @@
 package stateapis;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class MapStateAccessor<T> implements StateAccessor<T> {
+public class MapStateAccessor<K, V> extends BaseStateAccessor<IDataflowMap<K, V>> {
 
+    public MapStateAccessor(String descriptorName, KVProvider kvProvider) {
+        super(descriptorName, kvProvider);
+    }
 
-    private final Class<T> stateType;
-    private RemoteKVProvider remoteKVProvider = new RemoteKVProvider();
-
-    public MapStateAccessor(Class<T> stateType) {
-        this.stateType = stateType;
+    /*
+    value() returns a proxy object, the object MUST NOT be null
+     */
+    @Override
+    public IDataflowMap<K, V> value() {
+        return new MapProxy<>(descriptorName, this.kvProvider);
     }
 
     @Override
-    public BaseState getState(String key) throws InstantiationException, IllegalAccessException {
-        BaseState state = remoteKVProvider.get(key);
-        if (state == null) {
-            state = new BaseState<>(stateType.newInstance());
-            remoteKVProvider.put(key, state);
+    /*
+    update re-writes the entire new map, equivalent to PUT
+     */
+    public void update(IDataflowMap<K, V> value) {
+        // FIXME: this should be atomic
+        for (K key : value.keys()) {
+            this.kvProvider.put(descriptorName + "." + key, value.get(key));
         }
-        return state;
     }
 
     @Override
-    public void update(String key, T value) throws InstantiationException, IllegalAccessException {
-        StateAccessor.super.update(key, value);
+    public void clear() {
+        // TODO: implement this
     }
-
-    @Override
-    public void clear(String key) throws InstantiationException, IllegalAccessException {
-        StateAccessor.super.clear(key);
-    }
-
-    @Override
-    public T value(String key) throws InstantiationException, IllegalAccessException {
-        return (T) getState(key).value();
-    }
-
 }
+
+
+// mapproxy translates the map interface to the kvprovider interface
+
+class MapProxy<K, V> implements IDataflowMap<K, V> {
+
+    private String keyBase;
+    private KVProvider kvProvider;
+
+    public MapProxy(String keyBase, KVProvider kvProvider) {
+        this.keyBase = keyBase;
+        this.kvProvider = kvProvider;
+    }
+
+
+    @Override
+    public V get(K key) {
+        return null;
+    }
+
+    @Override
+    public void put(K key, V value) {
+
+    }
+
+    @Override
+    public void remove(K key) {
+
+    }
+
+    @Override
+    public void clear() {
+
+    }
+
+    @Override
+    public List<K> keys() {
+        return null;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
+    public boolean containsKey(K key) {
+        return false;
+    }
+
+    @Override
+    public int size() {
+        return 0;
+    }
+}
+
