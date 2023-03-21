@@ -5,7 +5,7 @@ import exec.SerDe;
 import operators.BaseOperator;
 import pb.Tm;
 import stateapis.MapStateAccessor;
-import stateapis.ValueState;
+import stateapis.ValueStateAccessor;
 
 import java.io.Serializable;
 import java.util.*;
@@ -19,7 +19,7 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
     private ArrayList<IN> windowData;
 
     private MapStateAccessor someMapStateAccessor;
-    private ValueState<Integer> intStateAccessor;
+    private ValueStateAccessor<Integer> intStateAccessor;
     public TimeSlidingWindow(Tm.OperatorConfig config, SerDe<IN> serde, SerDe<OUT> serdeOut, long windowSize, long slideStep) {
         this.serde = serde;
         this.windowSize = windowSize;

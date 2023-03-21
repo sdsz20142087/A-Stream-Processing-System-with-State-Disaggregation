@@ -10,6 +10,7 @@ import java.util.Set;
 public class MapStateAccessor<K, V> extends BaseStateAccessor<Map> {
     private RemoteKVProvider remoteKVProvider = new RemoteKVProvider();
 
+
     public MapStateAccessor(String descriptorName, KVProvider kvProvider) {
         super(descriptorName, kvProvider);
     }
@@ -107,3 +108,4 @@ class MapProxy<K,V> implements Map<K,V>{
         return null;
     }
 }
+

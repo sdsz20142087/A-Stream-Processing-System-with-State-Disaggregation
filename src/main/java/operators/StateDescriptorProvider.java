@@ -1,10 +1,12 @@
 package operators;
 
-import stateapis.ValueState;
+
+import stateapis.ListStateAccessor;
 import stateapis.MapStateAccessor;
+import stateapis.ValueStateAccessor;
 
 public interface StateDescriptorProvider {
-    ValueState getValueStateAccessor(BaseOperator op, String stateName);
+    ValueStateAccessor getValueStateAccessor(BaseOperator op, String stateName);
     MapStateAccessor getMapStateAccessor(BaseOperator op, String stateName);
 
     ListStateAccessor getListStateAccessor(BaseOperator op, String stateName);

@@ -11,8 +11,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
+import stateapis.ListStateAccessor;
 import stateapis.MapStateAccessor;
-import stateapis.ValueState;
+import stateapis.ValueStateAccessor;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -180,7 +181,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
 
     // TODO: IMPLEMENT THIS
     @Override
-    public ValueState getValueStateAccessor(BaseOperator op, String stateName) {
+    public ValueStateAccessor getValueStateAccessor(BaseOperator op, String stateName) {
         return null;
     }
 

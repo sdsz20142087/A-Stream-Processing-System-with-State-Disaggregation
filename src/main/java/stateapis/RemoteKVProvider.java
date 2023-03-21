@@ -1,8 +1,5 @@
 package stateapis;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class RemoteKVProvider implements KVProvider{
 
     @Override
