@@ -1,13 +1,8 @@
 package stateapis;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.util.List;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
-public class MapStateAccessor<K, V> extends BaseStateAccessor<Map> {
+public class MapStateAccessor<K, V> extends BaseStateAccessor<IDataflowMap<K, V>> {
     private RemoteKVProvider remoteKVProvider = new RemoteKVProvider();
 
 
@@ -16,16 +11,16 @@ public class MapStateAccessor<K, V> extends BaseStateAccessor<Map> {
     }
 
     @Override
-    public Map<K, V> value() {
+    public IDataflowMap<K, V> value() {
         return new MapProxy<>(descriptorName);
     }
 
 
     @Override
-    public void update(Map value) {
+    public void update(IDataflowMap value) {
         // FIXME: this should be atomic
-        for(Map.Entry<K, V> entry : (Iterable<Map.Entry<K, V>>) value.entrySet()){
-            remoteKVProvider.put(entry.getKey().toString(), entry.getValue().toString());
+        for(Object key : value.keys()){
+            remoteKVProvider.put(descriptorName + "." + key, value.get(key));
         }
     }
 
@@ -36,7 +31,7 @@ public class MapStateAccessor<K, V> extends BaseStateAccessor<Map> {
 }
 // TODO: implement this
 
-class MapProxy<K,V> implements Map<K,V>{
+class MapProxy<K,V> implements IDataflowMap<K,V>{
 
     private String keyBase;
 
@@ -44,44 +39,19 @@ class MapProxy<K,V> implements Map<K,V>{
         this.keyBase = keyBase;
     }
 
-    @Override
-    public int size() {
-        return 0;
-    }
 
     @Override
-    public boolean isEmpty() {
-        return false;
-    }
-
-    @Override
-    public boolean containsKey(Object key) {
-        return false;
-    }
-
-    @Override
-    public boolean containsValue(Object value) {
-        return false;
-    }
-
-    @Override
-    public V get(Object key) {
-        return null;
-    }
-
-    @Nullable
-    @Override
-    public V put(K key, V value) {
+    public V get(K key) {
         return null;
     }
 
     @Override
-    public V remove(Object key) {
-        return null;
+    public void put(K key, V value) {
+
     }
 
     @Override
-    public void putAll(@NotNull Map<? extends K, ? extends V> m) {
+    public void remove(K key) {
 
     }
 
@@ -90,22 +60,24 @@ class MapProxy<K,V> implements Map<K,V>{
 
     }
 
-    @NotNull
     @Override
-    public Set<K> keySet() {
+    public List<K> keys() {
         return null;
     }
 
-    @NotNull
     @Override
-    public Collection<V> values() {
-        return null;
+    public boolean isEmpty() {
+        return false;
     }
 
-    @NotNull
     @Override
-    public Set<Entry<K, V>> entrySet() {
-        return null;
+    public boolean containsKey(K key) {
+        return false;
+    }
+
+    @Override
+    public int size() {
+        return 0;
     }
 }
 

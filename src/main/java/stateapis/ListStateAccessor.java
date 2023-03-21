@@ -1,118 +1,86 @@
 package stateapis;
 
-public class ListStateAccessor<T> extends BaseStateAccessor<DoublyLinkedList<T>> {
-    private KVProvider kvProvider;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.Iterator;
+
+public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
 
     public ListStateAccessor(String descriptorName, KVProvider kvProvider){
         super(descriptorName,kvProvider);
     }
 
-
     @Override
-    public DoublyLinkedList<T> value() {
-        return (DoublyLinkedList<T>) kvProvider.get(descriptorName);
+    public IDataflowDeque<T> value() {
+        return new DequeProxy<>(descriptorName);
     }
 
     @Override
-    public void update(DoublyLinkedList<T> value) {
+    public void update(IDataflowDeque<T> value) {
 
     }
-
-
 
     @Override
     public void clear() {
-        kvProvider.clear();
-    }
-
-    public void addFront(T value) {
 
     }
 
-    public void addBack(T value) {
+}
 
+class DequeProxy<T> implements IDataflowDeque<T>{
+    private String keyBase;
+    public DequeProxy(String keyBase){
+        this.keyBase = keyBase;
+    }
+
+    @Override
+    public void addFirst(T value) {
+
+    }
+
+    @Override
+    public void addLast(T value) {
+
+    }
+
+    @Override
+    public T removeFirst() {
+        return null;
+    }
+
+    @Override
+    public T removeLast() {
+        return null;
+    }
+
+    @Override
+    public T peekFirst() {
+        return null;
+    }
+
+    @Override
+    public T peekLast() {
+        return null;
+    }
+
+    @Override
+    public void clear() {
+
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
+    }
+
+    @Override
+    public int size() {
+        return 0;
     }
 }
 
-
-class DoublyLinkedList<T> {
-    private Node head;
-    private Node tail;
-
-    private class Node {
-        private T value;
-        private Node prev;
-        private Node next;
-
-        public Node(T value) {
-            this.value = value;
-            this.prev = null;
-            this.next = null;
-        }
-    }
-
-    public DoublyLinkedList() {
-        this.head = null;
-        this.tail = null;
-    }
-
-    public void addFront(T value) {
-        Node node = new Node(value);
-
-        if (head == null) {
-            head = node;
-            tail = node;
-        } else {
-            head.prev = node;
-            node.next = head;
-            head = node;
-        }
-    }
-
-    public void addBack(T value) {
-        Node node = new Node(value);
-
-        if (head == null) {
-            head = node;
-            tail = node;
-        } else {
-            tail.next = node;
-            node.prev = tail;
-            tail = node;
-        }
-    }
-
-    public void remove(T value) {
-        Node current = head;
-
-        while (current != null) {
-            if (current.value == value) {
-                if (current == head) {
-                    head = current.next;
-                }
-                if (current == tail) {
-                    tail = current.prev;
-                }
-                if (current.prev != null) {
-                    current.prev.next = current.next;
-                }
-                if (current.next != null) {
-                    current.next.prev = current.prev;
-                }
-                break;
-            }
-            current = current.next;
-        }
-    }
-
-    public void printList() {
-        Node current = head;
-
-        while (current != null) {
-            System.out.print(current.value + " ");
-            current = current.next;
-        }
-        System.out.println();
-    }
 
 }

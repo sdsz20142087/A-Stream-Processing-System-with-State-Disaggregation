@@ -6,7 +6,7 @@ package stateapis;
 
 public abstract class BaseStateAccessor<T>{
     protected String descriptorName;
-    private KVProvider kvProvider;
+    protected KVProvider kvProvider;
 
     public BaseStateAccessor(String descriptorName, KVProvider kvProvider) {
         this.descriptorName = descriptorName;
