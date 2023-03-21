@@ -5,6 +5,7 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.kv.GetResponse;
+import io.grpc.NameResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,7 +31,7 @@ public class DBTools {
     public static void init(String[] eps, boolean testConn) {
         logger.info("Initializing DBTools");
         endpoints = eps;
-        Client client = Client.builder().endpoints(eps).build();
+        Client client = Client.builder().target(endpoints[0]).build();
         String msg = "Connecting to etcd on " + Arrays.toString(eps);
         logger.info(msg);
         kvClient = client.getKVClient();
@@ -39,13 +40,13 @@ public class DBTools {
             try {
                 ByteSequence key = ByteSequence.from("test_key".getBytes());
                 ByteSequence value = ByteSequence.from("test_value".getBytes());
-                kvClient.put(key, value).get(100, java.util.concurrent.TimeUnit.MILLISECONDS);
+                kvClient.put(key, value).get(1000, java.util.concurrent.TimeUnit.MILLISECONDS);
                 logger.info("put key-value pair");
                 // get the CompletableFuture
                 CompletableFuture<GetResponse> getFuture = kvClient.get(key);
 
                 // get the value from CompletableFuture
-                GetResponse response = getFuture.get(100, java.util.concurrent.TimeUnit.MILLISECONDS);
+                GetResponse response = getFuture.get(1000, java.util.concurrent.TimeUnit.MILLISECONDS);
                 logger.info(msg + " with response count=" + response.getCount());
             } catch (Exception e) {
                 logger.fatal("Failed to " + msg, e);
@@ -141,5 +142,6 @@ public class DBTools {
         System.out.println(new ArrayList<>(List.of(args)).toString());
         // usage: java -jar DBTools.jar http://localhost:2379
         DBTools.init(new String[]{args[0]}, true);
+        System.out.println("ok");
     }
 }
