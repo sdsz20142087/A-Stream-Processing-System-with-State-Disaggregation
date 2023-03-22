@@ -5,6 +5,8 @@ services:
     image: docker.io/bitnami/etcd:3.5
     environment:
       - ALLOW_NONE_AUTHENTICATION=yes
+      # log level should be WARN
+      - ETCD_LOG_LEVEL=warn
     volumes:
       - etcd_data:/bitnami/etcd
     ports:
@@ -20,6 +22,19 @@ services:
       - etcd
     depends_on:
       - etcd
+  taskmanager:
+    build:
+        context: .
+        dockerfile: TaskManagerDockerfile
+    ports:
+        - '8018:8018'
+    links:
+      - controlplane
+    depends_on:
+      - controlplane
+    deploy:
+        replicas: 1
+
 volumes:
   etcd_data:
     driver: local

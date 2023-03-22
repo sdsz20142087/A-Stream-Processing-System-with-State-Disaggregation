@@ -3,8 +3,10 @@ package controller;
 import DB.etcdDB.ETCDHelper;
 import config.CPConfig;
 import config.Config;
+import io.grpc.LoadBalancerRegistry;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.internal.PickFirstLoadBalancerProvider;
 import utils.NodeBase;
 import java.io.IOException;
 
@@ -26,6 +28,8 @@ public class ControlPlane extends NodeBase {
     }
 
     private ControlPlane() {
+        // configure GRPC to use PickFirstLB
+        LoadBalancerRegistry.getDefaultRegistry().register(new PickFirstLoadBalancerProvider());
         // read the config file
         Config.LoadConfig(configPath);
         cpcfg = Config.getInstance().controlPlane;
