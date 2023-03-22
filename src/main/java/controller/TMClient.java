@@ -47,22 +47,6 @@ public class TMClient implements Serializable {
         Tm.TMStatusRequest req = Tm.TMStatusRequest.newBuilder().build();
         Tm.TMStatusResponse resp = blockingStub.getStatus(req);
         logger.info("Got response: " + resp);
-//        asyncStub.getStatus(req, new StreamObserver<Tm.TMStatusResponse>() {
-//            @Override
-//            public void onNext(Tm.TMStatusResponse value) {
-//                logger.info("Got response: " + value);
-//            }
-//
-//            @Override
-//            public void onError(Throwable t) {
-//                logger.fatal("Failed to get status from TM at " + host + ":" + port, t);
-//            }
-//
-//            @Override
-//            public void onCompleted() {
-//                logger.info("getStatus Completed");
-//            }
-//        });
         return resp.toString();
     }
 

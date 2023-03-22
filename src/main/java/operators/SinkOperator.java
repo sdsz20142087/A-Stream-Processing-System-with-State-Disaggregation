@@ -1,7 +1,6 @@
 package operators;
 
 import com.google.protobuf.ByteString;
-import pb.Tm;
 
 import java.io.Serializable;
 

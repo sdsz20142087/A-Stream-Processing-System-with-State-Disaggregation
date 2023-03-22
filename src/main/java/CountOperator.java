@@ -11,6 +11,7 @@ import operators.SingleInputOperator;
  *  A simple count operator that keeps the current count per server
  *  in a hashmap
  */
+@Deprecated
 public class CountOperator extends SingleInputOperator<ServerCount, String>  {
 
     private final ConcurrentLinkedQueue<ServerCount> input;

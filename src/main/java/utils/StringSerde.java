@@ -1,7 +1,6 @@
 package utils;
 
 import com.google.protobuf.ByteString;
-import exec.SerDe;
 
 import java.io.Serializable;
 

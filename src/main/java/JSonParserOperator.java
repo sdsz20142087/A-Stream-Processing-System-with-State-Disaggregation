@@ -9,6 +9,7 @@ import operators.SingleInputOperator;
 /**
  *  A map operator that parses the json events and projects some fields
  */
+@Deprecated
 public class JSonParserOperator extends SingleInputOperator<TimedMessageEvent, ServerCount> {
 
     private final ConcurrentLinkedQueue<TimedMessageEvent> input;

@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
+@Deprecated
 public class WikipediaSource extends Thread {
     private final String URL;
     private final long timeout;

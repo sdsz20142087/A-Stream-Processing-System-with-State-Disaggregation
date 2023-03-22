@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  *
  */
+@Deprecated
 public class WikipediaFileSource extends Thread {
     private final String FILE_PATH;
     private final ConcurrentLinkedQueue<TimedMessageEvent>[] output;

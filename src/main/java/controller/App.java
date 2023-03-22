@@ -2,7 +2,7 @@ package controller;
 
 import config.Config;
 import config.TMConfig;
-import exec.SerDe;
+import utils.SerDe;
 import operators.ISource;
 import operators.SinkOperator;
 import operators.SourceOperator;
@@ -24,7 +24,7 @@ public class App {
         return instance;
     }
 
-    private App(){
+    private App() {
         this.queryPlan = new QueryPlan();
         this.tmcfg = Config.getInstance().taskManager;
         // TODO: build the query plan here
