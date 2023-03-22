@@ -17,6 +17,8 @@ public class ControlPlane extends NodeBase {
 
     public OperatorLoadBalancer opLB;
 
+    public int tmClientCnt;
+
     public static ControlPlane getInstance() {
         if (instance == null)
             instance = new ControlPlane();
@@ -27,7 +29,7 @@ public class ControlPlane extends NodeBase {
         // read the config file
         Config.LoadConfig(configPath);
         cpcfg = Config.getInstance().controlPlane;
-
+        tmClientCnt = 0;
         // initialize the etcd client
         ETCDHelper.init(cpcfg.etcd_endpoints, cpcfg.test_etcd_conn);
 
@@ -48,8 +50,11 @@ public class ControlPlane extends NodeBase {
         try {
             this.cpServer.start();
             logger.info("ControlPlane gRPC server started");
-            logger.info("ControlPlane scheduler starting in 5s...");
-            Thread.sleep(5000);
+            while (tmClientCnt == 0) {
+                logger.info("ControlPlane scheduler starting in 5s, please register taskManager");
+                Thread.sleep(5000);
+            }
+            logger.info("taskManager count: " + tmClientCnt);
             this.scheduler.start();
             logger.info("ControlPlane scheduler started");
             // let this thread block until server termination

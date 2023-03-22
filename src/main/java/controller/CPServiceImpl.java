@@ -52,6 +52,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         try{
             logger.info("status:"+tmClient.getStatus());
             b.setStatus("ok");
+            ControlPlane.getInstance().tmClientCnt++;
         }catch (Exception e){
             logger.fatal("Failed to get status from TM at " + request.getAddress(), e);
             b.setStatus("failed");
