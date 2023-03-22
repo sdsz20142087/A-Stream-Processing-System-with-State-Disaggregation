@@ -9,6 +9,8 @@ import stateapis.RemoteKVProvider;
 import utils.NodeBase;
 import java.io.IOException;
 
+import static java.lang.Thread.sleep;
+
 public class TaskManager extends NodeBase {
     private static TaskManager instance;
     private final CPClient registryClient;

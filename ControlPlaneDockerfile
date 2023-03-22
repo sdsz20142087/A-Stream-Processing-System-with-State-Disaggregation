@@ -1,0 +1,7 @@
+FROM adoptopenjdk/openjdk11
+# we really should mount the drive, but I'm using a virtual machine, so no.
+# IMPORTANT: run `docker compose build` to build the image before running `docker compose up`
+COPY target/ControlPlane-jar-with-dependencies.jar /app.jar
+COPY config.json /config.json
+CMD ["java", "-jar", "/app.jar"]
+

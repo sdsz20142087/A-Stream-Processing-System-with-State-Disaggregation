@@ -1,19 +1,15 @@
 package controller;
 
+import DB.etcdDB.ETCDHelper;
 import config.CPConfig;
 import config.Config;
-import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.Client;
-import io.etcd.jetcd.KV;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import utils.NodeBase;
 import java.io.IOException;
-import java.util.Arrays;
 
 public class ControlPlane extends NodeBase {
     private final Server cpServer;
-    private final KV kvClient;
     private final CPConfig cpcfg;
     private static ControlPlane instance;
 
@@ -33,19 +29,7 @@ public class ControlPlane extends NodeBase {
         cpcfg = Config.getInstance().controlPlane;
 
         // initialize the etcd client
-        Client client = Client.builder().endpoints(cpcfg.etcd_endpoints).build();
-        this.kvClient = client.getKVClient();
-        if (cpcfg.test_etcd_conn){
-            // test the connection
-            try {
-                this.kvClient.get(ByteSequence.from("test_key".getBytes())).get();
-                logger.info("Connected to etcd on"+ Arrays.toString(cpcfg.etcd_endpoints));
-            } catch (Exception e) {
-                logger.fatal("Failed to connect to etcd", e);
-                System.exit(1);
-            }
-        }
-        logger.info("initialized etcd kvclient, endpoints="+Arrays.toString(cpcfg.etcd_endpoints));
+        ETCDHelper.init(cpcfg.etcd_endpoints, cpcfg.test_etcd_conn);
 
         CPServiceImpl svc = new CPServiceImpl();
 

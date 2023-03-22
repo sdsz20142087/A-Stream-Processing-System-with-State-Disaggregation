@@ -30,9 +30,17 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         Cp.RegisterTMResponse.Builder b = Cp.RegisterTMResponse.newBuilder();
         TMClient tmClient = new TMClient(request.getAddress(), request.getPort());
         tmClients.put(request.getName(),tmClient);
-
+        logger.info("a");
         String status = null;
 //        try {
+//            //status = dbTools.registerTM(request.getName(), tmClient);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+        //logger.info("DB_status: " + status);
+        logger.info("b");
+        //dbTools.getTM(request.getName());
+        logger.info("c");
 //            status = ETCDHelper.registerTM(request.getName(), tmClient);
 //        } catch (IOException e) {
 //            throw new RuntimeException(e);
