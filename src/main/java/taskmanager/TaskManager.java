@@ -3,11 +3,14 @@ package taskmanager;
 import config.Config;
 import config.TMConfig;
 import io.grpc.*;
+import io.grpc.internal.PickFirstLoadBalancerProvider;
 import stateapis.KVProvider;
 import stateapis.LocalKVProvider;
 import stateapis.RemoteKVProvider;
 import utils.NodeBase;
+
 import java.io.IOException;
+import java.util.List;
 
 public class TaskManager extends NodeBase {
     private static TaskManager instance;
@@ -16,26 +19,29 @@ public class TaskManager extends NodeBase {
     private final TMConfig tmcfg;
     private final TMServiceImpl tmService;
 
-    private TaskManager(int grpcPort) {
-
+    private TaskManager() {
+        // configure GRPC to use PickFirstLB
+        LoadBalancerRegistry.getDefaultRegistry().register(new PickFirstLoadBalancerProvider());
         // read the config file
         Config.LoadConfig(configPath);
 
         tmcfg = Config.getInstance().taskManager;
 
-        // !!!!tm_port is assigned at runtime to make things simple
-        tmcfg.tm_port = grpcPort;
+        int actualPort = tmcfg.tm_port;
 
-        logger.info("tm_port=" + Config.getInstance().taskManager.tm_port);
-        registryClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, tmcfg.tm_port);
+        logger.info("tm_port=" + actualPort);
+        registryClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, actualPort);
         KVProvider kvProvider = tmcfg.useHybrid ? new RemoteKVProvider() : new LocalKVProvider();
         logger.info("State config: using " + kvProvider.getClass().getName());
         tmService = new TMServiceImpl(tmcfg.operator_quota, kvProvider);
-        tmServer = ServerBuilder.forPort(tmcfg.tm_port).addService(tmService).build();
+        tmServer = ServerBuilder.forPort(actualPort).addService(tmService).build();
     }
 
     public void init() {
+
         try {
+            logger.info("TaskManager will start in 3 seconds，tm_port=" +tmcfg.tm_port);
+            Thread.sleep(3000);
             // register at control plane
             logger.info("Registering at control plane=" + tmcfg.cp_host + ":" + tmcfg.cp_port);
             logger.info(getHost());
@@ -46,6 +52,7 @@ public class TaskManager extends NodeBase {
 
             this.tmServer.awaitTermination();
         } catch (IOException | InterruptedException e) {
+            logger.warn(List.of(e.getStackTrace()));
             logger.fatal("Failed to start TaskManager", e);
             System.exit(1);
         }
@@ -53,9 +60,10 @@ public class TaskManager extends NodeBase {
 
     public static TaskManager getInstance() {
         if (instance == null)
-            instance = new TaskManager(8010);
+            instance = new TaskManager();
         return instance;
     }
+
 
     public static void main(String[] args) {
         TaskManager.getInstance().init();
