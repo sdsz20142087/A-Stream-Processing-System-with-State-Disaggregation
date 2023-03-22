@@ -42,17 +42,19 @@ class CPClient {
                 logger.fatal("Failed to register TM at Control Plane " + target, t);
                 System.exit(1);
             }
+
             @Override
             public void onCompleted() {
                 logger.info("registerTM Completed");
             }
         });
     }
+
     public String getState(String key) {
         logger.info("Getting state from Control Plane");
         Cp.FindRemoteStateAddressRequest req = Cp.FindRemoteStateAddressRequest.newBuilder().setStateKey(key).build();
         Cp.FindRemoteStateAddressResponse res;
-        res= blockingStub.findRemoteStateAddress(req);
+        res = blockingStub.findRemoteStateAddress(req);
         return res.getAddress();
 
     }

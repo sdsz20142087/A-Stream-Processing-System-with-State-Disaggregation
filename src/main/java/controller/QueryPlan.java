@@ -1,7 +1,5 @@
 package controller;
 
-import kotlin.Pair;
-import kotlin.Triple;
 import operators.BaseOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

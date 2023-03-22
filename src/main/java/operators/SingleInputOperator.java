@@ -2,6 +2,7 @@ package operators;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+@Deprecated
 public abstract class SingleInputOperator<IN, OUT> extends Thread {
     /**
      * Apply transformation

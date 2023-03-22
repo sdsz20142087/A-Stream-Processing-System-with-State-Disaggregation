@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  *  A simple application that ingests wiki edit events
  *  and counts the number of events per server
  */
+@Deprecated
 public class WikiApplication {
     private static final String SERVER_URL = "https://stream.wikimedia.org/v2/stream/recentchange";
     private static final String FILE_INPUT = "data.txt";

@@ -1,7 +1,7 @@
 package operators.stateful;
 
 import com.google.protobuf.ByteString;
-import exec.SerDe;
+import utils.SerDe;
 import operators.BaseOperator;
 import pb.Tm;
 import stateapis.IDataflowMap;
