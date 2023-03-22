@@ -1,8 +1,14 @@
 package stateapis;
 
 public interface KVProvider {
-    BaseState get(String state);
-    void put(String state, BaseState baseState);
+    Object get(String stateKey);
+    void put(String stateKey, Object rawObject);
+
+    void put(String stateKey, byte[] value);
+
+    void delete(String stateKey);
+
+    void clear();
 }
 
 

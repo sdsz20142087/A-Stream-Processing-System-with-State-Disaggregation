@@ -1,5 +1,7 @@
 package controller;
 
+import config.Config;
+import config.TMConfig;
 import exec.SerDe;
 import operators.ISource;
 import operators.SinkOperator;
@@ -8,8 +10,12 @@ import pb.Tm;
 import utils.StringSerde;
 import utils.WikiFileSource;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class App {
     private static App instance;
+    private final TMConfig tmcfg;
     private QueryPlan queryPlan;
 
     public static App getInstance() {
@@ -20,14 +26,20 @@ public class App {
 
     private App(){
         this.queryPlan = new QueryPlan();
+        this.tmcfg = Config.getInstance().taskManager;
         // TODO: build the query plan here
         ISource<String> src = new WikiFileSource("data.txt");
         SerDe<String> serde = new StringSerde();
         SourceOperator<String> source = new SourceOperator<>(src, serde);
-        this.queryPlan.addStage(source, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN);
+
+        // FIXME: the stages should actually be topologically sorted
+        this.queryPlan.addStage(0, source, 3, 3, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         SinkOperator sink = new SinkOperator();
-        this.queryPlan.addStage(sink, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN);
+        this.queryPlan.addStage(1, sink, 3, 3, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
+        List<String> downStreamNames = new ArrayList<>();
+        downStreamNames.add(sink.getOpName());
+        this.queryPlan.addDownStreamOp(0, source, downStreamNames);
     }
 
     public QueryPlan getQueryPlan() {

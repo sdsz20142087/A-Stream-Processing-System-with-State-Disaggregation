@@ -6,7 +6,6 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.kv.GetResponse;
 import io.grpc.LoadBalancerRegistry;
-import io.grpc.NameResolver;
 import io.grpc.internal.PickFirstLoadBalancerProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,23 +17,17 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-//import io.etcd.jetcd.test.EtcdClusterExtension;
-//import org.junit.jupiter.api.extension.RegisterExtension;
-public class DBTools {
+public class ETCDHelper {
     private static String[] endpoints;
-    private static DBTools instance;
     private static KV kvClient;
-    //    private Server DBToolsServer;
     private static final Logger logger = LogManager.getLogger();
-
-    private DBTools() {
-    }
 
     public static void init(String[] eps, boolean testConn) {
         logger.info("Initializing DBTools");
         endpoints = eps;
+        // configure GRPC to use PickFirstLB
         LoadBalancerRegistry.getDefaultRegistry().register(new PickFirstLoadBalancerProvider());
-        Client client = Client.builder().endpoints(eps).build();
+        Client client = Client.builder().endpoints(endpoints).build();
         String msg = "Connecting to etcd on " + Arrays.toString(eps);
         logger.info(msg);
         kvClient = client.getKVClient();
@@ -144,7 +137,7 @@ public class DBTools {
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException {
         System.out.println(new ArrayList<>(List.of(args)).toString());
         // usage: java -jar DBTools.jar http://localhost:2379
-        DBTools.init(new String[]{args[0]}, true);
+        ETCDHelper.init(new String[]{args[0]}, true);
         System.out.println("ok");
     }
 }

@@ -1,31 +1,33 @@
 package taskmanager;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
-import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import kotlin.Pair;
 import operators.BaseOperator;
+import operators.StateDescriptorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
-import utils.TMException;
+import stateapis.KVProvider;
+import stateapis.ListStateAccessor;
+import stateapis.MapStateAccessor;
+import stateapis.ValueStateAccessor;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
-class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
+class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDescriptorProvider {
     private final int operatorQuota;
     private final HashMap<String, BaseOperator> operators;
+    private final KVProvider kvProvider;
     private final Logger logger = LogManager.getLogger();
 
     // map of< TM's address, PushMsgClient>
@@ -36,8 +38,9 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
     // map of <operator name, message>
     private final LinkedBlockingQueue<Pair<String, Tm.Msg.Builder>> msgQueue = new LinkedBlockingQueue<>();
 
-    public TMServiceImpl(int operatorQuota) {
+    public TMServiceImpl(int operatorQuota, KVProvider kvProvider) {
         super();
+        this.kvProvider = kvProvider;
         this.operatorQuota = operatorQuota;
         operators = new HashMap<>();
         logger.info("TM service started with operator quota: " + operatorQuota);
@@ -60,6 +63,18 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    public void getOperatorStatus(Tm.OPStatusRequest request,
+                                  StreamObserver<Tm.OperatorStatus> responseObserver) {
+        logger.info("got operator status query request");
+        Tm.OperatorStatus.Builder status = Tm.OperatorStatus.newBuilder();
+        BaseOperator baseOperator = operators.get(request.getName());
+        status.setInputQueueLength(baseOperator.getInputQueueLength())
+                .setOutputQueueLength(baseOperator.getOutputQueueLength())
+                .setName(baseOperator.getOpName());
+        responseObserver.onNext(status.build());
+        responseObserver.onCompleted();
+    }
+
     /**
      *
      */
@@ -75,7 +90,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
         BaseOperator op = (BaseOperator) ois.readObject();
         LinkedBlockingQueue<Tm.Msg> inputQueue = new LinkedBlockingQueue<>();
         // the queues must be initialized before the operator starts
-        op.init(request.getConfig(), inputQueue, msgQueue);
+        op.init(request.getConfig(), inputQueue, msgQueue, this);
         op.start();
         this.opInputQueues.put(op.getOpName(), inputQueue);
         operators.put(op.getOpName(), op);
@@ -96,6 +111,12 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator quota exceeded")));
             return;
         }
+        logger.info("Display operators why key exists");
+        for (String key : operators.keySet())  {
+            logger.info(key);
+        }
+        logger.info("Finish");
+
         if (operators.containsKey(request.getConfig().getName())) {
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator already exists")));
             return;
@@ -143,8 +164,66 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
     @Override
     public void reConfigOperator(Tm.ReConfigOperatorRequest request,
                                  StreamObserver<Empty> responseObserver) {
+        Tm.OperatorConfig config = request.getConfig();
+        try {
+            operators.get(config.getName()).setConfig(config);
+
+        } catch (Exception e) {
+            String msg = "invalid op name.";
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+        }
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
+    }
+
+
+    @Override
+    public void getState(Tm.GetStateRequest request, StreamObserver<Tm.GetStateResponse> responseObserver){
+        String stateKey = request.getStateKey();
+        Object state = this.kvProvider.get(stateKey);
+        ByteString stateBytes = null;
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(state);
+            oos.flush();
+            stateBytes = ByteString.copyFrom(baos.toByteArray());
+        } catch (IOException e) {
+            responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription("Failed to serialize state object")));
+            return;
+        }
+        Tm.GetStateResponse response = Tm.GetStateResponse.newBuilder().setObj(stateBytes).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
 
     }
+
+    @Override
+    public void removeState(Tm.RemoveStateRequest request, StreamObserver <Empty> responseObserver){
+        try {
+            String stateKey = request.getStateKey();
+            kvProvider.delete(stateKey);
+        } catch (Exception e) {
+            String msg = String.format("can not remove state in TM");
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    // EQUIVALENT TO "PUT"
+    public void updateState(Tm.UpdateStateRequest request, StreamObserver <Empty> responseObserver){
+        String stateKey = request.getStateKey();
+        byte[] stateBytes = request.getObj().toByteArray();
+        kvProvider.put(stateKey, stateBytes);
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
+    }
+
 
     private void sendLoop() throws InterruptedException {
         while (true) {
@@ -176,5 +255,21 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase {
             }
             logger.info("sendloop: sending msg to"+targetOutput);
         }
+    }
+
+    // TODO: IMPLEMENT THIS
+    @Override
+    public ValueStateAccessor getValueStateAccessor(BaseOperator op, String stateName) {
+        return null;
+    }
+
+    @Override
+    public MapStateAccessor getMapStateAccessor(BaseOperator op, String stateName) {
+        return null;
+    }
+
+    @Override
+    public ListStateAccessor getListStateAccessor(BaseOperator op, String stateName) {
+        return null;
     }
 }

@@ -4,10 +4,12 @@ import com.google.protobuf.ByteString;
 import exec.SerDe;
 import operators.BaseOperator;
 import pb.Tm;
+import stateapis.IDataflowMap;
+import stateapis.MapStateAccessor;
+import stateapis.ValueStateAccessor;
+
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.*;
 
 public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializable {
     private SerDe<IN> serde;
@@ -16,16 +18,43 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
     private long windowSize;
     private long slideStep;
     private ArrayList<IN> windowData;
+
+    private MapStateAccessor someMapStateAccessor;
+    private ValueStateAccessor<Integer> intStateAccessor;
     public TimeSlidingWindow(Tm.OperatorConfig config, SerDe<IN> serde, SerDe<OUT> serdeOut, long windowSize, long slideStep) {
         this.serde = serde;
         this.windowSize = windowSize;
         this.slideStep = slideStep;
         this.serdeOut = serdeOut;
         this.windowData = new ArrayList<>();
+
+        //
+        someMapStateAccessor = stateDescriptorProvider.getMapStateAccessor(this, "some-map-state");
+        intStateAccessor = stateDescriptorProvider.getValueStateAccessor(this, "some-int-state");
     }
 
     @Override
     protected void processElement(ByteString in) {
+
+        IDataflowMap m = someMapStateAccessor.value();
+
+
+        // pull state from stateAccessor, return value of value() WILL NOT BE NULL
+        // THE STATE ACCESSOR is responsible for creating a new one
+        Object o = m.get("999");
+
+        // 本地更新state
+        m.put("123",345);
+
+        // 把本地的状态更新到kvprovider
+        someMapStateAccessor.update(m);
+
+
+
+
+
+
+
         IN data = serde.deserialize(in);
         long timestamp = getDataTimestamp(data);
         if(currentWindow == null){

@@ -5,3 +5,4 @@ src/main/lib
 log
 target
 dataflow.iml
+*.db/

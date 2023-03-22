@@ -1,16 +1,12 @@
 package controller;
 
-import DB.etcdDB.DBTools;
+import DB.etcdDB.ETCDHelper;
 import config.CPConfig;
 import config.Config;
-import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.Client;
-import io.etcd.jetcd.KV;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import utils.NodeBase;
 import java.io.IOException;
-import java.util.Arrays;
 
 public class ControlPlane extends NodeBase {
     private final Server cpServer;
@@ -18,6 +14,8 @@ public class ControlPlane extends NodeBase {
     private static ControlPlane instance;
 
     private final Scheduler scheduler;
+
+    public OperatorLoadBalancer opLB;
 
     public static ControlPlane getInstance() {
         if (instance == null)
@@ -31,7 +29,7 @@ public class ControlPlane extends NodeBase {
         cpcfg = Config.getInstance().controlPlane;
 
         // initialize the etcd client
-        DBTools.init(cpcfg.etcd_endpoints, cpcfg.test_etcd_conn);
+        ETCDHelper.init(cpcfg.etcd_endpoints, cpcfg.test_etcd_conn);
 
         CPServiceImpl svc = new CPServiceImpl();
 
@@ -42,6 +40,7 @@ public class ControlPlane extends NodeBase {
 
         // start the scheduler thread
         this.scheduler = new Scheduler(App.getInstance().getQueryPlan(), svc.getTMClients());
+        this.opLB = OperatorLoadBalancer.getInstance(App.getInstance().getQueryPlan());
         logger.info("ControlPlane scheduler init");
     }
 
@@ -59,6 +58,11 @@ public class ControlPlane extends NodeBase {
             logger.fatal("Failed to start ControlPlane", e);
             System.exit(1);
         }
+    }
+
+    public String reportTMStatus(String tm_name, String op_name, int inputQueueLength) {
+        scheduler.scaleTMOperator(tm_name, op_name, inputQueueLength);
+        return "getStatus";
     }
 
     public static void main(String[] args) {

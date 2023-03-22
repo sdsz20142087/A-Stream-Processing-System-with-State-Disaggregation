@@ -12,6 +12,7 @@ public class Filter<T> extends BaseOperator implements Serializable {
     private Predicate<T> predicate;
     private SerDe<T> serde;
     public Filter(SerDe<T> serde) {
+        this.setName("Filter-");
         this.predicate = UDFpredicate;
         this.serde = serde;
     }

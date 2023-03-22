@@ -2,12 +2,15 @@
   "controlPlane": {
     "etcd_endpoints": ["http://etcd:2379"],
     "test_etcd_conn": false,
-    "cp_grpc_port": 8008
+    "cp_grpc_port": 8008,
+    "scale_up_portion": 0.75
   },
   "taskManager": {
     "cp_host": "127.0.0.1",
     "cp_port": 8008,
-    "operator_quota": 4,
-    "tm_host": "127.0.0.1"
+    "operator_quota": 6,
+    "tm_host": "127.0.0.1",
+    "operator_bufferSize": 20,
+    "useHybrid": false
   }
 }

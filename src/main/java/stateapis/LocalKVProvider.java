@@ -1,9 +1,8 @@
 package stateapis;
 
-public class RemoteKVProvider implements KVProvider{
-
+public class LocalKVProvider implements KVProvider{
     @Override
-    public String get(String stateKey) {
+    public Object get(String stateKey) {
         return null;
     }
 
