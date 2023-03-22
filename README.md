@@ -2,10 +2,11 @@
 
 This is a simple Java-based prototype that implements a multi-thread dataflow.
 
-## Run the project
-```bash
-docker compose up
-```
+## Build and Run the project
+
+use `mvn clean && mvn package` to build the project.
+
+edit `docker-compose.yml` and set the desired replicas of TaskManagers, then use `docker compose up` to run the project.
 
 ## Intro
 
