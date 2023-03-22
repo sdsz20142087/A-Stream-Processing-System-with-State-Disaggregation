@@ -5,7 +5,9 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.kv.GetResponse;
+import io.grpc.LoadBalancerRegistry;
 import io.grpc.NameResolver;
+import io.grpc.internal.PickFirstLoadBalancerProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,7 +33,8 @@ public class DBTools {
     public static void init(String[] eps, boolean testConn) {
         logger.info("Initializing DBTools");
         endpoints = eps;
-        Client client = Client.builder().target(endpoints[0]).build();
+        LoadBalancerRegistry.getDefaultRegistry().register(new PickFirstLoadBalancerProvider());
+        Client client = Client.builder().endpoints(eps).build();
         String msg = "Connecting to etcd on " + Arrays.toString(eps);
         logger.info(msg);
         kvClient = client.getKVClient();
