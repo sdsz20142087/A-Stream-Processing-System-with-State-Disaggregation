@@ -3,7 +3,7 @@ package stateapis;
 public class RemoteKVProvider implements KVProvider{
 
     @Override
-    public String get(String stateKey) {
+    public String get(String stateKey, Object defaultValue) {
         return null;
     }
 
@@ -23,7 +23,7 @@ public class RemoteKVProvider implements KVProvider{
     }
 
     @Override
-    public void clear() {
+    public void clear(String prefix) {
 
     }
 }

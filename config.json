@@ -11,6 +11,7 @@
     "operator_quota": 6,
     "tm_port": 8018,
     "operator_bufferSize": 20,
-    "useHybrid": false
+    "useHybrid": false,
+    "rocksDBPath": "data.db"
   }
 }

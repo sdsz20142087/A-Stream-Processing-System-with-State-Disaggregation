@@ -31,7 +31,7 @@ public class TaskManager extends NodeBase {
 
         logger.info("tm_port=" + actualPort);
         registryClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, actualPort);
-        KVProvider kvProvider = tmcfg.useHybrid ? new RemoteKVProvider() : new LocalKVProvider();
+        KVProvider kvProvider = tmcfg.useHybrid ? new RemoteKVProvider() : new LocalKVProvider(tmcfg.rocksDBPath);
         logger.info("State config: using " + kvProvider.getClass().getName());
         tmService = new TMServiceImpl(tmcfg.operator_quota, kvProvider);
         tmServer = ServerBuilder.forPort(actualPort).addService(tmService).build();

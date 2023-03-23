@@ -44,6 +44,8 @@ public abstract class BaseOperator extends Thread implements Serializable {
         this.logger = LogManager.getLogger();
     }
 
+    public void postInit(){}
+
     public Tm.OperatorConfig getConfig(){
         return this.config;
     }
