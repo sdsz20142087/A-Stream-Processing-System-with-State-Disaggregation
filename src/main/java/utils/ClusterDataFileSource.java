@@ -45,7 +45,7 @@ public class ClusterDataFileSource extends Thread implements ISource<String>, Se
         }
     }
     @Override
-    public void init() throws Exception {
+    public void init() throws IOException {
         openNextFile();
         read();
     }

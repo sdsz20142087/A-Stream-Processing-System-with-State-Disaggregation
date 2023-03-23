@@ -41,6 +41,7 @@ public abstract class BaseOperator extends Thread implements Serializable {
         this.inputQueue = inputQueue;
         this.outputQueue = outputQueue;
         this.stateDescriptorProvider = stateDescriptorProvider;
+        this.logger = LogManager.getLogger();
     }
 
     public Tm.OperatorConfig getConfig(){

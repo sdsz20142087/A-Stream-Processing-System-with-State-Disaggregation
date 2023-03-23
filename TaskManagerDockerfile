@@ -1,5 +1,6 @@
 FROM adoptopenjdk/openjdk11
 COPY target/TaskManager-jar-with-dependencies.jar /app.jar
 COPY config.json /config.json
+COPY data.txt /data.txt
 CMD ["java", "-jar", "/app.jar"]
 
