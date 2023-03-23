@@ -5,6 +5,7 @@ import operators.ISource;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,7 @@ public class WikiFileSource implements ISource<String>, Serializable {
     }
 
     @Override
-    public void init() throws Exception {
+    public void init() throws IOException {
         // read everything in advance because we are lazy
         BufferedReader reader = new BufferedReader(new FileReader(path));
         String line = reader.readLine();

@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import utils.SerDe;
 import pb.Tm;
 
+import java.io.IOException;
 import java.io.Serializable;
 
 
@@ -13,7 +14,6 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
 
     public SourceOperator(ISource<T> source, SerDe<T> serde) {
         super();
-        this.setName("SourceOperator");
         this.setOpName("SourceOperator");
         this.source = source;
         this.serde = serde;
@@ -24,10 +24,11 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
 
     @Override
     public void run(){
+
         new Thread(() -> {
             try {
                 source.init();
-            } catch (Exception e) {
+            } catch (IOException e) {
                 logger.fatal("source init failed: " + e.getMessage());
                 System.exit(1);
             }
