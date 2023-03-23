@@ -21,7 +21,7 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
 
     private MapStateAccessor someMapStateAccessor;
     private ValueStateAccessor<Integer> intStateAccessor;
-    public TimeSlidingWindow(Tm.OperatorConfig config, SerDe<IN> serde, SerDe<OUT> serdeOut, long windowSize, long slideStep) {
+    public TimeSlidingWindow(SerDe<IN> serde, SerDe<OUT> serdeOut, long windowSize, long slideStep) {
         this.serde = serde;
         this.windowSize = windowSize;
         this.slideStep = slideStep;
@@ -30,7 +30,7 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
 
         //
         someMapStateAccessor = stateDescriptorProvider.getMapStateAccessor(this, "some-map-state");
-        intStateAccessor = stateDescriptorProvider.getValueStateAccessor(this, "some-int-state");
+        intStateAccessor = stateDescriptorProvider.getValueStateAccessor(this, "some-int-state",0);
     }
 
     @Override

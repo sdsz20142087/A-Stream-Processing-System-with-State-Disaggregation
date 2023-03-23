@@ -3,17 +3,13 @@ package stateapis;
 
 public class ValueStateAccessor<T> extends BaseStateAccessor<T> {
 
-    private String descriptorName;
-
-    private KVProvider kvProvider;
-
-    public ValueStateAccessor(String descriptorName, KVProvider kvProvider) {
+    public ValueStateAccessor(String descriptorName, KVProvider kvProvider, T defaultValue) {
         super(descriptorName, kvProvider);
     }
 
     @Override
     public T value() {
-        T value = (T) kvProvider.get(descriptorName);
+        T value = (T) kvProvider.get(descriptorName, 0);
         return value;
     }
 

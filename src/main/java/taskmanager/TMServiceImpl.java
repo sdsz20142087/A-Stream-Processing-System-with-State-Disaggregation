@@ -91,6 +91,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         LinkedBlockingQueue<Tm.Msg> inputQueue = new LinkedBlockingQueue<>();
         // the queues must be initialized before the operator starts
         op.init(request.getConfig(), inputQueue, msgQueue, this);
+        op.postInit();
         op.start();
         this.opInputQueues.put(op.getOpName(), inputQueue);
         operators.put(op.getOpName(), op);
@@ -137,7 +138,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         String opName = request.getOperatorName();
         logger.info("got pushMsg request for "+opName);
         if(!operators.containsKey(opName)){
-            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator not found")));
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator "+opName+" not found")));
             return;
         }
         try {
@@ -181,7 +182,8 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     @Override
     public void getState(Tm.GetStateRequest request, StreamObserver<Tm.GetStateResponse> responseObserver){
         String stateKey = request.getStateKey();
-        Object state = this.kvProvider.get(stateKey);
+        // note that we're assuming that if a state is remote, then it must exist, thus could not be null anyways
+        Object state = this.kvProvider.get(stateKey, null);
         ByteString stateBytes = null;
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -253,14 +255,15 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
                 Tm.Msg msg = item.getSecond().setOperatorName(target.getName()).build();
                 pushMsgClients.get(target.getAddress()).pushMsg(msg);
             }
-            logger.info("sendloop: sending msg to"+targetOutput);
+            logger.debug("sendloop: sending msg to"+targetOutput);
         }
     }
 
     // TODO: IMPLEMENT THIS
     @Override
-    public ValueStateAccessor getValueStateAccessor(BaseOperator op, String stateName) {
-        return null;
+    public ValueStateAccessor getValueStateAccessor(BaseOperator op, String stateName, Object defaultValue) {
+        String stateDescriptor = op.getOpName() + "." + stateName;
+        return new ValueStateAccessor(stateDescriptor, this.kvProvider, defaultValue);
     }
 
     @Override

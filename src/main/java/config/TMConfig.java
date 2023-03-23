@@ -9,4 +9,6 @@ public class TMConfig {
     public int operator_bufferSize;
 
     public boolean useHybrid;
+
+    public String rocksDBPath;
 }
