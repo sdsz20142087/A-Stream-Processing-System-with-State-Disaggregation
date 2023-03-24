@@ -38,6 +38,8 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     // map of <operator name, message>
     private final LinkedBlockingQueue<Pair<String, Tm.Msg.Builder>> msgQueue = new LinkedBlockingQueue<>();
 
+    private final HashMap<BaseOperator, Integer> roundRobinCounter = new HashMap<>();
+
     public TMServiceImpl(int operatorQuota, KVProvider kvProvider) {
         super();
         this.kvProvider = kvProvider;
@@ -58,7 +60,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
                           StreamObserver<Tm.TMStatusResponse> responseObserver) {
         logger.info("got status request");
         Tm.TMStatusResponse.Builder b = Tm.TMStatusResponse.newBuilder();
-        b.setOperatorCount(999);
+        b.setOperatorCount(this.operators.size());
         responseObserver.onNext(b.build());
         responseObserver.onCompleted();
     }
@@ -93,6 +95,9 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         op.init(request.getConfig(), inputQueue, msgQueue, this);
         op.postInit();
         op.start();
+        if(request.getConfig().getPartitionStrategy() == Tm.PartitionStrategy.ROUND_ROBIN){
+            roundRobinCounter.put(op, 0);
+        }
         this.opInputQueues.put(op.getOpName(), inputQueue);
         operators.put(op.getOpName(), op);
         logger.info(String.format("Started operator %s --all: %s", op.getOpName(), operators.keySet()));
@@ -231,13 +236,18 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         while (true) {
             Pair<String, Tm.Msg.Builder> item = msgQueue.take();
             String opName = item.getFirst();
-            Tm.OperatorConfig config = operators.get(opName).getConfig();
+            BaseOperator op = operators.get(opName);
+            Tm.OperatorConfig config = op.getConfig();
             List<Tm.OutputMetadata> targetOutput = new ArrayList<>();
             // apply the partition strategy
             switch (config.getPartitionStrategy()) {
                 case ROUND_ROBIN:
                     // FIXME: this is not correct
-                    targetOutput.add(config.getOutputMetadataList().get(0));
+                    int val = roundRobinCounter.get(op);
+                    int outputListLen = config.getOutputMetadataList().size();
+                    logger.info("sendloop: roundrobin counter for "+opName+" is "+val+" and output list len is "+outputListLen);
+                    roundRobinCounter.put(op, val+1);
+                    targetOutput.add(config.getOutputMetadataList().get(val % outputListLen));
                     break;
                 case HASH:
                     // ???
