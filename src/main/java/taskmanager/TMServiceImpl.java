@@ -16,6 +16,7 @@ import stateapis.KVProvider;
 import stateapis.ListStateAccessor;
 import stateapis.MapStateAccessor;
 import stateapis.ValueStateAccessor;
+import utils.BytesUtil;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -85,11 +86,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     // we can just deserialize it and add it to the operators map
     private void initOperator(Tm.AddOperatorRequest request) throws IOException, ClassNotFoundException {
         byte[] bytes = request.getObj().toByteArray();
-        ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-        ObjectInputStream ois;
-
-        ois = new ObjectInputStream(bis);
-        BaseOperator op = (BaseOperator) ois.readObject();
+        BaseOperator op = (BaseOperator) BytesUtil.checkedObjectFromBytes(bytes);
         LinkedBlockingQueue<Tm.Msg> inputQueue = new LinkedBlockingQueue<>();
         // the queues must be initialized before the operator starts
         op.init(request.getConfig(), inputQueue, msgQueue, this);
@@ -191,11 +188,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         Object state = this.kvProvider.get(stateKey, null);
         ByteString stateBytes = null;
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(state);
-            oos.flush();
-            stateBytes = ByteString.copyFrom(baos.toByteArray());
+            stateBytes = ByteString.copyFrom(BytesUtil.checkedObjectToBytes(state));
         } catch (IOException e) {
             responseObserver.onError(new StatusRuntimeException(Status.INTERNAL.withDescription("Failed to serialize state object")));
             return;
@@ -272,17 +265,28 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     // TODO: IMPLEMENT THIS
     @Override
     public ValueStateAccessor getValueStateAccessor(BaseOperator op, String stateName, Object defaultValue) {
+        checkStateName(stateName);
         String stateDescriptor = op.getOpName() + "." + stateName;
         return new ValueStateAccessor(stateDescriptor, this.kvProvider, defaultValue);
     }
 
     @Override
     public MapStateAccessor getMapStateAccessor(BaseOperator op, String stateName) {
+        // TODO: IMPLEMENT THIS
+        checkStateName(stateName);
         return null;
     }
 
     @Override
     public ListStateAccessor getListStateAccessor(BaseOperator op, String stateName) {
+        // TODO: IMPLEMENT THIS
+        checkStateName(stateName);
         return null;
+    }
+
+    private void checkStateName(String name){
+        if(name.contains(".")){
+            throw new IllegalArgumentException("state name can not contain '.'");
+        }
     }
 }

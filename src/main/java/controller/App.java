@@ -2,7 +2,7 @@ package controller;
 
 import config.Config;
 import config.TMConfig;
-import operators.stateful.CountOperator;
+import operators.stateful.SingleCountOperator;
 import operators.stateless.Filter;
 import utils.*;
 import operators.SinkOperator;
@@ -37,7 +37,7 @@ public class App {
         this.queryPlan.addStage(1, filter, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         // 3: count
-        CountOperator count = new CountOperator(new StringSerde());
+        SingleCountOperator count = new SingleCountOperator(new StringSerde());
         this.queryPlan.addStage(2, count, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         // 4: sink

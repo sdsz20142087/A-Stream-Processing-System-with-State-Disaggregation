@@ -1,5 +1,7 @@
 package stateapis;
 
+import java.util.List;
+
 public class RemoteKVProvider implements KVProvider{
 
     @Override
@@ -15,6 +17,11 @@ public class RemoteKVProvider implements KVProvider{
     @Override
     public void put(String stateKey, byte[] value) {
 
+    }
+
+    @Override
+    public List<String> listKeys(String prefix) {
+        return null;
     }
 
     @Override

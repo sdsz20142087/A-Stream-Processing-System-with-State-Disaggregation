@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
+import utils.BytesUtil;
 
 import java.io.*;
 import java.io.Serializable;
@@ -51,10 +52,8 @@ public class TMClient implements Serializable {
     }
 
     public void addOperator(Tm.OperatorConfig config, BaseOperator operator) throws Exception {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(operator);
-        byte[] bytes = baos.toByteArray();
+
+        byte[] bytes = BytesUtil.checkedObjectToBytes(operator);
         ByteString bs = ByteString.copyFrom(bytes);
         Tm.AddOperatorRequest req = Tm.AddOperatorRequest.newBuilder().setConfig(config).setObj(bs).build();
         blockingStub.addOperator(req);
@@ -119,18 +118,12 @@ public class TMClient implements Serializable {
 
         //deserialize
         byte[] bytes = res.getObj().toByteArray();
-        ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-        ObjectInputStream ois;
-
-        ois = new ObjectInputStream(bis);
-        return ois.readObject();
+        return BytesUtil.checkedObjectFromBytes(bytes);
     }
 
     public void updateState(String stateKey, Object state) throws IOException, ClassNotFoundException{
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream oos = new ObjectOutputStream(baos);
-        oos.writeObject(state);
-        byte[] bytes = baos.toByteArray();
+        byte[] bytes = BytesUtil.checkedObjectToBytes(state);
+
         ByteString bs = ByteString.copyFrom(bytes);
         Tm.UpdateStateRequest req = Tm.UpdateStateRequest.newBuilder().setStateKey(stateKey).setObj(bs).build();
         blockingStub.updateState(req);
