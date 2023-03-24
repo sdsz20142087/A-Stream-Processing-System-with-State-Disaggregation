@@ -3,16 +3,17 @@ package stateapis;
 import java.util.List;
 import java.util.Set;
 
-public interface IDataflowMap<K, V> {
-    V get(K key);
-    void put(K key, V value);
-    void remove(K key);
+public interface IDataflowMap<V> {
+    // The type of keys must be String
+    V get(String key);
+    void put(String key, V value);
+    void remove(String key);
     void clear();
-    List<K> keys();
+    List<String> keys();
 
     boolean isEmpty();
 
-    boolean containsKey(K key);
+    boolean containsKey(String key);
 
     int size();
 }

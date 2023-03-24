@@ -4,23 +4,26 @@ import DB.rocksDB.RocksDBHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rocksdb.RocksDB;
+import org.rocksdb.RocksIterator;
+import utils.BytesUtil;
+import utils.FatalUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LocalKVProvider implements KVProvider {
     private RocksDB db;
-    private Logger logger = LogManager.getLogger();
+    private final Logger logger = LogManager.getLogger();
 
     public LocalKVProvider(String dbPath) {
         try {
             db = RocksDBHelper.getRocksDB(dbPath);
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.fatal("Failed to create RocksDB instance" + e.getMessage());
-            System.exit(1);
+            FatalUtil.fatal("Failed to open RocksDB", e);
         }
     }
 
@@ -29,19 +32,14 @@ public class LocalKVProvider implements KVProvider {
         try {
             byte[] value = db.get(stateKey.getBytes());
             if (value == null) {
+                logger.info("Key not found in RocksDB, returning default value");
                 return defaultValue;
             }
             // deserialize the value into an object
-            ByteArrayInputStream bis = new ByteArrayInputStream(value);
-            ObjectInputStream ois;
-
-            ois = new ObjectInputStream(bis);
-            Object v = ois.readObject();
+            Object v = BytesUtil.checkedObjectFromBytes(value);
             return v;
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.fatal("Failed to get value from RocksDB" + e.getMessage());
-            System.exit(1);
+            FatalUtil.fatal("Failed to get value from RocksDB", e);
             return null;
         }
     }
@@ -50,15 +48,10 @@ public class LocalKVProvider implements KVProvider {
     public void put(String stateKey, Object rawObject) {
         try {
             // serialize the object into a byte array
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(rawObject);
-            byte[] bytes = baos.toByteArray();
+            byte[] bytes = BytesUtil.checkedObjectToBytes(rawObject);
             db.put(stateKey.getBytes(), bytes);
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.fatal("Failed to put value into RocksDB" + e.getMessage());
-            System.exit(1);
+            FatalUtil.fatal("Failed to put value into RocksDB", e);
         }
     }
 
@@ -67,10 +60,18 @@ public class LocalKVProvider implements KVProvider {
         try {
             db.put(stateKey.getBytes(), value);
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.fatal("Failed to put value into RocksDB" + e.getMessage());
-            System.exit(1);
+            FatalUtil.fatal("Failed to put value into RocksDB", e);
         }
+    }
+
+    @Override
+    public List<String> listKeys(String prefix) {
+        List<String> result = new ArrayList<>();
+        RocksIterator it = db.newIterator();
+        for (it.seek(prefix.getBytes()); it.isValid(); it.next()) {
+            result.add(new String(it.key()));
+        }
+        return result;
     }
 
     @Override
@@ -78,20 +79,20 @@ public class LocalKVProvider implements KVProvider {
         try {
             db.delete(stateKey.getBytes());
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.fatal("Failed to delete value from RocksDB" + e.getMessage());
-            System.exit(1);
+            FatalUtil.fatal("Failed to delete value from RocksDB", e);
         }
     }
 
     @Override
     public void clear(String prefix) {
         try {
-            db.delete(prefix.getBytes());
+            byte[] start = prefix.getBytes();
+            // increment the last byte of the start byte array
+            byte[] end = BytesUtil.increment(start);
+            // beautiful impl, gets the next byte array
+            db.deleteRange(start, end);
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.fatal("Failed to delete value prefix from RocksDB" + prefix + ":" + e.getMessage());
-            System.exit(1);
+            FatalUtil.fatal("Failed to clear values from RocksDB", e);
         }
     }
 }
