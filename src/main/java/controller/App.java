@@ -9,6 +9,9 @@ import operators.SinkOperator;
 import operators.SourceOperator;
 import pb.Tm;
 
+import java.io.Serializable;
+import java.util.function.Predicate;
+
 public class App {
     private static App instance;
     private final TMConfig tmcfg;
@@ -30,7 +33,7 @@ public class App {
         this.queryPlan.addStage(0, source, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         // 2: filter: wikiInfo.id % 4 != 0;
-        Filter<WikiInfo> filter = new Filter<>(new WikiInfoSerde(), new WIKIPredicate());
+        Filter<WikiInfo> filter = new Filter<>(new WikiInfoSerde(), (Predicate<WikiInfo>& Serializable) wikiInfo -> wikiInfo.id % 4 != 0 );
         this.queryPlan.addStage(1, filter, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         // 3: count

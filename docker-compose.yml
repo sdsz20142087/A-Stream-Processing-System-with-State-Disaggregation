@@ -25,14 +25,14 @@ services:
     build:
         context: .
         dockerfile: TaskManagerDockerfile
-    ports:
-        - '8018:8018'
+    expose:
+      - '8018'
     links:
       - controlplane
     depends_on:
       - controlplane
     deploy:
-        replicas: 1
+        replicas: 2
 
 volumes:
   etcd_data:
