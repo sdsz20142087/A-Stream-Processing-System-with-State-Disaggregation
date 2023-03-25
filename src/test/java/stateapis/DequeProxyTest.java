@@ -1,18 +1,25 @@
 package stateapis;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DequeProxyTest {
 
     private DequeProxy<String> d;
+    private LocalKVProvider kvProvider;
 
     @BeforeEach
     void setUp() {
-        d = new DequeProxy<>("test-keybase", new LocalKVProvider("test.db"));
+        kvProvider = new LocalKVProvider("test.db");
+        d = new DequeProxy<>("test-keybase", kvProvider);
         d.clear();
+    }
+
+    @AfterEach
+    void tearDown() {
+        d.clear();
+        kvProvider.close();
     }
 
     @Test
