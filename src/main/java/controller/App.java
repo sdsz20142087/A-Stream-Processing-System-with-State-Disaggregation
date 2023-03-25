@@ -43,9 +43,6 @@ public class App {
         // 4: sink
         SinkOperator sink = new SinkOperator();
         this.queryPlan.addStage(3, sink, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
-
-
-
 //        SinkOperator sink = new SinkOperator();
 //        this.queryPlan.addStage(1, sink, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 //        List<String> downStreamNames = new ArrayList<>();
