@@ -1,5 +1,3 @@
-package operators;
-
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Deprecated

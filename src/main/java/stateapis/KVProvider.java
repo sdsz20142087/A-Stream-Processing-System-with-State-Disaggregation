@@ -13,6 +13,8 @@ public interface KVProvider {
     void delete(String stateKey);
 
     void clear(String prefix);
+
+    void close();
 }
 
 

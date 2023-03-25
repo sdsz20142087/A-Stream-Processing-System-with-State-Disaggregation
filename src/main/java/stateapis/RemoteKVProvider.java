@@ -33,4 +33,9 @@ public class RemoteKVProvider implements KVProvider{
     public void clear(String prefix) {
 
     }
+
+    @Override
+    public void close() {
+
+    }
 }

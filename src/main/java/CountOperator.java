@@ -1,11 +1,7 @@
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import utils.ServerCount;
-import utils.TimedMessageEvent;
+
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import operators.SingleInputOperator;
 
 /**
  *  A simple count operator that keeps the current count per server

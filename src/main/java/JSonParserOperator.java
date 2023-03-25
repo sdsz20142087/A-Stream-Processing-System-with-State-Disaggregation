@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import utils.ServerCount;
 import utils.TimedMessageEvent;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import operators.SingleInputOperator;
 
 /**
  *  A map operator that parses the json events and projects some fields

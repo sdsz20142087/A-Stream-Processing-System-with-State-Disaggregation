@@ -95,4 +95,13 @@ public class LocalKVProvider implements KVProvider {
             FatalUtil.fatal("Failed to clear values from RocksDB", e);
         }
     }
+
+    @Override
+    public void close() {
+        try {
+            db.close();
+        } catch (Exception e) {
+            FatalUtil.fatal("Failed to close RocksDB", e);
+        }
+    }
 }
