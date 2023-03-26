@@ -1,6 +1,6 @@
 {
   "controlPlane": {
-    "etcd_endpoints": ["http://etcd:2379"],
+    "etcd_endpoints": ["http://etcd:8179"],
     "test_etcd_conn": false,
     "cp_grpc_port": 8008,
     "scale_up_portion": 0.75

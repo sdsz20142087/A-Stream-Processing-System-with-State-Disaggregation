@@ -9,8 +9,8 @@ services:
     volumes:
       - etcd_data:/bitnami/etcd
     ports:
-        - '2379:2379'
-        - '2380:2380'
+        - '8179:2379'
+        - '8180:2380'
   controlplane:
     build:
         context: .

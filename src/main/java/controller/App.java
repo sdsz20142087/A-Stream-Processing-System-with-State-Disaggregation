@@ -34,7 +34,7 @@ public class App {
 
         // 2: filter: wikiInfo.id % 4 != 0;
         Filter<WikiInfo> filter = new Filter<>(new WikiInfoSerde(), (Predicate<WikiInfo>& Serializable) wikiInfo -> wikiInfo.id % 4 != 0 );
-        this.queryPlan.addStage(1, filter, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
+        this.queryPlan.addStage(1, filter, 2, 2, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         // 3: count
         SingleCountOperator count = new SingleCountOperator(new StringSerde());
@@ -43,9 +43,6 @@ public class App {
         // 4: sink
         SinkOperator sink = new SinkOperator();
         this.queryPlan.addStage(3, sink, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
-
-
-
 //        SinkOperator sink = new SinkOperator();
 //        this.queryPlan.addStage(1, sink, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 //        List<String> downStreamNames = new ArrayList<>();
