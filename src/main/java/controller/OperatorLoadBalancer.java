@@ -106,7 +106,7 @@ public class OperatorLoadBalancer{
     /**
      * @operators_distribution: key - opGeneralName, value - PQ(OperatorTaskStatus), order based on pendingTaskCnt and upstreamOperatorCnt
      */
-    private ConcurrentHashMap<String, PriorityBlockingQueue<OperatorTaskStatus>> operators_distribution = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, List<OperatorTaskStatus>> operators_distribution = new ConcurrentHashMap<>();
     /**
      * @stageToTm: key - stage idx, value - List(opGeneralName)
      */
@@ -152,28 +152,33 @@ public class OperatorLoadBalancer{
         }
         //get real downStream operator, at first step the downStream Op is a general name, for example SourceOp_0,
         // however, for Parallelism = 3, realOpName are (SourceOp_0-0, SourceOp_0-1, SourceOp_0-2), so need to choose an appropriate op instance
-        for (int i = 0; i < cfg.getOutputMetadataCount(); i++) {
+        int n = cfg.getOutputMetadataCount();
+        for (int i = 0; i < n; i++) {
             Tm.OutputMetadata completedMeta = cfg.getOutputMetadata(i);
-            OperatorTaskStatus realDownStreamOp = operators_distribution.get(completedMeta.getName()).poll(); //get op who has minimum load
-            Tm.OutputMetadata newMeta = Tm.OutputMetadata.
-                    newBuilder().
-                    setName(realDownStreamOp.getOpName()).
-                    setAddress(realDownStreamOp.getTmAddr()).
-                    build();
-            cfg.setOutputMetadata(i, newMeta);
-            realDownStreamOp.upstreamOperatorCnt++;
-            if (!upstream_operators.containsKey(realDownStreamOp.getOpName())) {
-                upstream_operators.put(realDownStreamOp.getOpName(), new ArrayList<>());
+            List<OperatorTaskStatus> realDownStreamOps = operators_distribution.get(completedMeta.getName()); //get op who has minimum load
+            for (int j = 0; j < realDownStreamOps.size(); j++) {
+                OperatorTaskStatus realDownStreamOp = realDownStreamOps.get(j);
+                Tm.OutputMetadata newMeta = Tm.OutputMetadata.
+                        newBuilder().
+                        setName(realDownStreamOp.getOpName()).
+                        setAddress(realDownStreamOp.getTmAddr()).
+                        build();
+                cfg.addOutputMetadata(newMeta);
+                realDownStreamOp.upstreamOperatorCnt++;
+                if (!upstream_operators.containsKey(realDownStreamOp.getOpName())) {
+                    upstream_operators.put(realDownStreamOp.getOpName(), new ArrayList<>());
+                }
+                upstream_operators.get(realDownStreamOp.getOpName()).add(cfg); // update upStreamOp
             }
-            upstream_operators.get(realDownStreamOp.getOpName()).add(cfg); // update upStreamOp
-            operators_distribution.get(completedMeta.getName()).offer(realDownStreamOp);
+            cfg.removeOutputMetadata(i);
         }
+
         try {
             String op_name = cfg.getName(); //generalName
             if (!operators_distribution.containsKey(op_name)) {
-                operators_distribution.put(op_name, new PriorityBlockingQueue<>(20, comparator));
+                operators_distribution.put(op_name, new ArrayList<>());
             }
-            PriorityBlockingQueue<OperatorTaskStatus> op_instances = operators_distribution.get(op_name);
+            List<OperatorTaskStatus> op_instances = operators_distribution.get(op_name);
             int instance_size = op_instances.size();
             cfg.setName(cfg.getName() + "-" + instance_size); //rename operator based on current instance size
             if (ParaCnt == 0) {
@@ -186,7 +191,7 @@ public class OperatorLoadBalancer{
             }
             routeTable.put(cfg.getName(), tmClient.getAddress());
             OperatorTaskStatus opTS = new OperatorTaskStatus(0, 0, cfg.getName(), tmClient.getAddress());
-            operators_distribution.get(op_name).offer(opTS);
+            operators_distribution.get(op_name).add(opTS);
             logger.info("register operator: " + cfg.getName());
             tmClient.addOperator(cfg.build(), op);
             outputDownStreamOpInfo(cfg, tmClient.getAddress());
@@ -206,65 +211,67 @@ public class OperatorLoadBalancer{
         }
     }
 
+    @Deprecated
     public boolean reRouteOperator(String tm_name, String op_name) {
-        String generalOpName = op_name.substring(0, op_name.length() - 2);
-        PriorityBlockingQueue<OperatorTaskStatus> operatorTaskStatuses = operators_distribution.get(generalOpName);
-        PriorityBlockingQueue<OperatorTaskStatus> newPQ = updatePQTaskStatus(operatorTaskStatuses); //get latest pendingTaskLength for each
-        operators_distribution.put(generalOpName, newPQ);
-        OperatorTaskStatus taskStatus = newPQ.poll(); //target re-Route operator, who has the least pendingTaskLength
-        Tm.OperatorConfig.Builder cfg = op_configs.get(taskStatus.getOpName());
-        int operator_threshold = (int) (cfg.getBufferSize() * scale_up_portion);
-        if (operator_threshold < taskStatus.getPendingTaskCnt()) { //if op who has the least pendingTaskLength still exceed threshold, need scale up
-            return false;
-        }
-        List<Tm.OperatorConfig.Builder> builders = upstream_operators.get(op_name); //get upstreamOperators
-        int reRouteCnt = ((builders.size() - 1) >> 1); //reRoute half upstream operators to new op
-        for (int i = 0; i < reRouteCnt; i++) {
-            String tmAddr = routeTable.get(builders.get(i).getName());
-            TMClient tmClient = new TMClient(tmAddr);
-            Tm.OperatorConfig.Builder prevConfig = builders.get(i);
-            for (int j = 0; j < prevConfig.getOutputMetadataCount(); i++) { //change downStream operators to new op
-                Tm.OutputMetadata outputMeta = prevConfig.getOutputMetadata(j);
-                if (!outputMeta.getName().equals(op_name)) continue;
-                Tm.OutputMetadata newMeta = Tm.OutputMetadata.newBuilder()
-                        .setName(taskStatus.getOpName())
-                        .setAddress(taskStatus.getTmAddr())
-                        .build();
-                prevConfig.setOutputMetadata(j, newMeta);
-                taskStatus.setUpstreamOperatorCnt(taskStatus.getUpstreamOperatorCnt() + 1);
-            }
-            upstream_operators.get(taskStatus.getOpName()).add(prevConfig);
-            upstream_operators.get(op_name).remove(i);
-            tmClient.reConfigOp(prevConfig.build()); //reConfig to new Op
-        }
+//        String generalOpName = op_name.substring(0, op_name.length() - 2);
+//        PriorityBlockingQueue<OperatorTaskStatus> operatorTaskStatuses = operators_distribution.get(generalOpName);
+//        PriorityBlockingQueue<OperatorTaskStatus> newPQ = updatePQTaskStatus(operatorTaskStatuses); //get latest pendingTaskLength for each
+//        operators_distribution.put(generalOpName, newPQ);
+//        OperatorTaskStatus taskStatus = newPQ.poll(); //target re-Route operator, who has the least pendingTaskLength
+//        Tm.OperatorConfig.Builder cfg = op_configs.get(taskStatus.getOpName());
+//        int operator_threshold = (int) (cfg.getBufferSize() * scale_up_portion);
+//        if (operator_threshold < taskStatus.getPendingTaskCnt()) { //if op who has the least pendingTaskLength still exceed threshold, need scale up
+//            return false;
+//        }
+//        List<Tm.OperatorConfig.Builder> builders = upstream_operators.get(op_name); //get upstreamOperators
+//        int reRouteCnt = ((builders.size() - 1) >> 1); //reRoute half upstream operators to new op
+//        for (int i = 0; i < reRouteCnt; i++) {
+//            String tmAddr = routeTable.get(builders.get(i).getName());
+//            TMClient tmClient = new TMClient(tmAddr);
+//            Tm.OperatorConfig.Builder prevConfig = builders.get(i);
+//            for (int j = 0; j < prevConfig.getOutputMetadataCount(); i++) { //change downStream operators to new op
+//                Tm.OutputMetadata outputMeta = prevConfig.getOutputMetadata(j);
+//                if (!outputMeta.getName().equals(op_name)) continue;
+//                Tm.OutputMetadata newMeta = Tm.OutputMetadata.newBuilder()
+//                        .setName(taskStatus.getOpName())
+//                        .setAddress(taskStatus.getTmAddr())
+//                        .build();
+//                prevConfig.setOutputMetadata(j, newMeta);
+//                taskStatus.setUpstreamOperatorCnt(taskStatus.getUpstreamOperatorCnt() + 1);
+//            }
+//            upstream_operators.get(taskStatus.getOpName()).add(prevConfig);
+//            upstream_operators.get(op_name).remove(i);
+//            tmClient.reConfigOp(prevConfig.build()); //reConfig to new Op
+//        }
         return true;
     }
 
-    public PriorityBlockingQueue<OperatorTaskStatus> updatePQTaskStatus(PriorityBlockingQueue<OperatorTaskStatus> operatorTaskStatuses) {
-        PriorityBlockingQueue<OperatorTaskStatus> newOperatorTaskStatuses = new PriorityBlockingQueue<>();
-        while (!operatorTaskStatuses.isEmpty()) {
-            OperatorTaskStatus status = operatorTaskStatuses.poll();
-            TMClient tmClient = new TMClient(status.getTmAddr());
-            Pair<Integer, Integer> opQueueStatus = tmClient.getOpStatus(status.getOpName());
-            status.setPendingTaskCnt(opQueueStatus.getFirst());
-            newOperatorTaskStatuses.offer(status);
-        }
-        operatorTaskStatuses = newOperatorTaskStatuses;
-        return operatorTaskStatuses;
+    @Deprecated
+    public void updatePQTaskStatus(PriorityBlockingQueue<OperatorTaskStatus> operatorTaskStatuses) {
+//        PriorityBlockingQueue<OperatorTaskStatus> newOperatorTaskStatuses = new PriorityBlockingQueue<>();
+//        while (!operatorTaskStatuses.isEmpty()) {
+//            OperatorTaskStatus status = operatorTaskStatuses.poll();
+//            TMClient tmClient = new TMClient(status.getTmAddr());
+//            Pair<Integer, Integer> opQueueStatus = tmClient.getOpStatus(status.getOpName());
+//            status.setPendingTaskCnt(opQueueStatus.getFirst());
+//            newOperatorTaskStatuses.offer(status);
+//        }
+//        operatorTaskStatuses = newOperatorTaskStatuses;
+//        return operatorTaskStatuses;
     }
 
     public Tm.OperatorConfig.Builder scaleUpOp(Tm.OperatorConfig.Builder cfg, TMClient tmClient) {
         String op_name = cfg.getName();
         String generalName = op_name.substring(0, op_name.length() - 2);
         Tm.OperatorConfig.Builder newCfg = Tm.OperatorConfig.newBuilder();
-        PriorityBlockingQueue<OperatorTaskStatus> op_instances = operators_distribution.get(generalName);
+        List<OperatorTaskStatus> op_instances = operators_distribution.get(generalName);
         int instance_size = op_instances.size();
         newCfg.setName(generalName + "-" + instance_size).setBufferSize(cfg.getBufferSize()).setPartitionStrategy(cfg.getPartitionStrategy());
         newCfg.addAllOutputMetadata(cfg.getOutputMetadataList());
-        upstream_operators.put(newCfg.getName(), new ArrayList<>());
+        upstream_operators.put(newCfg.getName(), upstream_operators.get(cfg.getName()));
         routeTable.put(newCfg.getName(), tmClient.getAddress());
         OperatorTaskStatus opTS = new OperatorTaskStatus(0, 0, newCfg.getName(), tmClient.getAddress());
-        operators_distribution.get(generalName).offer(opTS);
+        operators_distribution.get(generalName).add(opTS);
         BaseOperator op = hmBaseOperators.get(generalName);
         try {
             tmClient.addOperator(newCfg.build(), op);
@@ -272,7 +279,21 @@ public class OperatorLoadBalancer{
             throw new RuntimeException(e);
         }
         op_configs.put(newCfg.getName(), newCfg);
-        reRouteOperator(cfg.getName(), routeTable.get(cfg.getName()));
+//        reRouteOperator(cfg.getName(), routeTable.get(cfg.getName()));
+        List<Tm.OperatorConfig.Builder> builders = upstream_operators.get(op_name); //get upstreamOperators
+        int reConfigCnt = builders.size(); //reRoute half upstream operators to new op
+        for (int i = 0; i < reConfigCnt; i++) {
+            String tmAddr = routeTable.get(builders.get(i).getName());
+            TMClient client = new TMClient(tmAddr);
+            Tm.OperatorConfig.Builder prevConfig = builders.get(i);
+            Tm.OutputMetadata newMeta = Tm.OutputMetadata.newBuilder()
+                    .setName(opTS.getOpName())
+                    .setAddress(opTS.getTmAddr())
+                    .build();
+            prevConfig.addOutputMetadata(newMeta);
+            upstream_operators.get(opTS.getOpName()).add(prevConfig);
+            tmClient.reConfigOp(prevConfig.build()); //reConfig to new Op
+        }
         return newCfg;
     }
 }

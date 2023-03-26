@@ -154,20 +154,14 @@ public class Scheduler extends Thread {
                 Tm.OperatorConfig.Builder op_config = operators_config.get(new Pair<>(op_request.getFirst(), op_request.getSecond()));
                 int operator_threshold = (int) (op_config.getBufferSize() * scale_up_portion);
                 if (!(operator_threshold >= op_request.getThird())) {
-                    logger.info("processing Reroute");
-                    boolean reRouteSucceedOrNot = opLB.reRouteOperator(op_request.getFirst(), op_request.getSecond());
-                    if (reRouteSucceedOrNot) {
-                        logger.info("re-Route successfully.");
-                    } else {
-                        logger.info("re-Route unsuccessful, try scale up");
-                        Triple<Integer, String, TMClient> target_element = pq.poll();
-                        TMClient tmClient = target_element.getThird();
-                        Tm.OperatorConfig.Builder scaledOpConfig = opLB.scaleUpOp(op_config, tmClient);
-                        operators_config.put(new Pair<>(target_element.getSecond(), scaledOpConfig.getName()), scaledOpConfig);
-                        target_element = new Triple<>(target_element.getFirst() + 1, target_element.getSecond(), target_element.getThird());
-                        pq.offer(target_element);
-                        logger.info("scale up successfully, new scaled op is " + scaledOpConfig.getName());
-                    }
+                    logger.info("processing scale up");
+                    Triple<Integer, String, TMClient> target_element = pq.poll();
+                    TMClient tmClient = target_element.getThird();
+                    Tm.OperatorConfig.Builder scaledOpConfig = opLB.scaleUpOp(op_config, tmClient);
+                    operators_config.put(new Pair<>(target_element.getSecond(), scaledOpConfig.getName()), scaledOpConfig);
+                    target_element = new Triple<>(target_element.getFirst() + 1, target_element.getSecond(), target_element.getThird());
+                    pq.offer(target_element);
+                    logger.info("scale up successfully, new scaled op is " + scaledOpConfig.getName());
                 }
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
