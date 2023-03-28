@@ -66,11 +66,7 @@ class MapProxy<V> implements IDataflowMap<V> {
     private void setSize(int size) {
         kvProvider.put(sizeKey, size);
     }
-
-    private String makeIndex(int idx) {
-        return keyBase + "." + idx;
-    }
-
+    
     @Override
     public V get(String key) {
         String k = makeKey(key);
