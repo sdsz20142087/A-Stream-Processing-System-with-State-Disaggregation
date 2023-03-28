@@ -3,6 +3,11 @@ package stateapis;
 import java.util.HashMap;
 import java.util.List;
 
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+
 public class MapStateAccessor<V> extends BaseStateAccessor<IDataflowMap<V>> {
     private MapProxy<V> mapProxy;
 
@@ -46,7 +51,8 @@ class MapProxy<V> implements IDataflowMap<V> {
 
     private final String keyBase;
     private final KVProvider kvProvider;
-
+    private String sizeKey;
+    private final Logger logger = LogManager.getLogger();
     private String makeKey(String key){
         return this.keyBase + ":" + key;
     }
@@ -54,8 +60,15 @@ class MapProxy<V> implements IDataflowMap<V> {
     public MapProxy(String keyBase, KVProvider kvProvider) {
         this.keyBase = keyBase;
         this.kvProvider = kvProvider;
+        this.sizeKey = keyBase + ".size";
+        if (kvProvider.listKeys(keyBase).size() == 0) {
+            kvProvider.put(sizeKey, 0);
+        }
     }
 
+    private void setSize(int size) {
+        kvProvider.put(sizeKey, size);
+    }
 
     @Override
     public V get(String key) {
@@ -71,7 +84,13 @@ class MapProxy<V> implements IDataflowMap<V> {
 
     @Override
     public void remove(String key) {
-        this.kvProvider.delete(makeKey(key));
+        if (this.isEmpty()) {
+            throw new RuntimeException("Cannot remove from an empty map");
+        }
+
+        String k = makeKey(key);
+        this.kvProvider.delete(k);
+        setSize(size() - 1);
     }
 
     @Override
@@ -91,12 +110,13 @@ class MapProxy<V> implements IDataflowMap<V> {
 
     @Override
     public boolean containsKey(String key) {
-        return this.get(key)!=null;
+        String k = makeKey(key);
+        return this.kvProvider.listKeys(keyBase).contains(k);
     }
 
     @Override
     public int size() {
-        return this.keys().size();
+        return kvProvider.listKeys(keyBase).size();
     }
 }
 
