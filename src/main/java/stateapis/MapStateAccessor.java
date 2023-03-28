@@ -3,8 +3,11 @@ package stateapis;
 import java.util.HashMap;
 import java.util.List;
 
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+
 public class MapStateAccessor<V> extends BaseStateAccessor<IDataflowMap<V>> {
     private MapProxy<V> mapProxy;
 
@@ -66,7 +69,7 @@ class MapProxy<V> implements IDataflowMap<V> {
     private void setSize(int size) {
         kvProvider.put(sizeKey, size);
     }
-    
+
     @Override
     public V get(String key) {
         String k = makeKey(key);
@@ -84,8 +87,10 @@ class MapProxy<V> implements IDataflowMap<V> {
         if (this.isEmpty()) {
             throw new RuntimeException("Cannot remove from an empty map");
         }
+
         String k = makeKey(key);
         this.kvProvider.delete(k);
+        setSize(size() - 1);
     }
 
     @Override
@@ -106,12 +111,12 @@ class MapProxy<V> implements IDataflowMap<V> {
     @Override
     public boolean containsKey(String key) {
         String k = makeKey(key);
-        return this.kvProvider.get(k,0)!=null;
+        return this.kvProvider.listKeys(keyBase).contains(k);
     }
 
     @Override
     public int size() {
-        return (int) kvProvider.get(sizeKey, 0);
+        return kvProvider.listKeys(keyBase).size();
     }
 }
 
