@@ -6,7 +6,7 @@
     "scale_up_portion": 0.75
   },
   "taskManager": {
-    "cp_host": "controlplane",
+    "cp_host": "127.0.0.1",
     "cp_port": 8008,
     "operator_quota": 6,
     "tm_port": 8018,

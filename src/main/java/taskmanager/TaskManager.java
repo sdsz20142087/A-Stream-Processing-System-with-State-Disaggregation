@@ -4,9 +4,9 @@ import config.Config;
 import config.TMConfig;
 import io.grpc.*;
 import io.grpc.internal.PickFirstLoadBalancerProvider;
+import stateapis.HybridNoMgrKVProvider;
 import stateapis.KVProvider;
 import stateapis.LocalKVProvider;
-import stateapis.RemoteKVProvider;
 import utils.NodeBase;
 
 import java.io.IOException;
@@ -31,7 +31,8 @@ public class TaskManager extends NodeBase {
 
         logger.info("tm_port=" + actualPort);
         registryClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, actualPort);
-        KVProvider kvProvider = tmcfg.useHybrid ? new RemoteKVProvider() : new LocalKVProvider(tmcfg.rocksDBPath);
+
+        KVProvider kvProvider = tmcfg.useHybrid ? new HybridNoMgrKVProvider(tmcfg.cp_host, tmcfg.cp_port,actualPort) : new LocalKVProvider(tmcfg.rocksDBPath);
         logger.info("State config: using " + kvProvider.getClass().getName());
         tmService = new TMServiceImpl(tmcfg.operator_quota, kvProvider);
         tmServer = ServerBuilder.forPort(actualPort).addService(tmService).build();
