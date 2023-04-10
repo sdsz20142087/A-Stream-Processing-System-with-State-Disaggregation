@@ -52,7 +52,11 @@ public class WikiFileSource implements ISource<String>, Serializable {
     public void startPeriodicWriting() {
         new Thread(() -> {
             try {
-                queue.add(dataIter.next());
+                String data = dataIter.next();
+                // add ingest timestamp
+                long ingestTime = System.currentTimeMillis();
+                data = data + "," + ingestTime;
+                queue.add(data);
                 Thread.sleep(this.periodMillis);
             } catch (InterruptedException e) {
                 throw new RuntimeException("Error adding data to queue", e);
