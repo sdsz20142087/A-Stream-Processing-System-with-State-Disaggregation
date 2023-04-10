@@ -10,6 +10,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class WikiFileSource implements ISource<String>, Serializable {
 
@@ -17,9 +19,13 @@ public class WikiFileSource implements ISource<String>, Serializable {
     private List<String> data = new ArrayList<>();
     private ListIterator<String> dataIter;
     private String path;
+    private BlockingQueue<String> queue = new LinkedBlockingQueue<>();
+    private long periodMillis;
 
-    public WikiFileSource(String path) {
+    // This source generates data every periodMillis milliseconds
+    public WikiFileSource(String path,long periodMillis) {
         this.path = path;
+        this.periodMillis= periodMillis;
     }
 
     @Override
@@ -33,6 +39,7 @@ public class WikiFileSource implements ISource<String>, Serializable {
         }
         dataIter = data.listIterator();
         System.out.println("Wikifilesource: read " + data.size() + " lines from " + path);
+        startPeriodicWriting();
     }
 
     @Override
@@ -42,7 +49,22 @@ public class WikiFileSource implements ISource<String>, Serializable {
 
     @Override
     public String next() {
-        String d = dataIter.next();
-        return d;
+        try{
+            return queue.take();
+        } catch (InterruptedException ie){
+            FatalUtil.fatal("interrupted",ie);
+            return null;
+        }
+    }
+    public void startPeriodicWriting() {
+        new Thread(() -> {
+            try {
+                String data = dataIter.next();
+                queue.add(data);
+                Thread.sleep(this.periodMillis);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Error adding data to queue", e);
+            }
+        }).start();
     }
 }

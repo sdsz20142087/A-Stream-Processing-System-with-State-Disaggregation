@@ -29,7 +29,7 @@ public class App {
         // TODO: build the query plan here
         // FIXME: the stages should actually be topologically sorted
         // 1: source
-        SourceOperator<String> source = new SourceOperator<>(new WikiFileSource("data.txt"), new StringSerde());
+        SourceOperator<String> source = new SourceOperator<>(new WikiFileSource("data.txt",10), new StringSerde());
         this.queryPlan.addStage(0, source, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         // 2: filter: wikiInfo.id % 4 != 0;

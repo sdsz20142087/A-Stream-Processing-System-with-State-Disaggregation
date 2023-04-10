@@ -2,6 +2,7 @@ package operators.stateful;
 
 import com.google.protobuf.ByteString;
 import operators.BaseOperator;
+import operators.OutputSender;
 import pb.Tm;
 import stateapis.ValueStateAccessor;
 import utils.SerDe;
@@ -24,12 +25,12 @@ public class SingleCountOperator extends BaseOperator implements Serializable {
     }
 
     @Override
-    protected void processElement(ByteString in) {
+    protected void processElement(ByteString in, OutputSender outputSender) {
         Integer cntVal = cntAccesor.value() + 1;
         cntAccesor.update(cntVal);
         String outMsg = "Count: " + (cntVal+1);
 
         ByteString out = outSerde.serialize(outMsg);
-        sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(out));
+        outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(out));
     }
 }
