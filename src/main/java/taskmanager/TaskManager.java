@@ -19,9 +19,6 @@ public class TaskManager extends NodeBase {
     private final TMConfig tmcfg;
     private final TMServiceImpl tmService;
 
-    // we'll always need a local KVProvider
-    private final KVProvider localKVProvider;
-
     private TaskManager() {
         // configure GRPC to use PickFirstLB
         LoadBalancerRegistry.getDefaultRegistry().register(new PickFirstLoadBalancerProvider());
@@ -34,13 +31,8 @@ public class TaskManager extends NodeBase {
 
         logger.info("tm_port=" + actualPort);
         registryClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, actualPort);
-        this.localKVProvider = new LocalKVProvider(tmcfg.rocksDBPath);
 
-        KVProvider kvProvider = tmcfg.useHybrid ?
-                new HybridKVProvider(this.localKVProvider, registryClient, tmcfg.useMigration)
-                : this.localKVProvider;
-        logger.info("State config: using " + kvProvider.getClass().getName());
-        tmService = new TMServiceImpl(tmcfg.operator_quota, kvProvider);
+        tmService = new TMServiceImpl(tmcfg, registryClient);
         tmServer = ServerBuilder.forPort(actualPort).addService(tmService).build();
     }
 

@@ -10,24 +10,30 @@ import org.rocksdb.RocksIterator;
 import pb.CPServiceGrpc;
 import pb.Cp;
 
+import taskmanager.CPClient;
 import utils.BytesUtil;
 import utils.FatalUtil;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
-public class HybridNoMgrKVProvider implements KVProvider{
+public class HybridKVProvider implements KVProvider{
     private final CPServiceGrpc.CPServiceStub asyncStub;
     private RocksDB db;
     private final CPServiceGrpc.CPServiceBlockingStub blockingStub;
 
+    // The routing table cache, if any, is stored in the cpClient, the kvprovider doesn't care.
+    private final CPClient cpClient;
+    private KVProvider localKVProvider;
+    private boolean migrate;
     private final Logger logger = LogManager.getLogger();
-    public HybridNoMgrKVProvider(String cp_host, int cp_port, int actualPort) {
-        String target = cp_host + ":" + cp_port;
-        ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
-        asyncStub = CPServiceGrpc.newStub(channel);
-        blockingStub = CPServiceGrpc.newBlockingStub(channel);
+
+    // The only difference between hybridNoMgr/hybridMgr is that whether they attempt to migrate,
+    // this means hybridNoMgr has a subset of functions of hybridMgr
+    public HybridKVProvider(KVProvider localKVProvider, CPClient cpClient, boolean migrate) {
+        this.cpClient = cpClient;
+        this.localKVProvider = localKVProvider;
+        this.migrate = migrate;
     }
     private void getRemoteTMStorage(String stateKey) {
         Cp.FindRemoteStateAddressRequest req = Cp.FindRemoteStateAddressRequest.newBuilder().setStateKey(stateKey).build();

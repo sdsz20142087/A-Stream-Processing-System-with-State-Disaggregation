@@ -2,6 +2,7 @@ package taskmanager;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Empty;
+import config.TMConfig;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -12,10 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
-import stateapis.KVProvider;
-import stateapis.ListStateAccessor;
-import stateapis.MapStateAccessor;
-import stateapis.ValueStateAccessor;
+import stateapis.*;
 import utils.BytesUtil;
 
 import java.io.*;
@@ -28,6 +26,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDescriptorProvider {
     private final int operatorQuota;
     private final HashMap<String, BaseOperator> operators;
+
     private final KVProvider kvProvider;
     private final Logger logger = LogManager.getLogger();
 
@@ -41,10 +40,14 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
 
     private final HashMap<BaseOperator, Integer> roundRobinCounter = new HashMap<>();
 
-    public TMServiceImpl(int operatorQuota, KVProvider kvProvider) {
+    public TMServiceImpl(TMConfig tmcfg, CPClient cpClient) {
         super();
-        this.kvProvider = kvProvider;
-        this.operatorQuota = operatorQuota;
+        KVProvider localKVProvider = new LocalKVProvider(tmcfg.rocksDBPath);
+        this.kvProvider = tmcfg.useHybrid ?
+                new HybridKVProvider(localKVProvider, cpClient, tmcfg.useMigration)
+                : localKVProvider;
+        logger.info("State config: using " + this.kvProvider.getClass().getName());
+        this.operatorQuota = tmcfg.operator_quota;
         operators = new HashMap<>();
         logger.info("TM service started with operator quota: " + operatorQuota);
         // boot the sendloop
