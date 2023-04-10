@@ -12,6 +12,7 @@
     "tm_port": 8018,
     "operator_bufferSize": 20,
     "useHybrid": false,
+    "useMigration": false,
     "rocksDBPath": "data.db"
   }
 }

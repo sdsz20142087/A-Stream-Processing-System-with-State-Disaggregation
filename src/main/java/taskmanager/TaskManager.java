@@ -4,7 +4,7 @@ import config.Config;
 import config.TMConfig;
 import io.grpc.*;
 import io.grpc.internal.PickFirstLoadBalancerProvider;
-import stateapis.HybridNoMgrKVProvider;
+import stateapis.HybridKVProvider;
 import stateapis.KVProvider;
 import stateapis.LocalKVProvider;
 import utils.NodeBase;
@@ -19,6 +19,9 @@ public class TaskManager extends NodeBase {
     private final TMConfig tmcfg;
     private final TMServiceImpl tmService;
 
+    // we'll always need a local KVProvider
+    private final KVProvider localKVProvider;
+
     private TaskManager() {
         // configure GRPC to use PickFirstLB
         LoadBalancerRegistry.getDefaultRegistry().register(new PickFirstLoadBalancerProvider());
@@ -31,8 +34,11 @@ public class TaskManager extends NodeBase {
 
         logger.info("tm_port=" + actualPort);
         registryClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, actualPort);
+        this.localKVProvider = new LocalKVProvider(tmcfg.rocksDBPath);
 
-        KVProvider kvProvider = tmcfg.useHybrid ? new HybridNoMgrKVProvider(tmcfg.cp_host, tmcfg.cp_port,actualPort) : new LocalKVProvider(tmcfg.rocksDBPath);
+        KVProvider kvProvider = tmcfg.useHybrid ?
+                new HybridKVProvider(this.localKVProvider, registryClient, tmcfg.useMigration)
+                : this.localKVProvider;
         logger.info("State config: using " + kvProvider.getClass().getName());
         tmService = new TMServiceImpl(tmcfg.operator_quota, kvProvider);
         tmServer = ServerBuilder.forPort(actualPort).addService(tmService).build();
@@ -41,7 +47,7 @@ public class TaskManager extends NodeBase {
     public void init() {
 
         try {
-            logger.info("TaskManager will start in 3 seconds，tm_port=" +tmcfg.tm_port);
+            logger.info("TaskManager will start in 3 seconds，tm_port=" + tmcfg.tm_port);
             Thread.sleep(3000);
             // register at control plane
             logger.info("Registering at control plane=" + tmcfg.cp_host + ":" + tmcfg.cp_port);

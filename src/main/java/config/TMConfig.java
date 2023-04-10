@@ -10,5 +10,7 @@ public class TMConfig {
 
     public boolean useHybrid;
 
+    public boolean useMigration;
+
     public String rocksDBPath;
 }
