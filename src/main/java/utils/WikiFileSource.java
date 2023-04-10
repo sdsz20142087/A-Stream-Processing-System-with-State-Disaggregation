@@ -10,6 +10,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class WikiFileSource implements ISource<String>, Serializable {
 
@@ -17,9 +19,11 @@ public class WikiFileSource implements ISource<String>, Serializable {
     private List<String> data = new ArrayList<>();
     private ListIterator<String> dataIter;
     private String path;
-
-    public WikiFileSource(String path) {
+    private BlockingQueue<String> queue = new LinkedBlockingQueue<>();
+    private long periodMillis;
+    public WikiFileSource(String path,long periodMillis) {
         this.path = path;
+        this.periodMillis= periodMillis;
     }
 
     @Override
@@ -42,7 +46,17 @@ public class WikiFileSource implements ISource<String>, Serializable {
 
     @Override
     public String next() {
-        String d = dataIter.next();
+        String d= queue.poll();
         return d;
+    }
+    public void startPeriodicWriting() {
+        new Thread(() -> {
+            try {
+                queue.add(dataIter.next());
+                Thread.sleep(this.periodMillis);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Error adding data to queue", e);
+            }
+        }).start();
     }
 }
