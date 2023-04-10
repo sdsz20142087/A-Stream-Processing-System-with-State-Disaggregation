@@ -21,6 +21,8 @@ public class WikiFileSource implements ISource<String>, Serializable {
     private String path;
     private BlockingQueue<String> queue = new LinkedBlockingQueue<>();
     private long periodMillis;
+
+    // This source generates data every periodMillis milliseconds
     public WikiFileSource(String path,long periodMillis) {
         this.path = path;
         this.periodMillis= periodMillis;
@@ -47,16 +49,17 @@ public class WikiFileSource implements ISource<String>, Serializable {
 
     @Override
     public String next() {
-        String d= queue.poll();
-        return d;
+        try{
+            return queue.take();
+        } catch (InterruptedException ie){
+            FatalUtil.fatal("interrupted",ie);
+            return null;
+        }
     }
     public void startPeriodicWriting() {
         new Thread(() -> {
             try {
                 String data = dataIter.next();
-                // add ingest timestamp
-                long ingestTime = System.currentTimeMillis();
-                data = data + "," + ingestTime;
                 queue.add(data);
                 Thread.sleep(this.periodMillis);
             } catch (InterruptedException e) {

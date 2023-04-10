@@ -22,6 +22,8 @@ public abstract class BaseOperator extends Thread implements Serializable {
 
     private String opName;
 
+    private Tm.Msg currentInputMsg;
+
     public String getOpName() {
     	return opName;
     }
@@ -54,9 +56,9 @@ public abstract class BaseOperator extends Thread implements Serializable {
         this.config = config;
     }
 
-    protected final void sendOutput(Tm.Msg.Builder output) {
-        outputQueue.add(new Pair<>(config.getName(), output));
-    }
+//    protected final void sendOutput(Tm.Msg.Builder output) {
+//        outputQueue.add(new Pair<>(config.getName(), output));
+//    }
 
     // !! No control message reaches the operator, only data messages
 //    private void handleMsg(Tm.Msg input) {
@@ -73,8 +75,20 @@ public abstract class BaseOperator extends Thread implements Serializable {
 //        }
 //    }
 
+    class BaseOutputSender implements OutputSender{
+        private long ingestTime;
+        public BaseOutputSender(long ingestTime){
+            this.ingestTime = ingestTime;
+        }
+
+        public void sendOutput(Tm.Msg.Builder output){
+            output.setIngestTime(ingestTime);
+            outputQueue.add(new Pair<>(config.getName(), output));
+        }
+    }
+
     // emitting output is done in the processElement method
-    protected abstract void processElement(ByteString in);
+    protected abstract void processElement(ByteString in, OutputSender outputSender);
     @Override
     public void run() {
         if(config==null){
@@ -85,7 +99,8 @@ public abstract class BaseOperator extends Thread implements Serializable {
         try {
             while (true) {
                 Tm.Msg input = inputQueue.take();
-                processElement(input.getData());
+                this.currentInputMsg = input;
+                processElement(input.getData(), new BaseOutputSender(input.getIngestTime()));
             }
         } catch (Exception e) {
             logger.fatal("Exception in sender thread: " + e.getMessage());

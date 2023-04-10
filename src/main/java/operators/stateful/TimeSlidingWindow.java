@@ -1,6 +1,7 @@
 package operators.stateful;
 
 import com.google.protobuf.ByteString;
+import operators.OutputSender;
 import utils.SerDe;
 import operators.BaseOperator;
 import pb.Tm;
@@ -34,7 +35,7 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
     }
 
     @Override
-    protected void processElement(ByteString in) {
+    protected void processElement(ByteString in, OutputSender outputSender) {
 
         IDataflowMap m = someMapStateAccessor.value();
 
@@ -49,12 +50,6 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
         // 把本地的状态更新到kvprovider
         someMapStateAccessor.update(m);
 
-
-
-
-
-
-
         IN data = serde.deserialize(in);
         long timestamp = getDataTimestamp(data);
         if(currentWindow == null){
@@ -65,7 +60,7 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
             if(trigger()){
                 OUT result = UDF(data);
                 ByteString output=serdeOut.serialize(result);
-                sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(output));
+                outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(output));
             }
         }else{
             moveWindow();

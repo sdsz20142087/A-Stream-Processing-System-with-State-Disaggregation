@@ -1,6 +1,7 @@
 package operators.stateless;
 
 import com.google.protobuf.ByteString;
+import operators.OutputSender;
 import utils.SerDe;
 import operators.BaseOperator;
 import pb.Tm;
@@ -22,12 +23,12 @@ public class FlatMap<T> extends BaseOperator implements Serializable{
         super.run();
     }
     @Override
-    protected void processElement(ByteString in) {
+    protected void processElement(ByteString in, OutputSender outputSender) {
         T data = serde.deserialize(in);
         output= UDFflatmap(data);
         for (T t: output){
             ByteString bs = serde.serialize(t);
-            sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs));
+            outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs));
         }
     }
     private List<T> UDFflatmap(T t){

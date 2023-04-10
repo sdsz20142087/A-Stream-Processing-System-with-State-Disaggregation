@@ -44,7 +44,7 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
 
     @Override
     // simply move whatever we have in the input queue to the output queue
-    protected void processElement(ByteString in) {
-        sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(in));
+    protected void processElement(ByteString in, OutputSender outputSender) {
+        outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(in));
     }
 }

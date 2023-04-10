@@ -1,6 +1,7 @@
 package operators.stateless;
 
 import com.google.protobuf.ByteString;
+import operators.OutputSender;
 import utils.SerDe;
 import operators.BaseOperator;
 import pb.Tm;
@@ -15,11 +16,11 @@ public class Map<T> extends BaseOperator implements Serializable {
     }
 
     @Override
-    protected void processElement(ByteString in) {
+    protected void processElement(ByteString in, OutputSender outputSender) {
         T data = serde.deserialize(in);
         T output= UDFmap(data);
         ByteString bs = serde.serialize(output);
-        sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs));
+        outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs));
     }
 
 

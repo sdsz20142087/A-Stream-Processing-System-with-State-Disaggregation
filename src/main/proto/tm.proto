@@ -45,6 +45,7 @@ message Msg{
   optional bytes data = 3;
   optional OperatorConfig config = 4;
   optional int32 partitionId = 5; // what is this for?
+  int64 ingestTime = 6;
 }
 enum PartitionStrategy{
   HASH = 0;
