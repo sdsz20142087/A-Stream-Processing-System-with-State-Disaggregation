@@ -19,6 +19,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         return tmClients;
     }
     private HashMap<String, String> RoutingTable = new HashMap<>();
+    private ConsistentHash hashRing = new ConsistentHash(3);
 
     @Override
     public void registerTM(Cp.RegisterTMRequest request,
