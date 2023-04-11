@@ -19,7 +19,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         return tmClients;
     }
     private HashMap<String, String> RoutingTable = new HashMap<>();
-    private ConsistentHash hashRing = new ConsistentHash(3);
+    private ConsistentHash consistentHash = new ConsistentHash(3);
 
     @Override
     public void registerTM(Cp.RegisterTMRequest request,
@@ -136,6 +136,63 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
             RoutingTable.replace(stateKey,address);
         } catch (Exception e) {
             String msg = String.format("can not update state address in routing table");
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        responseObserver.onNext(b.build());
+        responseObserver.onCompleted();
+    }
+
+    public void getConsistentAddress(Cp.GetConsistentAddressRequest req,
+                                     StreamObserver<Cp.GetConsistentAddressResponse> responseObserver) {
+        Cp.GetConsistentAddressResponse.Builder b = Cp.GetConsistentAddressResponse.newBuilder();
+        try {
+            String address = consistentHash.get(req.getKey());
+            if (address == null) {
+                throw new Exception("state address not found");
+            }
+            b.setAddress(address);
+        } catch (Exception e) {
+            String msg = String.format("can not find state address in routing table: %s", e.getMessage());
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        Cp.GetConsistentAddressResponse response = b.build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    public void addConsistentAddress(Cp.AddConsistentAddressRequest req,
+                                     StreamObserver<Cp.AddConsistentAddressResponse> responseObserver){
+        Cp.AddConsistentAddressResponse.Builder b = Cp.AddConsistentAddressResponse.newBuilder();
+        // find a random TM
+        String[] keys= tmClients.keySet().toArray(new String[0]);
+        Random random = new Random();
+        String randomKey = keys[random.nextInt(keys.length)];
+        TMClient tmClient = tmClients.get(randomKey);
+        String randomAddress = tmClient.getHost();
+
+        try {
+            consistentHash.add(req.getKey(), randomAddress);
+        } catch (Exception e) {
+            String msg = String.format("can not add state address in routing table");
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        responseObserver.onNext(b.build());
+        responseObserver.onCompleted();
+    }
+
+    public void removeConsistentAddress(Cp.RemoveConsistentAddressRequest req,
+                                        StreamObserver<Cp.RemoveConsistentAddressResponse> responseObserver){
+        Cp.RemoveConsistentAddressResponse.Builder b = Cp.RemoveConsistentAddressResponse.newBuilder();
+        try {
+            consistentHash.remove(req.getKey());
+        } catch (Exception e) {
+            String msg = String.format("can not remove state address from routing table");
             logger.error(msg);
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
             return;

@@ -48,6 +48,9 @@ service CPService {
     rpc AddRemoteStateAddress(AddRemoteStateAddressRequest) returns (AddRemoteStateAddressResponse);
     rpc RemoveRemoteStateAddress(RemoveRemoteStateAddressRequest) returns (RemoveRemoteStateAddressResponse);
     rpc UpdateRemoteStateAddress(UpdateRemoteStateAddressRequest) returns (UpdateRemoteStateAddressResponse);
+    rpc GetConsistentAddress(GetConsistentAddressRequest) returns (GetConsistentAddressResponse);
+    rpc AddConsistentAddress(AddConsistentAddressRequest) returns (AddConsistentAddressResponse);
+    rpc RemoveConsistentAddress(RemoveConsistentAddressRequest) returns (RemoveConsistentAddressResponse);
 }
 
 message FindRemoteStateAddressRequest{
@@ -81,6 +84,31 @@ message UpdateRemoteStateAddressRequest{
 }
 
 message UpdateRemoteStateAddressResponse{
+
+}
+
+message GetConsistentAddressRequest{
+    string key = 1;
+}
+
+message GetConsistentAddressResponse{
+    string address = 1;
+}
+
+message AddConsistentAddressRequest{
+    string key=1;
+    string address=2;
+}
+
+message AddConsistentAddressResponse{
+    string address=1;
+}
+
+message RemoveConsistentAddressRequest{
+    string key=1;
+}
+
+message RemoveConsistentAddressResponse{
 
 }
 

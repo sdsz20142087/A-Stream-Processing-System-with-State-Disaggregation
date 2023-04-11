@@ -11,19 +11,19 @@ public class ConsistentHash {
         this.numReplicas = numReplicas;
     }
 
-    public void add(String node) {
+    public void add(String key, String address) {
         for (int i = 0; i < numReplicas; i++) {
-            String virtualNode = node + "-" + i;
-            String hash = hash(virtualNode);
-            circle.put(hash, node);
+            //String virtualAddress = address + "-" + i;
+            //String hash = hash(virtualAddress);
+            circle.put(key, address);
         }
     }
 
-    public void remove(String node) {
+    public void remove(String key) {
         for (int i = 0; i < numReplicas; i++) {
-            String virtualNode = node + "-" + i;
-            String hash = hash(virtualNode);
-            circle.remove(hash);
+            //String virtualAddress = address + "-" + i;
+            //String hash = hash(virtualAddress);
+            circle.remove(key);
         }
     }
 
@@ -31,8 +31,8 @@ public class ConsistentHash {
         if (circle.isEmpty()) {
             return null;
         }
-        String hash = hash(key);
-        Map.Entry<String, String> entry = circle.ceilingEntry(hash);
+        //String hash = hash(key);
+        Map.Entry<String, String> entry = circle.ceilingEntry(key);
         if (entry == null) {
             entry = circle.firstEntry();
         }
