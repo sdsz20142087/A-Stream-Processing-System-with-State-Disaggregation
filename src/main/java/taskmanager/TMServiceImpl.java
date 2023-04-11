@@ -40,8 +40,15 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
 
     private final HashMap<BaseOperator, Integer> roundRobinCounter = new HashMap<>();
 
+    private TMConfig tmConfig;
+
+    public void setLocalAddr(String addr){
+        this.kvProvider.setLocalAddr(addr);
+    }
+
     public TMServiceImpl(TMConfig tmcfg, CPClient cpClient) {
         super();
+        this.tmConfig = tmcfg;
         KVProvider localKVProvider = new LocalKVProvider(tmcfg.rocksDBPath);
         this.kvProvider = tmcfg.useHybrid ?
                 new HybridKVProvider(localKVProvider, cpClient, tmcfg.useMigration)
@@ -91,6 +98,13 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         byte[] bytes = request.getObj().toByteArray();
         BaseOperator op = (BaseOperator) BytesUtil.checkedObjectFromBytes(bytes);
         LinkedBlockingQueue<Tm.Msg> inputQueue = new LinkedBlockingQueue<>();
+        // TODO: BEFORE OPERATOR BOOTS, TM SHOULD UPDATE ROUTING-TABLE IF NEEDED
+
+        // FIXME: IMPLEMENT THIS
+        if(this.tmConfig.useHybrid){
+            // TODO: WRITE THINGS TO ROUTING TABLE
+        }
+
         // the queues must be initialized before the operator starts
         op.init(request.getConfig(), inputQueue, msgQueue, this);
         op.postInit();

@@ -17,6 +17,8 @@ message RegisterTMRequest {
 
 message RegisterTMResponse {
     string status = 1;
+    // the ip address visible to other actors
+    string externalAddress = 2;
 }
 
 message DeregisterTMRequest {

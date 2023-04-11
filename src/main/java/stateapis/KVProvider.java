@@ -18,6 +18,8 @@ public interface KVProvider {
 
     // WIP: migration control msg definition
     void handleMigration();
+
+    void setLocalAddr(String addr);
 }
 
 

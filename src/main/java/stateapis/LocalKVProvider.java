@@ -14,6 +14,8 @@ public class LocalKVProvider implements KVProvider {
     private RocksDB db;
     private final Logger logger = LogManager.getLogger();
 
+    private String localAddr;
+
     public LocalKVProvider(String dbPath) {
         try {
             db = RocksDBHelper.getRocksDB(dbPath);
@@ -98,5 +100,10 @@ public class LocalKVProvider implements KVProvider {
         } catch (Exception e) {
             FatalUtil.fatal("Failed to close RocksDB", e);
         }
+    }
+
+    @Override
+    public void setLocalAddr(String addr) {
+        this.localAddr = addr;
     }
 }

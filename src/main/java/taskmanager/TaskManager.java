@@ -4,9 +4,6 @@ import config.Config;
 import config.TMConfig;
 import io.grpc.*;
 import io.grpc.internal.PickFirstLoadBalancerProvider;
-import stateapis.HybridKVProvider;
-import stateapis.KVProvider;
-import stateapis.LocalKVProvider;
 import utils.NodeBase;
 
 import java.io.IOException;
@@ -14,10 +11,10 @@ import java.util.List;
 
 public class TaskManager extends NodeBase {
     private static TaskManager instance;
-    private final CPClient registryClient;
-    private final Server tmServer;
+    private CPClient cpClient;
+    private Server tmServer;
     private final TMConfig tmcfg;
-    private final TMServiceImpl tmService;
+    private TMServiceImpl tmService;
 
     private TaskManager() {
         // configure GRPC to use PickFirstLB
@@ -27,25 +24,30 @@ public class TaskManager extends NodeBase {
 
         tmcfg = Config.getInstance().taskManager;
 
-        int actualPort = tmcfg.tm_port;
 
-        logger.info("tm_port=" + actualPort);
-        registryClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, actualPort);
-
-        tmService = new TMServiceImpl(tmcfg, registryClient);
-        tmServer = ServerBuilder.forPort(actualPort).addService(tmService).build();
     }
 
     public void init() {
 
         try {
-            logger.info("TaskManager will start in 3 seconds，tm_port=" + tmcfg.tm_port);
-            Thread.sleep(3000);
+            int actualPort = tmcfg.tm_port;
+
+            logger.info("tm_port=" + actualPort);
+            cpClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, actualPort);
+
+            // boot the service
+            tmService = new TMServiceImpl(tmcfg, cpClient);
+            tmServer = ServerBuilder.forPort(actualPort).addService(tmService).build();
+            this.tmServer.start();
+
             // register at control plane
             logger.info("Registering at control plane=" + tmcfg.cp_host + ":" + tmcfg.cp_port);
-            logger.info(getHost());
-            registryClient.registerTM(getHost(), getName());
-            this.tmServer.start();
+            String localAddr = cpClient.registerTM(getHost(), getName());
+
+            // This is a hack since we don't have a way to get the external address of
+            // the TM before registration, but kvprovider needs our addr to access state
+            tmService.setLocalAddr(localAddr);
+
             logger.info("TaskManager started on " + tmcfg.tm_port);
             // let this thread block until server termination
 

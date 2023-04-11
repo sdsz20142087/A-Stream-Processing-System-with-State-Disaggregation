@@ -82,6 +82,8 @@ service TMService{
   rpc RemoveState(RemoveStateRequest) returns (google.protobuf.Empty);
   rpc GetState(GetStateRequest) returns (GetStateResponse);
   rpc UpdateState(UpdateStateRequest) returns (google.protobuf.Empty);
+  rpc ClearState(ClearStateRequest) returns (google.protobuf.Empty);
+  rpc ListStateKeys(ListKeysRequest) returns (ListKeysResponse);
 }
 
 // TM should calculate config diff based on this
@@ -108,6 +110,18 @@ message GetStateRequest{
 
 message GetStateResponse{
   bytes obj = 1;
+}
+
+message ClearStateRequest{
+  string stateKey = 1;
+}
+
+message ListKeysRequest{
+  string prefix = 1;
+}
+
+message ListKeysResponse{
+  repeated string keys = 1;
 }
 
 message UpdateStateRequest{

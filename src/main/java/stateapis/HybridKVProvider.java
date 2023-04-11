@@ -15,18 +15,20 @@ import utils.BytesUtil;
 import utils.FatalUtil;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
-public class HybridKVProvider implements KVProvider{
-    private final CPServiceGrpc.CPServiceStub asyncStub;
-    private RocksDB db;
-    private final CPServiceGrpc.CPServiceBlockingStub blockingStub;
+public class HybridKVProvider implements KVProvider {
 
     // The routing table cache, if any, is stored in the cpClient, the kvprovider doesn't care.
     private final CPClient cpClient;
     private KVProvider localKVProvider;
     private boolean migrate;
+
+    private String localAddr;
     private final Logger logger = LogManager.getLogger();
+
+    private final HashMap<String, RemoteStateClient> remoteStateClientMap = new HashMap<>();
 
     // The only difference between hybridNoMgr/hybridMgr is that whether they attempt to migrate,
     // this means hybridNoMgr has a subset of functions of hybridMgr
@@ -35,107 +37,87 @@ public class HybridKVProvider implements KVProvider{
         this.localKVProvider = localKVProvider;
         this.migrate = migrate;
     }
-    private void getRemoteTMStorage(String stateKey) {
-        Cp.FindRemoteStateAddressRequest req = Cp.FindRemoteStateAddressRequest.newBuilder().setStateKey(stateKey).build();
-        Cp.FindRemoteStateAddressResponse res;
-        res = blockingStub.findRemoteStateAddress(req);
-        String tmAddress = res.getAddress();
 
-        try {
-            db = RocksDBHelper.getRocksDB(tmAddress);
-        } catch (Exception e) {
-            FatalUtil.fatal("Failed to open RocksDB", e);
+    private String getStateAddr(String prefix) {
+        String addr = this.cpClient.getState(prefix);
+        if (addr == null) {
+            FatalUtil.fatal("Failed to get state addr from CP", null);
         }
-
+        if (addr.equals(this.localAddr)) {
+            return addr;
+        }
+        if (!remoteStateClientMap.containsKey(addr)) {
+            remoteStateClientMap.put(addr, new RemoteStateClient(addr));
+        }
+        return addr;
     }
+
     @Override
     public Object get(String stateKey, Object defaultValue) {
-        getRemoteTMStorage(stateKey);
-        try {
-            byte[] value = db.get(stateKey.getBytes());
-            if (value == null) {
-                logger.info("Key not found in RocksDB, returning default value");
-                return defaultValue;
-            }
-            Object v = BytesUtil.checkedObjectFromBytes(value);
-            return v;
-        } catch (Exception e) {
-            FatalUtil.fatal("Failed to get value from remote RocksDB", e);
-            return null;
+        String addr = getStateAddr(stateKey);
+        if (addr.equals(this.localAddr)) {
+            return localKVProvider.get(stateKey, defaultValue);
         }
-
-
+        Object r = remoteStateClientMap.get(addr).get(stateKey);
+        return r == null ? defaultValue : r;
     }
 
     @Override
     public void put(String stateKey, Object rawObject) {
-        getRemoteTMStorage(stateKey);
-
-        try {
-            // serialize the object into a byte array
-            byte[] bytes = BytesUtil.checkedObjectToBytes(rawObject);
-            db.put(stateKey.getBytes(), bytes);
-        } catch (Exception e) {
-            FatalUtil.fatal("Failed to put value into RocksDB", e);
+        String addr = getStateAddr(stateKey);
+        if (addr.equals(this.localAddr)) {
+            localKVProvider.put(stateKey, rawObject);
+            return;
         }
+        remoteStateClientMap.get(addr).put(stateKey, BytesUtil.ObjectToBytes(rawObject));
     }
 
     @Override
     public void put(String stateKey, byte[] value) {
-        getRemoteTMStorage(stateKey);
-        try {
-            db.put(stateKey.getBytes(), value);
-        } catch (Exception e) {
-            FatalUtil.fatal("Failed to put value into RocksDB", e);
+        String addr = getStateAddr(stateKey);
+        if (addr.equals(this.localAddr)) {
+            localKVProvider.put(stateKey, value);
+            return;
         }
+        remoteStateClientMap.get(addr).put(stateKey, value);
     }
 
     @Override
     public List<String> listKeys(String prefix) {
-        // how to get tm based on the keybase? keybase is not in the tm kv store
-        List<String> result = new ArrayList<>();
-        if (db != null) {
-            RocksIterator it = db.newIterator();
-            for (it.seek(prefix.getBytes()); it.isValid(); it.next()) {
-                result.add(new String(it.key()));
-            }
+        String addr = getStateAddr(prefix);
+        if (addr.equals(this.localAddr)) {
+            return localKVProvider.listKeys(prefix);
         }
-        return result;
+        return remoteStateClientMap.get(addr).listKeys(prefix);
     }
 
     @Override
     public void delete(String stateKey) {
-        getRemoteTMStorage(stateKey);
-        try {
-            db.delete(stateKey.getBytes());
-        } catch (Exception e) {
-            FatalUtil.fatal("Failed to delete value from RocksDB", e);
+        String addr = getStateAddr(stateKey);
+        if (addr.equals(this.localAddr)) {
+            localKVProvider.delete(stateKey);
+            return;
         }
+        remoteStateClientMap.get(addr).delete(stateKey);
     }
 
     @Override
     public void clear(String prefix) {
-        if (db != null) {
-            try {
-                byte[] start = prefix.getBytes();
-                // increment the last byte of the start byte array
-                byte[] end = BytesUtil.increment(start);
-                // beautiful impl, gets the next byte array
-                db.deleteRange(start, end);
-            } catch (Exception e) {
-                FatalUtil.fatal("Failed to clear values from RocksDB", e);
-            }
+        String addr = getStateAddr(prefix);
+        if (addr.equals(this.localAddr)) {
+            localKVProvider.clear(prefix);
+            return;
         }
+        remoteStateClientMap.get(addr).clear(prefix);
     }
 
     @Override
     public void close() {
-        if (db != null) {
-            try {
-                db.close();
-            } catch (Exception e) {
-                FatalUtil.fatal("Failed to close RocksDB", e);
-            }
-        }
+        this.localKVProvider.close();
+    }
+
+    @Override
+    public void setLocalAddr(String addr) {
+        this.localAddr = addr;
     }
 }

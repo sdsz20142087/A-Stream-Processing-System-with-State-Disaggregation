@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import pb.CPServiceGrpc;
 import pb.Cp;
 
-class CPClient {
+public class CPClient {
     private final Logger logger = LogManager.getLogger();
     private final String target;
     private final int tm_port;
@@ -24,39 +24,26 @@ class CPClient {
         blockingStub = CPServiceGrpc.newBlockingStub(channel);
     }
 
-    public void registerTM(String localAddress, String name) {
+    // returns the external ip addr of this client
+    public String registerTM(String localAddress, String name) {
         logger.info("Registering TM at Control Plane");
         Cp.RegisterTMRequest req = Cp.RegisterTMRequest.newBuilder()
                 .setAddress(localAddress)
                 .setName(name)
                 .setPort(this.tm_port)
                 .build();
-        asyncStub.registerTM(req, new StreamObserver<>() {
-            @Override
-            public void onNext(Cp.RegisterTMResponse value) {
-                logger.info("Got response: " + value);
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                logger.fatal("Failed to register TM at Control Plane " + target, t);
-                System.exit(1);
-            }
-
-            @Override
-            public void onCompleted() {
-                logger.info("registerTM Completed");
-            }
-        });
+        Cp.RegisterTMResponse resp = blockingStub.registerTM(req);
+        logger.info("Got response: " + resp);
+        return resp.getExternalAddress();
     }
 
-    public String getState(String key) {
-        logger.info("Getting state from Control Plane");
-        Cp.FindRemoteStateAddressRequest req = Cp.FindRemoteStateAddressRequest.newBuilder().setStateKey(key).build();
+    public String getState(String keyPrefix) {
+        logger.info("Getting state TM addr from Control Plane");
+        Cp.FindRemoteStateAddressRequest req = Cp.FindRemoteStateAddressRequest.
+                newBuilder().setStateKey(keyPrefix).build();
         Cp.FindRemoteStateAddressResponse res;
         res = blockingStub.findRemoteStateAddress(req);
         return res.getAddress();
-
     }
 }
 
