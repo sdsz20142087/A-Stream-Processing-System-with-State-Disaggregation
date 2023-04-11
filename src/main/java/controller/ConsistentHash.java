@@ -15,7 +15,8 @@ public class ConsistentHash {
         for (int i = 0; i < numReplicas; i++) {
             //String virtualAddress = address + "-" + i;
             //String hash = hash(virtualAddress);
-            circle.put(key, address);
+            String hash = hash(key);
+            circle.put(hash, address);
         }
     }
 
@@ -23,7 +24,8 @@ public class ConsistentHash {
         for (int i = 0; i < numReplicas; i++) {
             //String virtualAddress = address + "-" + i;
             //String hash = hash(virtualAddress);
-            circle.remove(key);
+            String hash = hash(key);
+            circle.remove(hash);
         }
     }
 
@@ -31,8 +33,8 @@ public class ConsistentHash {
         if (circle.isEmpty()) {
             return null;
         }
-        //String hash = hash(key);
-        Map.Entry<String, String> entry = circle.ceilingEntry(key);
+        String hash = hash(key);
+        Map.Entry<String, String> entry = circle.ceilingEntry(hash);
         if (entry == null) {
             entry = circle.firstEntry();
         }
