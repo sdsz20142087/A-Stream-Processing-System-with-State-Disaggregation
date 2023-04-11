@@ -33,7 +33,7 @@ public class TaskManager extends NodeBase {
             int actualPort = tmcfg.tm_port;
 
             logger.info("tm_port=" + actualPort);
-            cpClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, actualPort);
+            cpClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, actualPort, tmcfg.useCache);
 
             // boot the service
             tmService = new TMServiceImpl(tmcfg, cpClient);

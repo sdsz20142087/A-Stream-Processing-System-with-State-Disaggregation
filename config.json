@@ -13,6 +13,7 @@
     "operator_bufferSize": 20,
     "useHybrid": false,
     "useMigration": false,
+    "useCache": false,
     "rocksDBPath": "data.db"
   }
 }

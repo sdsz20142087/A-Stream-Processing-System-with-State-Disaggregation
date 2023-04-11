@@ -12,5 +12,7 @@ public class TMConfig {
 
     public boolean useMigration;
 
+    public boolean useCache;
+
     public String rocksDBPath;
 }

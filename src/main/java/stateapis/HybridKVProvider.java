@@ -1,20 +1,12 @@
 package stateapis;
 
-import DB.rocksDB.RocksDBHelper;
-import io.grpc.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import org.rocksdb.RocksDB;
-import org.rocksdb.RocksIterator;
-import pb.CPServiceGrpc;
-import pb.Cp;
 
 import taskmanager.CPClient;
 import utils.BytesUtil;
 import utils.FatalUtil;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -39,7 +31,7 @@ public class HybridKVProvider implements KVProvider {
     }
 
     private String getStateAddr(String prefix) {
-        String addr = this.cpClient.getState(prefix);
+        String addr = this.cpClient.getStateAddr(prefix);
         if (addr == null) {
             FatalUtil.fatal("Failed to get state addr from CP", null);
         }

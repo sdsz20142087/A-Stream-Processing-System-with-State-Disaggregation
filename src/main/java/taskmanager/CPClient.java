@@ -3,11 +3,12 @@ package taskmanager;
 import io.grpc.Grpc;
 import io.grpc.InsecureChannelCredentials;
 import io.grpc.ManagedChannel;
-import io.grpc.stub.StreamObserver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.CPServiceGrpc;
 import pb.Cp;
+
+import java.util.HashMap;
 
 public class CPClient {
     private final Logger logger = LogManager.getLogger();
@@ -16,7 +17,14 @@ public class CPClient {
     private final CPServiceGrpc.CPServiceStub asyncStub;
     private final CPServiceGrpc.CPServiceBlockingStub blockingStub;
 
-    public CPClient(String host, int cp_port, int tm_port) {
+    private final boolean cached;
+
+    // routing table cache
+    // FIXME: we probably need a trie tree for this
+    private HashMap<String, String> RTCache = new HashMap<>();
+
+    public CPClient(String host, int cp_port, int tm_port, boolean cached) {
+        this.cached = cached;
         target = host + ":" + cp_port;
         this.tm_port = tm_port;
         ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
@@ -37,13 +45,21 @@ public class CPClient {
         return resp.getExternalAddress();
     }
 
-    public String getState(String keyPrefix) {
+    public String getStateAddr(String keyPrefix) {
+        if(cached && RTCache.containsKey(keyPrefix)) {
+            return RTCache.get(keyPrefix);
+        }
+        // TODO: IMPLEMENT THIS
         logger.info("Getting state TM addr from Control Plane");
         Cp.FindRemoteStateAddressRequest req = Cp.FindRemoteStateAddressRequest.
                 newBuilder().setStateKey(keyPrefix).build();
-        Cp.FindRemoteStateAddressResponse res;
-        res = blockingStub.findRemoteStateAddress(req);
+        Cp.FindRemoteStateAddressResponse res = blockingStub.findRemoteStateAddress(req);
+        RTCache.put(keyPrefix, res.getAddress());
         return res.getAddress();
+    }
+
+    public void flush(){
+        this.RTCache.clear();
     }
 }
 
