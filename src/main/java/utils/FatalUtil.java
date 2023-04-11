@@ -9,9 +9,13 @@ public class FatalUtil {
     private static final Logger logger = LogManager.getLogger();
 
     public static void fatal(String context, Throwable t) {
-        String stack = List.of(t.getStackTrace()).toString();
-        String msg = "Fatal error in " + context + ": " + t.getMessage() + "\n stack: " + stack;
-        logger.fatal(msg);
+        if(t==null){
+            logger.fatal("Fatal error in " + context);
+        } else {
+            String stack = List.of(t.getStackTrace()).toString();
+            String msg = "Fatal error in " + context + ": " + t.getMessage() + "\n stack: " + stack;
+            logger.fatal(msg);
+        }
         System.exit(1);
     }
 }

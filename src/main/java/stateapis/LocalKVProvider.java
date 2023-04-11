@@ -7,17 +7,14 @@ import org.rocksdb.RocksDB;
 import org.rocksdb.RocksIterator;
 import utils.BytesUtil;
 import utils.FatalUtil;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class LocalKVProvider implements KVProvider {
     private RocksDB db;
     private final Logger logger = LogManager.getLogger();
+
+    private String localAddr;
 
     public LocalKVProvider(String dbPath) {
         try {
@@ -103,5 +100,10 @@ public class LocalKVProvider implements KVProvider {
         } catch (Exception e) {
             FatalUtil.fatal("Failed to close RocksDB", e);
         }
+    }
+
+    @Override
+    public void setLocalAddr(String addr) {
+        this.localAddr = addr;
     }
 }

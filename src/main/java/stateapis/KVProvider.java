@@ -15,6 +15,11 @@ public interface KVProvider {
     void clear(String prefix);
 
     void close();
+
+    // WIP: migration control msg definition
+    void handleMigration();
+
+    void setLocalAddr(String addr);
 }
 
 
