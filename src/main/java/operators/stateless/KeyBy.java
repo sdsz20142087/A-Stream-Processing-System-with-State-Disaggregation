@@ -1,6 +1,8 @@
 package operators.stateless;
 
 import com.google.protobuf.ByteString;
+import kotlin.NotImplementedError;
+import operators.OutputSender;
 import utils.SerDe;
 import operators.BaseOperator;
 
@@ -21,10 +23,10 @@ public class KeyBy<T,K> extends BaseOperator implements Serializable {
     }
 
     @Override
-    protected void processElement(ByteString in) {
+    protected void processElement(ByteString in, OutputSender outputSender) {
         T data = serde.deserialize(in);
         int partition = data.hashCode()%getNumOfPartitions();
-
+        throw new NotImplementedError("Not implemented yet");
     }
 
     public void setKey(K key){
