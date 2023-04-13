@@ -12,7 +12,7 @@ public class SinkOperator extends BaseOperator implements Serializable {
     }
 
     @Override
-    protected void processElement(ByteString in) {
+    protected void processElement(ByteString in, OutputSender outputSender) {
         System.out.println("--> "+in.toStringUtf8());
     }
 }
