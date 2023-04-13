@@ -51,11 +51,6 @@ public class ClusterDataFileSource extends Thread implements ISource<String>, Se
     }
 
     @Override
-    public boolean hasNext() {
-        return !data.isEmpty();
-    }
-
-    @Override
     public String next() {
         if (!data.isEmpty()) {
             return data.remove(0);

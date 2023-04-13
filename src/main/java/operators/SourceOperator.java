@@ -32,7 +32,7 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
                 logger.fatal("source init failed: " + e.getMessage());
                 System.exit(1);
             }
-            while (source.hasNext()) {
+            while (true) {
                 T data = source.next();
                 ByteString bs = serde.serialize(data);
                 Tm.Msg msg = Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs).build();

@@ -109,6 +109,11 @@ public class HybridKVProvider implements KVProvider {
     }
 
     @Override
+    public void handleMigration() {
+        throw new UnsupportedOperationException("HybridKVProvider doesn't support handleMigration");
+    }
+
+    @Override
     public void setLocalAddr(String addr) {
         this.localAddr = addr;
     }

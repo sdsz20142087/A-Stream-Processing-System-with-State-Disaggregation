@@ -26,9 +26,10 @@ public class SingleCountOperator extends BaseOperator implements Serializable {
 
     @Override
     protected void processElement(ByteString in, OutputSender outputSender) {
+        //logger.info("cntAccesor.value() = " + cntAccesor.value());
         Integer cntVal = cntAccesor.value() + 1;
         cntAccesor.update(cntVal);
-        String outMsg = "Count: " + (cntVal+1);
+        String outMsg = "Count: " + (cntVal);
 
         ByteString out = outSerde.serialize(outMsg);
         outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(out));

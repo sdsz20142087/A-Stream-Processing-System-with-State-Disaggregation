@@ -29,7 +29,7 @@ public class LocalKVProvider implements KVProvider {
         try {
             byte[] value = db.get(stateKey.getBytes());
             if (value == null) {
-                logger.info("Key not found in RocksDB, returning default value");
+                logger.info("Key not found in RocksDB, returning default value: " + defaultValue);
                 return defaultValue;
             }
             // deserialize the value into an object
@@ -100,6 +100,11 @@ public class LocalKVProvider implements KVProvider {
         } catch (Exception e) {
             FatalUtil.fatal("Failed to close RocksDB", e);
         }
+    }
+
+    @Override
+    public void handleMigration() {
+        throw new UnsupportedOperationException("LocalKVProvider does not support migration");
     }
 
     @Override
