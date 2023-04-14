@@ -1,57 +1,61 @@
 package consistent;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 public class ConsistentHashing {
-    private final int replicas;
-    private final Map<String, List<Integer>> virtualNodes = new HashMap<>();
-    private final SortedMap<String, String> circle = new TreeMap<>();
+    private final int numberOfReplicas;
+    private final Map<PhysicalNode, List<VirtualNode>> virtualNodes = new HashMap<>();
+    private final SortedMap<Integer, PhysicalNode> circle = new TreeMap<>();
 
-    public ConsistentHashing( int replicas, List<PhysicalNode> physicalNodes) throws NoSuchAlgorithmException {
-        this.replicas = replicas;
-        for (PhysicalNode physicalNode: physicalNodes){
-            addPhysicalNode(physicalNode);
-        }
+    public ConsistentHashing( int replicas){
+        this.numberOfReplicas = replicas;
     }
 
-    public void addPhysicalNode(PhysicalNode physicalNode) throws NoSuchAlgorithmException {
-        circle.put(physicalNode.getAddress(), physicalNode);
-        for (int i = 0; i < replicas; i++) {
-            String hash = getHash(physicalNode.getAddress() + "-" + i);
-            VirtualNode virtualNode = new VirtualNode(physicalNode.getAddress() + "-" + i, hash, physicalNode);
-            virtualNodes.put(hash, virtualNode);
+    public void add(PhysicalNode physicalNode) throws NoSuchAlgorithmException {
+        List<VirtualNode> replicas = new ArrayList<>();
+        for (int i = 0; i < numberOfReplicas; i++) {
+            int hash = getHash(physicalNode.getKey() + "-" + i);
+            VirtualNode virtualNode = new VirtualNode(physicalNode.getKey() + "-" + i, hash, physicalNode);
             physicalNode.addVirtualNode(virtualNode);
+            replicas.add(virtualNode);
+            circle.put(hash, physicalNode);
         }
+        virtualNodes.put(physicalNode, replicas);
     }
 
-    public void removePhysicalNode(PhysicalNode physicalNode) {
-        circle.remove(physicalNode.getAddress());
+    public void remove(PhysicalNode physicalNode) {
+        circle.remove(getHash(physicalNode.getKey()));
         for (VirtualNode virtualNode : physicalNode.getVirtualNodes()) {
             virtualNodes.remove(virtualNode.getHash());
         }
     }
 
-    public PhysicalNode getPhysicalNode(String key) throws NoSuchAlgorithmException {
+    public PhysicalNode get(String key) {
         if (circle.isEmpty()) {
             return null;
         }
-        String hash = getHash(key);
-        SortedMap<Integer, VirtualNode> tailMap = virtualNodes.tailMap(hash);
-        int virtualHash = tailMap.isEmpty() ? virtualNodes.firstKey() : tailMap.firstKey();
-        VirtualNode virtualNode = virtualNodes.get(virtualHash);
-        return virtualNode.getPhysicalNode();
+        int hash = getHash(key);
+        if (!circle.containsKey(hash)) {
+            SortedMap<Integer, PhysicalNode> tailMap = circle.tailMap(hash);
+            int virtualHash = tailMap.isEmpty() ? circle.firstKey() : tailMap.firstKey();
+            VirtualNode virtualNode = virtualNodes.get(virtualHash).get(0); // get the first virtual node for the selected physical node
+            return virtualNode.getPhysicalNode();
+        }
+        return circle.get(hash);
     }
 
-    private String getHash(String key) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-1");
-        byte[] hash = md.digest(key.getBytes(StandardCharsets.UTF_8));
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hash) {
-            sb.append(String.format("%02x", b));
+    private int getHash(String key){
+        final int p = 16777619;
+        int hash = (int)2166136261L;
+        for (int i = 0; i < key.length(); i++) {
+            hash = (hash ^ key.charAt(i)) * p;
         }
-        return sb.toString();
+        hash += hash << 13;
+        hash ^= hash >> 7;
+        hash += hash << 3;
+        hash ^= hash >> 17;
+        hash += hash << 5;
+        return hash;
     }
 }

@@ -4,16 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PhysicalNode {
-    private String address;
+    private String key;
     private List<VirtualNode> virtualNodes;
 
-    public PhysicalNode(String address) {
-        this.address = address;
+    public PhysicalNode(String key) {
+        this.key = key;
         this.virtualNodes = new ArrayList<>();
     }
 
-    public String getAddress() {
-        return address;
+    public String getKey() {
+        return key;
     }
 
     public List<VirtualNode> getVirtualNodes() {

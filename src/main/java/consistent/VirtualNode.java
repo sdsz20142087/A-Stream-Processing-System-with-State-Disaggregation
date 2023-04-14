@@ -1,18 +1,18 @@
 package consistent;
 
 public class VirtualNode {
-    private String address;
+    private String key;
     private int hash;
     private PhysicalNode physicalNode;
 
-    public VirtualNode(String address, int hash, PhysicalNode physicalNode) {
-        this.address = address;
+    public VirtualNode(String key, int hash, PhysicalNode physicalNode) {
+        this.key = key;
         this.hash = hash;
         this.physicalNode = physicalNode;
     }
 
-    public String getAddress() {
-        return address;
+    public String getKey() {
+        return key;
     }
 
     public int getHash() {
