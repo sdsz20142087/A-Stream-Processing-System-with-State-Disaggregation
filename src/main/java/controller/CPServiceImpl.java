@@ -8,7 +8,9 @@ import org.apache.logging.log4j.Logger;
 import pb.CPServiceGrpc;
 import pb.Cp;
 
+import java.io.StringBufferInputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 
 class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
@@ -154,7 +156,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
             }
             b.setAddress(address);
         } catch (Exception e) {
-            String msg = String.format("can not find state address in routing table: %s", e.getMessage());
+            String msg = String.format("can not find state address in hash ring", e.getMessage());
             logger.error(msg);
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
             return;
@@ -164,15 +166,22 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         responseObserver.onCompleted();
     }
 
-    public void addConsistentAddress(Cp.AddConsistentAddressRequest req,
-                                     StreamObserver<Cp.AddConsistentAddressResponse> responseObserver){
-        Cp.AddConsistentAddressResponse.Builder b = Cp.AddConsistentAddressResponse.newBuilder();
-        // find a random TM
+    public void addConsistentNode(Cp.AddConsistentNodeRequest req,
+                                     StreamObserver<Cp.AddConsistentNodeResponse> responseObserver){
+        Cp.AddConsistentNodeResponse.Builder b = Cp.AddConsistentNodeResponse.newBuilder();
 
         try {
-            consistentHash.add(req.getKey());
+            List<Scheduler.Triple<String, Integer, Integer>> range = consistentHash.addNode(req.getKey());
+            for (Scheduler.Triple<String, Integer, Integer> triple : range) {
+                Cp.Triple tripleValue = Cp.Triple.newBuilder()
+                        .setField1(triple.getFirst())
+                        .setField2(triple.getSecond())
+                        .setField3(triple.getThird())
+                        .build();
+                b.addTriples(tripleValue);
+            }
         } catch (Exception e) {
-            String msg = String.format("can not add state address in routing table");
+            String msg = String.format("can not add node in hash ring");
             logger.error(msg);
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
             return;
@@ -181,13 +190,21 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         responseObserver.onCompleted();
     }
 
-    public void removeConsistentAddress(Cp.RemoveConsistentAddressRequest req,
-                                        StreamObserver<Cp.RemoveConsistentAddressResponse> responseObserver){
-        Cp.RemoveConsistentAddressResponse.Builder b = Cp.RemoveConsistentAddressResponse.newBuilder();
+    public void removeConsistentNode(Cp.RemoveConsistentNodeRequest req,
+                                        StreamObserver<Cp.RemoveConsistentNodeResponse> responseObserver){
+        Cp.RemoveConsistentNodeResponse.Builder b = Cp.RemoveConsistentNodeResponse.newBuilder();
         try {
-            consistentHash.remove(req.getKey());
+            List<Scheduler.Triple<String, Integer, Integer>> range = consistentHash.removeNode(req.getKey());
+            for (Scheduler.Triple<String, Integer, Integer> triple : range) {
+                Cp.Triple tripleValue = Cp.Triple.newBuilder()
+                        .setField1(triple.getFirst())
+                        .setField2(triple.getSecond())
+                        .setField3(triple.getThird())
+                        .build();
+                b.addTriples(tripleValue);
+            }
         } catch (Exception e) {
-            String msg = String.format("can not remove state address from routing table");
+            String msg = String.format("can not remove node from hash ring");
             logger.error(msg);
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
             return;
