@@ -168,14 +168,9 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
                                      StreamObserver<Cp.AddConsistentAddressResponse> responseObserver){
         Cp.AddConsistentAddressResponse.Builder b = Cp.AddConsistentAddressResponse.newBuilder();
         // find a random TM
-        String[] keys= tmClients.keySet().toArray(new String[0]);
-        Random random = new Random();
-        String randomKey = keys[random.nextInt(keys.length)];
-        TMClient tmClient = tmClients.get(randomKey);
-        String randomAddress = tmClient.getHost();
 
         try {
-            consistentHash.add(req.getKey(), randomAddress);
+            consistentHash.add(req.getKey());
         } catch (Exception e) {
             String msg = String.format("can not add state address in routing table");
             logger.error(msg);
