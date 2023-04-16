@@ -60,12 +60,6 @@ public class TMClient implements Serializable {
         logger.info("deployed operator " + operator.getOpName() + " bytes, size=" + bytes.length + "");
     }
 
-    public void reConfigOp(Tm.OperatorConfig config) {
-        Tm.ReConfigOperatorRequest req = Tm.ReConfigOperatorRequest.newBuilder().setConfig(config).build();
-        blockingStub.reConfigOperator(req);
-        logger.info("re-config operator " +config.getName());
-    }
-
     public OperatorLoadBalancer.Pair<Integer, Integer> getOpStatus(String name) {
         Tm.OPStatusRequest req = Tm.OPStatusRequest.newBuilder().setName(name).build();
         final Tm.OperatorStatus[] return_value = new Tm.OperatorStatus[1];

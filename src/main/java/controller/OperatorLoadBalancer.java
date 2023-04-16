@@ -292,7 +292,9 @@ public class OperatorLoadBalancer{
                     .build();
             prevConfig.addOutputMetadata(newMeta);
             upstream_operators.get(opTS.getOpName()).add(prevConfig);
-            tmClient.reConfigOp(prevConfig.build()); //reConfig to new Op
+            // FIXME: Reconfig no longer works this way
+            throw new UnsupportedOperationException("Reconfig no longer works this way");
+            //tmClient.reConfigOp(prevConfig.build()); //reConfig to new Op
         }
         return newCfg;
     }
