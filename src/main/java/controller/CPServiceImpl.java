@@ -8,7 +8,9 @@ import org.apache.logging.log4j.Logger;
 import pb.CPServiceGrpc;
 import pb.Cp;
 
+import java.io.StringBufferInputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 
 class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
@@ -19,6 +21,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         return tmClients;
     }
     private HashMap<String, String> RoutingTable = new HashMap<>();
+    private ConsistentHash consistentHash = new ConsistentHash(3);
 
     @Override
     public void registerTM(Cp.RegisterTMRequest request,
@@ -135,6 +138,73 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
             RoutingTable.replace(stateKey,address);
         } catch (Exception e) {
             String msg = String.format("can not update state address in routing table");
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        responseObserver.onNext(b.build());
+        responseObserver.onCompleted();
+    }
+
+    public void getConsistentAddress(Cp.GetConsistentAddressRequest req,
+                                     StreamObserver<Cp.GetConsistentAddressResponse> responseObserver) {
+        Cp.GetConsistentAddressResponse.Builder b = Cp.GetConsistentAddressResponse.newBuilder();
+        try {
+            String address = consistentHash.get(req.getKey());
+            if (address == null) {
+                throw new Exception("state address not found");
+            }
+            b.setAddress(address);
+        } catch (Exception e) {
+            String msg = String.format("can not find state address in hash ring", e.getMessage());
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        Cp.GetConsistentAddressResponse response = b.build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
+    public void addConsistentNode(Cp.AddConsistentNodeRequest req,
+                                     StreamObserver<Cp.AddConsistentNodeResponse> responseObserver){
+        Cp.AddConsistentNodeResponse.Builder b = Cp.AddConsistentNodeResponse.newBuilder();
+
+        try {
+            List<Scheduler.Triple<String, Integer, Integer>> range = consistentHash.addNode(req.getKey());
+            for (Scheduler.Triple<String, Integer, Integer> triple : range) {
+                Cp.Triple tripleValue = Cp.Triple.newBuilder()
+                        .setField1(triple.getFirst())
+                        .setField2(triple.getSecond())
+                        .setField3(triple.getThird())
+                        .build();
+                b.addTriples(tripleValue);
+            }
+        } catch (Exception e) {
+            String msg = String.format("can not add node in hash ring");
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
+            return;
+        }
+        responseObserver.onNext(b.build());
+        responseObserver.onCompleted();
+    }
+
+    public void removeConsistentNode(Cp.RemoveConsistentNodeRequest req,
+                                        StreamObserver<Cp.RemoveConsistentNodeResponse> responseObserver){
+        Cp.RemoveConsistentNodeResponse.Builder b = Cp.RemoveConsistentNodeResponse.newBuilder();
+        try {
+            List<Scheduler.Triple<String, Integer, Integer>> range = consistentHash.removeNode(req.getKey());
+            for (Scheduler.Triple<String, Integer, Integer> triple : range) {
+                Cp.Triple tripleValue = Cp.Triple.newBuilder()
+                        .setField1(triple.getFirst())
+                        .setField2(triple.getSecond())
+                        .setField3(triple.getThird())
+                        .build();
+                b.addTriples(tripleValue);
+            }
+        } catch (Exception e) {
+            String msg = String.format("can not remove node from hash ring");
             logger.error(msg);
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
             return;

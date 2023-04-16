@@ -4,6 +4,7 @@ import config.CPConfig;
 import config.Config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import pb.Cp;
 import pb.Tm;
 
 import java.util.*;
@@ -42,6 +43,7 @@ public class Scheduler extends Thread {
         public T getThird() {
             return third;
         }
+
     }
 
     Comparator<Triple<Integer, String, TMClient>> comparator = new Comparator<Triple<Integer, String, TMClient>>() {
