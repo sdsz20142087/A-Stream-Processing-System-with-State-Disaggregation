@@ -43,7 +43,8 @@ message Msg{
   MsgType type = 1;
   optional string operatorName = 2;
   optional bytes data = 3;
-  optional OperatorConfig config = 4;
+  // only for type=CONTROL, contains map of <operatorName, new config>
+  map<string,OperatorConfig> config = 4;
   optional int32 partitionHash = 5;
   int64 ingestTime = 6;
 }

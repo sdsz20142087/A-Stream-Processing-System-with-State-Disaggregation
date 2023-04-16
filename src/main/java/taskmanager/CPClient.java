@@ -54,7 +54,9 @@ public class CPClient {
         Cp.FindRemoteStateAddressRequest req = Cp.FindRemoteStateAddressRequest.
                 newBuilder().setStateKey(keyPrefix).build();
         Cp.FindRemoteStateAddressResponse res = blockingStub.findRemoteStateAddress(req);
-        RTCache.put(keyPrefix, res.getAddress());
+        if(cached){
+            RTCache.put(keyPrefix, res.getAddress());
+        }
         return res.getAddress();
     }
 
