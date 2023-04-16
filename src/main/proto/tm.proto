@@ -44,7 +44,6 @@ message Msg{
   optional string operatorName = 2;
   optional bytes data = 3;
   optional OperatorConfig config = 4;
-  optional int32 partitionId = 5; // what is this for?
   int64 ingestTime = 6;
 }
 enum PartitionStrategy{
@@ -64,6 +63,13 @@ enum OperatorType{
 message OutputMetadata{
   string name = 1;
   string address = 2;
+  // tells the upstream operator where to send the data
+  PartitionPlan partitionPlan = 3;
+}
+
+message PartitionPlan{
+  int32 partitionStart = 1;
+  int32 partitionEnd = 2;
 }
 
 message OperatorConfig{
@@ -71,6 +77,8 @@ message OperatorConfig{
   repeated OutputMetadata outputMetadata = 3; // The next TM's address: ip:port
   PartitionStrategy partitionStrategy = 4;
   int32 bufferSize = 5;
+  // tells this operator the new partitions it should take care of
+  PartitionPlan partitionPlan = 6;
 }
 
 service TMService{
