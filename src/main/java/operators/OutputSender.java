@@ -1,7 +1,7 @@
 package operators;
 
-import pb.Tm;
+import com.google.protobuf.ByteString;
 
 public interface OutputSender {
-    void sendOutput(Tm.Msg.Builder msgBuilder);
+    void sendOutput(Object o);
 }

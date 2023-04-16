@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 public class SinkOperator extends BaseOperator implements Serializable {
     public SinkOperator() {
-        super();
+        super(null, null);
         this.setName("SinkOperator");
         this.setOpName("SinkOperator");
     }

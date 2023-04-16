@@ -11,12 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FlatMap<T> extends BaseOperator implements Serializable{
-    private SerDe<T> serde;
     List<T> output= new ArrayList<>();
-    public FlatMap(SerDe<T> serde) {
+    public FlatMap(SerDe serDeIn, SerDe serDeOut) {
+        super(serDeIn, serDeOut);
         this.setName("FlatMap-");
-        this.serde = serde;
-
     }
     @Override
     public void run(){
@@ -24,10 +22,10 @@ public class FlatMap<T> extends BaseOperator implements Serializable{
     }
     @Override
     protected void processElement(ByteString in, OutputSender outputSender) {
-        T data = serde.deserialize(in);
+        T data = (T) serdeIn.deserializeIn(in);
         output= UDFflatmap(data);
         for (T t: output){
-            ByteString bs = serde.serialize(t);
+            ByteString bs = serdeOut.serializeOut(t);
             outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs));
         }
     }
