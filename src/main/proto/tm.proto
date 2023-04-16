@@ -44,13 +44,13 @@ message Msg{
   optional string operatorName = 2;
   optional bytes data = 3;
   optional OperatorConfig config = 4;
+  optional int32 partitionHash = 5;
   int64 ingestTime = 6;
 }
 enum PartitionStrategy{
   HASH = 0;
   ROUND_ROBIN = 1;
   BROADCAST = 2;
-  RANDOM = 3;
 }
 
 enum OperatorType{
@@ -79,6 +79,10 @@ message OperatorConfig{
   int32 bufferSize = 5;
   // tells this operator the new partitions it should take care of
   PartitionPlan partitionPlan = 6;
+  /* for each TM, we only consider if it needs new partitions from other TMs,
+  the TM itself doesn't need to know if it needs to give up some partitions.
+  If one TM receives a partition request, it then removes the partition from itself.
+  */
 }
 
 service TMService{

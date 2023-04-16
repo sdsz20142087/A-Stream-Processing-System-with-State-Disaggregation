@@ -10,13 +10,11 @@ import java.io.Serializable;
 
 public class SourceOperator<T> extends BaseOperator implements Serializable {
     private ISource<T> source;
-    private SerDe<T> serde;
 
     public SourceOperator(ISource<T> source, SerDe<T> serde) {
-        super();
+        super(serde, serde);
         this.setOpName("SourceOperator");
         this.source = source;
-        this.serde = serde;
         // start a new thread to emit data and store them in the input queue
         // TODO: the design is NOT finalized yet! We are not yet sure how to handle
         // stream item serialization/de-serialization
@@ -34,7 +32,7 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
             }
             while (true) {
                 T data = source.next();
-                ByteString bs = serde.serialize(data);
+                ByteString bs = serdeIn.serializeOut(data);
                 Tm.Msg msg = Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs).build();
                 inputQueue.add(msg);
             }
@@ -45,6 +43,7 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
     @Override
     // simply move whatever we have in the input queue to the output queue
     protected void processElement(ByteString in, OutputSender outputSender) {
-        outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(in));
+        T obj = (T) serdeIn.deserializeIn(in);
+        outputSender.sendOutput(obj);
     }
 }

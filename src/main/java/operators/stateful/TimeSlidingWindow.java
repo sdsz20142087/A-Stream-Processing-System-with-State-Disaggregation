@@ -13,8 +13,6 @@ import java.io.Serializable;
 import java.util.*;
 
 public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializable {
-    private SerDe<IN> serde;
-    private SerDe<OUT> serdeOut;
     private Window currentWindow;
     private long windowSize;
     private long slideStep;
@@ -23,10 +21,9 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
     private MapStateAccessor someMapStateAccessor;
     private ValueStateAccessor<Integer> intStateAccessor;
     public TimeSlidingWindow(SerDe<IN> serde, SerDe<OUT> serdeOut, long windowSize, long slideStep) {
-        this.serde = serde;
+        super(serde, serdeOut);
         this.windowSize = windowSize;
         this.slideStep = slideStep;
-        this.serdeOut = serdeOut;
         this.windowData = new ArrayList<>();
 
         //
@@ -50,7 +47,7 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
         // 把本地的状态更新到kvprovider
         someMapStateAccessor.update(m);
 
-        IN data = serde.deserialize(in);
+        IN data = (IN) this.serdeIn.deserializeIn(in);
         long timestamp = getDataTimestamp(data);
         if(currentWindow == null){
             currentWindow = new Window(timestamp,timestamp+windowSize);
@@ -59,7 +56,7 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
             windowData.add(data);
             if(trigger()){
                 OUT result = UDF(data);
-                ByteString output=serdeOut.serialize(result);
+                ByteString output=serdeOut.serializeOut(result);
                 outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(output));
             }
         }else{

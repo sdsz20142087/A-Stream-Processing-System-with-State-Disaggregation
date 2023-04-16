@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 public class WikiInfoSerde implements SerDe<WikiInfo>, Serializable {
     @Override
-    public WikiInfo deserialize(ByteString bs) {
+    public WikiInfo deserializeIn(ByteString bs) {
         // convert to string, then load json
         String info = bs.toStringUtf8();
         Gson gson = new Gson();
@@ -16,7 +16,7 @@ public class WikiInfoSerde implements SerDe<WikiInfo>, Serializable {
     }
 
     @Override
-    public ByteString serialize(WikiInfo wikiInfo) {
-        throw new UnsupportedOperationException();
+    public ByteString serializeOut(WikiInfo wikiInfo) {
+        return ByteString.copyFrom(BytesUtil.ObjectToBytes(wikiInfo));
     }
 }

@@ -1,7 +1,7 @@
 package operators;
 
 import com.google.protobuf.ByteString;
-import kotlin.Pair;
+import kotlin.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -9,10 +9,13 @@ import java.io.Serializable;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import pb.Tm;
+import utils.DefaultKeySelector;
+import utils.FatalUtil;
+import utils.SerDe;
 
 public abstract class BaseOperator extends Thread implements Serializable {
     protected transient LinkedBlockingQueue<Tm.Msg> inputQueue;
-    private transient LinkedBlockingQueue<Pair<String,Tm.Msg.Builder>> outputQueue;
+    private transient LinkedBlockingQueue<Triple<String,ByteString,Integer>> outputQueue;
     protected transient Logger logger = LogManager.getLogger();
     private Tm.OperatorConfig config;
     private int bufferSize = 1000; // UDF buffer size, can change in runtime
@@ -22,7 +25,9 @@ public abstract class BaseOperator extends Thread implements Serializable {
 
     private String opName;
 
-    private Tm.Msg currentInputMsg;
+    protected SerDe serdeIn, serdeOut;
+
+    private IKeySelector keySelector = new DefaultKeySelector();
 
     public String getOpName() {
     	return opName;
@@ -32,11 +37,13 @@ public abstract class BaseOperator extends Thread implements Serializable {
     }
     // There must not be moving parts (e.g. listening to ports, starting new threads)
     // in the constructor because we'll be sending this object over grpc.
-    public BaseOperator() {
+    public BaseOperator(SerDe serdeIn, SerDe serdeOut) {
+        this.serdeIn = serdeIn;
+        this.serdeOut = serdeOut;
     }
 
     public final void init(Tm.OperatorConfig config, LinkedBlockingQueue<Tm.Msg> inputQueue,
-                           LinkedBlockingQueue<Pair<String,Tm.Msg.Builder>> outputQueue,
+                           LinkedBlockingQueue<Triple<String,ByteString,Integer>> outputQueue,
                            StateDescriptorProvider stateDescriptorProvider){
         this.config = config;
         this.opName = config.getName();
@@ -55,10 +62,6 @@ public abstract class BaseOperator extends Thread implements Serializable {
     public void setConfig(Tm.OperatorConfig config) {
         this.config = config;
     }
-
-//    protected final void sendOutput(Tm.Msg.Builder output) {
-//        outputQueue.add(new Pair<>(config.getName(), output));
-//    }
 
     // !! No control message reaches the operator, only data messages
 //    private void handleMsg(Tm.Msg input) {
@@ -81,9 +84,12 @@ public abstract class BaseOperator extends Thread implements Serializable {
             this.ingestTime = ingestTime;
         }
 
-        public void sendOutput(Tm.Msg.Builder output){
-            output.setIngestTime(ingestTime);
-            outputQueue.add(new Pair<>(config.getName(), output));
+        public void sendOutput(Object o){
+            int key = keySelector.getKey(o);
+            if(o instanceof ByteString){
+                FatalUtil.fatal("Output is ByteString",null);
+            }
+            outputQueue.add(new Triple<>(config.getName(), serdeOut.serializeOut(o), key));
         }
     }
 
@@ -92,19 +98,16 @@ public abstract class BaseOperator extends Thread implements Serializable {
     @Override
     public void run() {
         if(config==null){
-            logger.fatal("Operator not initialized");
-            System.exit(1);
+            FatalUtil.fatal("Operator not initialized",null);
         }
         // receive input from upstream operators
         try {
             while (true) {
                 Tm.Msg input = inputQueue.take();
-                this.currentInputMsg = input;
                 processElement(input.getData(), new BaseOutputSender(input.getIngestTime()));
             }
         } catch (Exception e) {
-            logger.fatal("Exception in sender thread: " + e.getMessage());
-            System.exit(1);
+            FatalUtil.fatal(getOpName()+": Exception in sender thread",e);
         }
         logger.info("Operator " + config.getName() + " started");
     }

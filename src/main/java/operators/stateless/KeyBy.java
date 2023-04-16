@@ -9,7 +9,6 @@ import operators.BaseOperator;
 import java.io.Serializable;
 
 public class KeyBy<T,K> extends BaseOperator implements Serializable {
-    private SerDe<T> serde;
     private  K key; // position or name
 
     private int numOfPartitions;
@@ -17,15 +16,14 @@ public class KeyBy<T,K> extends BaseOperator implements Serializable {
 
 
     public KeyBy(int numOfPartitions, SerDe<T> serde) {
+        super(serde, serde);
         this.setName("KeyBy-");
-        this.serde = serde;
         this.numOfPartitions = numOfPartitions;
     }
 
     @Override
     protected void processElement(ByteString in, OutputSender outputSender) {
-        T data = serde.deserialize(in);
-        int partition = data.hashCode()%getNumOfPartitions();
+        T data = (T) serdeIn.deserializeIn(in);
         throw new NotImplementedError("Not implemented yet");
     }
 

@@ -7,6 +7,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import kotlin.Pair;
+import kotlin.Triple;
 import operators.BaseOperator;
 import operators.StateDescriptorProvider;
 import org.apache.logging.log4j.LogManager;
@@ -36,7 +37,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     private final Map<String, LinkedBlockingQueue<Tm.Msg>> opInputQueues = new HashMap<>();
 
     // map of <operator name, message>
-    private final LinkedBlockingQueue<Pair<String, Tm.Msg.Builder>> msgQueue = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<Triple<String, ByteString,Integer>> msgQueue = new LinkedBlockingQueue<>();
 
     private final HashMap<BaseOperator, Integer> roundRobinCounter = new HashMap<>();
 
@@ -244,7 +245,8 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
 
     private void sendLoop() throws InterruptedException {
         while (true) {
-            Pair<String, Tm.Msg.Builder> item = msgQueue.take();
+            // operator-name, serialized msg, partition key
+            Triple<String, ByteString,Integer> item = msgQueue.take();
             String opName = item.getFirst();
             BaseOperator op = operators.get(opName);
             Tm.OperatorConfig config = op.getConfig();
@@ -252,34 +254,32 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
             // apply the partition strategy
             switch (config.getPartitionStrategy()) {
                 case ROUND_ROBIN:
-                    // FIXME: this is not correct
                     int val = roundRobinCounter.get(op);
                     int outputListLen = config.getOutputMetadataList().size();
-                    logger.info("sendloop: roundrobin counter for "+opName+" is "+val+" and output list len is "+outputListLen);
+                    //logger.info("sendloop: roundrobin counter for "+opName+" is "+val+" and output list len is "+outputListLen);
                     roundRobinCounter.put(op, val+1);
                     targetOutput.add(config.getOutputMetadataList().get(val % outputListLen));
                     break;
                 case HASH:
-                    // ???
-
-                    // FIXME: WHAT DOES THIS EVEN MEAN? targetStub= stubs.get(msg.getPartitionId());
+                    int outputIndex = item.getThird() % config.getOutputMetadataList().size();
+                    targetOutput.add(config.getOutputMetadataList().get(outputIndex));
                     break;
                 case BROADCAST:
                     targetOutput = config.getOutputMetadataList();
                     break;
-                case RANDOM:
-                    // ???
-                    break;
             }
+            ByteString msgBytes = item.getSecond();
+            Tm.Msg.Builder msgBuilder = Tm.Msg.newBuilder()
+                    .setType(Tm.Msg.MsgType.DATA)
+                    .setData(msgBytes);
             for(Tm.OutputMetadata target: targetOutput){
-                Tm.Msg msg = item.getSecond().setOperatorName(target.getName()).build();
+                Tm.Msg msg = msgBuilder.setOperatorName(target.getName()).build();
                 pushMsgClients.get(target.getAddress()).pushMsg(msg);
             }
             logger.debug("sendloop: sending msg to"+targetOutput);
         }
     }
 
-    // TODO: IMPLEMENT THIS
     @Override
     public ValueStateAccessor getValueStateAccessor(BaseOperator op, String stateName, Object defaultValue) {
         checkStateName(stateName);
@@ -289,16 +289,14 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
 
     @Override
     public MapStateAccessor getMapStateAccessor(BaseOperator op, String stateName) {
-        // TODO: IMPLEMENT THIS
         checkStateName(stateName);
-        return null;
+        return new MapStateAccessor(op.getOpName() + "." + stateName, this.kvProvider);
     }
 
     @Override
     public ListStateAccessor getListStateAccessor(BaseOperator op, String stateName) {
-        // TODO: IMPLEMENT THIS
         checkStateName(stateName);
-        return null;
+        return new ListStateAccessor(op.getOpName() + "." + stateName, this.kvProvider);
     }
 
     private void checkStateName(String name){

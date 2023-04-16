@@ -3,6 +3,6 @@ package utils;
 import com.google.protobuf.ByteString;
 
 public interface SerDe<T> {
-    T deserialize(ByteString bs);
-    ByteString serialize(T t);
+    T deserializeIn(ByteString bs);
+    ByteString serializeOut(T t);
 }

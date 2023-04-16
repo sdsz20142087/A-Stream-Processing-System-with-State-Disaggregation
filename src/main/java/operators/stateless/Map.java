@@ -8,18 +8,17 @@ import pb.Tm;
 
 import java.io.Serializable;
 
-public class Map<T> extends BaseOperator implements Serializable {
-    private SerDe<T> serde;
-    public Map(SerDe<T> serde) {
+public class Map<Tin, Tout> extends BaseOperator implements Serializable {
+    public Map(SerDe<Tin> serdeIn, SerDe<Tout> serdeOut) {
+        super(serdeIn, serdeOut);
         this.setName("Map-");
-        this.serde = serde;
     }
 
     @Override
     protected void processElement(ByteString in, OutputSender outputSender) {
-        T data = serde.deserialize(in);
-        T output= UDFmap(data);
-        ByteString bs = serde.serialize(output);
+        Tin data = (Tin) serdeIn.deserializeIn(in);
+        Tout output= UDFmap(data);
+        ByteString bs = serdeOut.serializeOut(output);
         outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs));
     }
 
@@ -28,8 +27,8 @@ public class Map<T> extends BaseOperator implements Serializable {
     public void run(){
         super.run();
     }
-    private T UDFmap(T t){
+    private Tout UDFmap(Tin t){
         // some implementation
-        return t;
+        return null;
     }
 }
