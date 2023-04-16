@@ -35,6 +35,12 @@ message OPStatusRequest{
   string name = 1;
 }
 
+message ReconfigMsg{
+  // only for type=CONTROL, contains map of <operatorName, new config>
+  map<string,OperatorConfig> config = 1;
+  int64 effectiveWaterMark = 2;
+}
+
 message Msg{
   enum MsgType {
     DATA = 0;
@@ -43,11 +49,10 @@ message Msg{
   MsgType type = 1;
   optional string operatorName = 2;
   optional bytes data = 3;
-  // only for type=CONTROL, contains map of <operatorName, new config>
-  map<string,OperatorConfig> config = 4;
-  optional int32 partitionHash = 5;
+  optional ReconfigMsg reconfigMsg = 4;
   int64 ingestTime = 6;
 }
+
 enum PartitionStrategy{
   HASH = 0;
   ROUND_ROBIN = 1;
