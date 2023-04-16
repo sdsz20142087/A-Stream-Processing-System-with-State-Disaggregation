@@ -21,6 +21,8 @@ public class ControlPlane extends NodeBase {
 
     public int tmClientCnt;
 
+    private ControlServer controlServer;
+
     public static ControlPlane getInstance() {
         if (instance == null)
             instance = new ControlPlane();
@@ -47,11 +49,15 @@ public class ControlPlane extends NodeBase {
         // start the scheduler thread
         this.scheduler = new Scheduler(App.getInstance().getQueryPlan(), svc.getTMClients());
         this.opLB = OperatorLoadBalancer.getInstance(App.getInstance().getQueryPlan());
+
+        // start the control server
+        controlServer = new ControlServer(svc, cpcfg.control_port);
         logger.info("ControlPlane scheduler init");
     }
 
     public void init() {
         try {
+            this.controlServer.start();
             this.cpServer.start();
             logger.info("ControlPlane gRPC server started");
             while (tmClientCnt == 0) {
