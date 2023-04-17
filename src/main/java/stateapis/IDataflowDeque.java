@@ -9,6 +9,6 @@ public interface IDataflowDeque<T> {
     T peekLast();
     void clear();
     boolean isEmpty();
-
+    T getSum();
     int size();
 }
