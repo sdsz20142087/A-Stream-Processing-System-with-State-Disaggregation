@@ -5,7 +5,6 @@ import config.CPConfig;
 import config.Config;
 import utils.SerDe;
 import pb.Tm;
-
 import java.io.IOException;
 import java.io.Serializable;
 
@@ -13,7 +12,6 @@ import java.io.Serializable;
 public class SourceOperator<T> extends BaseOperator implements Serializable {
     private ISource<T> source;
     private SerDe<T> serde;
-    private double watermark_interval;
     private int out_of_order_grace_period;
     private T watermarkContent;
 
@@ -22,7 +20,6 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
         this.setOpName("SourceOperator");
         this.source = source;
         this.serde = serde;
-        this.watermark_interval = this.cpcfg.watermark_interval;
         this.out_of_order_grace_period = this.cpcfg.out_of_order_grace_period;
         // start a new thread to emit data and store them in the input queue
         // TODO: the design is NOT finalized yet! We are not yet sure how to handle
@@ -50,17 +47,18 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
                 Tm.Msg msg = Tm.Msg.newBuilder()
                         .setType(Tm.Msg.MsgType.DATA)
                         .setData(bs)
+                        .setOperatorName("DATA SOURCE")
                         .setIngestTime((long) (System.currentTimeMillis() / 1000.0) - startTimeStamp)
                         .build();
                 inputQueue.add(msg);
             }
         }).start();
 
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+//        try {
+//            Thread.sleep(100);
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
 
         new Thread(() -> {
             while (true) {
@@ -77,7 +75,8 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
                 Tm.Msg msg = Tm.Msg.newBuilder()
                         .setType(Tm.Msg.MsgType.WATERMARK)
                         .setData(bs)
-                        .setIngestTime((long) (System.currentTimeMillis() / 1000.0) - startTimeStamp - this.out_of_order_grace_period)
+                        .setOperatorName("DATA SOURCE")
+                        .setIngestTime(Math.max(0, (long) (System.currentTimeMillis() / 1000.0) - startTimeStamp - this.out_of_order_grace_period))
                         .build();
                 inputQueue.add(msg);
             }
