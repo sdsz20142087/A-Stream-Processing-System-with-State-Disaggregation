@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksIterator;
+import pb.Tm;
 import utils.BytesUtil;
 import utils.FatalUtil;
 import java.util.ArrayList;
@@ -103,7 +104,10 @@ public class LocalKVProvider implements KVProvider {
     }
 
     @Override
-    public void handleMigration() {
+    public void handleReconfig(Tm.ReconfigMsg msg) {
+        /*
+        For the localkvprovider, reconfig should migrate everything for that operator.
+         */
         throw new UnsupportedOperationException("LocalKVProvider does not support migration");
     }
 

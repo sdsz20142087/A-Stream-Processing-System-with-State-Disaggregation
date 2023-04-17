@@ -1,5 +1,7 @@
 package stateapis;
 
+import pb.Tm;
+
 import java.util.List;
 
 public interface KVProvider {
@@ -17,7 +19,7 @@ public interface KVProvider {
     void close();
 
     // WIP: migration control msg definition
-    void handleMigration();
+    void handleReconfig(Tm.ReconfigMsg msg);
 
     void setLocalAddr(String addr);
 }

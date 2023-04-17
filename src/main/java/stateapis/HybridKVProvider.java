@@ -3,6 +3,7 @@ package stateapis;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import pb.Tm;
 import taskmanager.CPClient;
 import utils.BytesUtil;
 import utils.FatalUtil;
@@ -109,7 +110,7 @@ public class HybridKVProvider implements KVProvider {
     }
 
     @Override
-    public void handleMigration() {
+    public void handleReconfig(Tm.ReconfigMsg msg) {
         throw new UnsupportedOperationException("HybridKVProvider doesn't support handleMigration");
     }
 
