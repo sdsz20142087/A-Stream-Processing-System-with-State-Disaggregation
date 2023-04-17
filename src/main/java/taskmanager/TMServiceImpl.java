@@ -9,6 +9,7 @@ import io.grpc.stub.StreamObserver;
 import kotlin.Pair;
 import kotlin.Triple;
 import operators.BaseOperator;
+import operators.OutputMessage;
 import operators.StateDescriptorProvider;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,7 +38,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     private final Map<String, LinkedBlockingQueue<Tm.Msg>> opInputQueues = new HashMap<>();
 
     // map of <operator name, message>
-    private final LinkedBlockingQueue<Triple<String, ByteString,Integer>> msgQueue = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<OutputMessage> msgQueue = new LinkedBlockingQueue<>();
 
     private final HashMap<BaseOperator, Integer> roundRobinCounter = new HashMap<>();
 
@@ -155,7 +156,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
 
     @Override
     public void pushMsg(Tm.Msg request, StreamObserver<Empty> responseObserver) {
-        String opName = request.getOperatorName();
+        String opName = request.getReceiverOperatorName();
         logger.info("got pushMsg request for "+opName);
         if(!operators.containsKey(opName)){
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator "+opName+" not found")));
@@ -245,35 +246,49 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
 
     private void sendLoop() throws InterruptedException {
         while (true) {
-            // operator-name, serialized msg, partition key
-            Triple<String, ByteString,Integer> item = msgQueue.take();
-            String opName = item.getFirst();
+            // operator-name, serialized msg, <partition key, msg type>
+            OutputMessage item = msgQueue.take();
+//            Triple<String, Tm.Msg.Builder, Pair<Integer, Tm.Msg.MsgType>> item = msgQueue.take();
+            String opName = item.getOpName();
             BaseOperator op = operators.get(opName);
             Tm.OperatorConfig config = op.getConfig();
             List<Tm.OutputMetadata> targetOutput = new ArrayList<>();
             // apply the partition strategy
-            switch (config.getPartitionStrategy()) {
-                case ROUND_ROBIN:
-                    int val = roundRobinCounter.get(op);
-                    int outputListLen = config.getOutputMetadataList().size();
-                    //logger.info("sendloop: roundrobin counter for "+opName+" is "+val+" and output list len is "+outputListLen);
-                    roundRobinCounter.put(op, val+1);
-                    targetOutput.add(config.getOutputMetadataList().get(val % outputListLen));
-                    break;
-                case HASH:
-                    int outputIndex = item.getThird() % config.getOutputMetadataList().size();
-                    targetOutput.add(config.getOutputMetadataList().get(outputIndex));
-                    break;
-                case BROADCAST:
-                    targetOutput = config.getOutputMetadataList();
-                    break;
+            if (item.getMsg().getType() == Tm.Msg.MsgType.WATERMARK) {
+                targetOutput = config.getOutputMetadataList();
+                logger.info("WATERMARK BROADCAST");
+            } else {
+                switch (config.getPartitionStrategy()) {
+                    case ROUND_ROBIN:
+                        int val = roundRobinCounter.get(op);
+                        int outputListLen = config.getOutputMetadataList().size();
+                        //logger.info("sendloop: roundrobin counter for "+opName+" is "+val+" and output list len is "+outputListLen);
+                        roundRobinCounter.put(op, val+1);
+                        targetOutput.add(config.getOutputMetadataList().get(val % outputListLen));
+                        break;
+                    case HASH:
+                        int outputIndex = item.getKey() % config.getOutputMetadataList().size();
+                        targetOutput.add(config.getOutputMetadataList().get(outputIndex));
+                        break;
+                    case BROADCAST:
+                        targetOutput = config.getOutputMetadataList();
+                        break;
+                }
             }
-            ByteString msgBytes = item.getSecond();
-            Tm.Msg.Builder msgBuilder = Tm.Msg.newBuilder()
-                    .setType(Tm.Msg.MsgType.DATA)
-                    .setData(msgBytes);
+//            //extract info from msg builder
+//            ByteString msgBytes = item.getMsg().getData();
+//            Tm.Msg.MsgType msgType = item.getMsg().getType();
+//            long msgIngestionTime = item.getMsg().getIngestTime();
+//            String msgOperatorName = item.getMsg().getSenderOperatorName();
+//            //build new msg
+//            Tm.Msg.Builder msgBuilder = Tm.Msg.newBuilder()
+//                    .setType(msgType)
+//                    .setData(msgBytes)
+//                    .setIngestTime(msgIngestionTime)
+//                    .setSenderOperatorName(msgOperatorName);
+            Tm.Msg.Builder msgBuilder = item.getMsg();
             for(Tm.OutputMetadata target: targetOutput){
-                Tm.Msg msg = msgBuilder.setOperatorName(target.getName()).build();
+                Tm.Msg msg = msgBuilder.setReceiverOperatorName(target.getName()).build();
                 pushMsgClients.get(target.getAddress()).pushMsg(msg);
             }
             logger.debug("sendloop: sending msg to"+targetOutput);

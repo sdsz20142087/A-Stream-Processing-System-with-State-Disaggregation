@@ -49,7 +49,7 @@ public class ConsistentHash {
                 circle.remove(hash);
             }
             virtualNodes.remove(node);
-            // 重新计算各个节点的区域
+            // recompute ranges
             for (Map.Entry<Integer, String> entry : circle.entrySet()) {
                 int hash = entry.getKey();
                 String physicalNode = entry.getValue();
