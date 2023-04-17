@@ -39,12 +39,13 @@ public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
 }
 
 // dequeproxy translates the deque interface to the kvprovider interface
-class DequeProxy<T> implements IDataflowDeque<T> {
+public class DequeProxy<T> implements IDataflowDeque<T> {
     private String keyBase;
     private KVProvider kvProvider;
 
     private String frontIndexKey;
     private String sizeKey;
+    private T sum;
     private final Logger logger = LogManager.getLogger();
 
     public DequeProxy(String keyBase, KVProvider kvProvider) {
@@ -148,6 +149,12 @@ class DequeProxy<T> implements IDataflowDeque<T> {
     public boolean isEmpty() {
         return size() == 0;
     }
+
+    @Override
+    public T getSum() {
+        return sum;
+    }
+
 
     @Override
     public int size() {
