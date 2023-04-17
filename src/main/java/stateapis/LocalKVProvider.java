@@ -9,11 +9,14 @@ import pb.Tm;
 import utils.BytesUtil;
 import utils.FatalUtil;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class LocalKVProvider implements KVProvider {
     private RocksDB db;
     private final Logger logger = LogManager.getLogger();
+
+    private final HashSet<String> involvedOps = new HashSet<>();
 
     private String localAddr;
 
@@ -108,7 +111,41 @@ public class LocalKVProvider implements KVProvider {
         /*
         For the localkvprovider, reconfig should migrate everything for that operator.
          */
-        throw new UnsupportedOperationException("LocalKVProvider does not support migration");
+        for(String opName: msg.getConfigMap().keySet()){
+            if(!involvedOps.contains(opName)){
+                continue;
+            }
+            /*
+            get the operator's stage,
+             loop through all the changed configs,
+              connect to their TM to pull required data
+             */
+            List<String> targetTMs = msg.getConfigMap().get(opName).getPeerTMAddrsList();
+            int stage = msg.getConfigMap().get(opName).getLogicalStage();
+            assert stage > 0;
+            for(String targetAddr:targetTMs){
+                if(msg.getConfigMap().get(opName).getLocalTMAddr().equals(targetAddr)){
+                    continue;
+                }
+                RemoteStateClient client = new RemoteStateClient(targetAddr);
+
+                List<Tm.StateKV> newKVs = client.pullStates(stage, msg.getConfigMap().get(opName).getPartitionPlan());
+                for(Tm.StateKV kv:newKVs){
+                    this.put(kv.getKey(), kv.getKeyBytes().toByteArray());
+                }
+                logger.info("Pulled " + newKVs.size() + " states from " + targetAddr + " for " + opName);
+            }
+        }
+    }
+
+    @Override
+    public void addInvolvedOp(String opId) {
+        this.involvedOps.add(opId);
+    }
+
+    @Override
+    public void removeInvolvedOp(String opId) {
+        this.involvedOps.remove(opId);
     }
 
     @Override

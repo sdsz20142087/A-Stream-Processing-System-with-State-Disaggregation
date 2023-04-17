@@ -75,6 +75,7 @@ public class QueryPlan {
         String realName = op.getOpName()+"_"+this.operatorIdMap.get(op.getClass());
         op.setOpName(realName);
         Tm.OperatorConfig.Builder cfg = Tm.OperatorConfig.newBuilder()
+                .setLogicalStage(stageIdx)
                 .setName(op.getOpName())
                 .setPartitionStrategy(partitionStrategy)
                 .setBufferSize(bufferSize)

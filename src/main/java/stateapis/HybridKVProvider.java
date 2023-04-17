@@ -9,6 +9,7 @@ import utils.BytesUtil;
 import utils.FatalUtil;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 public class HybridKVProvider implements KVProvider {
@@ -21,7 +22,12 @@ public class HybridKVProvider implements KVProvider {
     private String localAddr;
     private final Logger logger = LogManager.getLogger();
 
+    // map<TM ADDRESS, RemoteStateClient>
     private final HashMap<String, RemoteStateClient> remoteStateClientMap = new HashMap<>();
+
+    private final HashSet<String> involvedOps = new HashSet<>();
+
+    private final HashMap<String, Object> localMigratedCache = new HashMap<>();
 
     // The only difference between hybridNoMgr/hybridMgr is that whether they attempt to migrate,
     // this means hybridNoMgr has a subset of functions of hybridMgr
@@ -112,6 +118,16 @@ public class HybridKVProvider implements KVProvider {
     @Override
     public void handleReconfig(Tm.ReconfigMsg msg) {
         throw new UnsupportedOperationException("HybridKVProvider doesn't support handleMigration");
+    }
+
+    @Override
+    public void addInvolvedOp(String opId) {
+        this.involvedOps.add(opId);
+    }
+
+    @Override
+    public void removeInvolvedOp(String opId) {
+        this.involvedOps.remove(opId);
     }
 
     @Override

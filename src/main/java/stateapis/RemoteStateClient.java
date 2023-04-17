@@ -12,6 +12,7 @@ import java.util.List;
 
 public class RemoteStateClient {
 
+
     private final String target;
     private final TMServiceGrpc.TMServiceBlockingStub blockingStub;
     public RemoteStateClient(String addr) {
@@ -35,6 +36,12 @@ public class RemoteStateClient {
         Tm.ListKeysResponse res = blockingStub.listStateKeys(
                 Tm.ListKeysRequest.newBuilder().setPrefix(prefix).build());
         return res.getKeysList();
+    }
+
+    public List<Tm.StateKV> pullStates(int stage, Tm.PartitionPlan plan){
+        Tm.PullStatesResponse res = blockingStub.pullStates(
+                Tm.PullStatesRequest.newBuilder().setLogicalStage(stage).setPartitionPlan(plan).build());
+        return res.getStateKVsList();
     }
 
     public void delete(String key){

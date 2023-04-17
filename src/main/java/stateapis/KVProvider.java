@@ -18,8 +18,10 @@ public interface KVProvider {
 
     void close();
 
-    // WIP: migration control msg definition
     void handleReconfig(Tm.ReconfigMsg msg);
+
+    void addInvolvedOp(String opId);
+    void removeInvolvedOp(String opId);
 
     void setLocalAddr(String addr);
 }

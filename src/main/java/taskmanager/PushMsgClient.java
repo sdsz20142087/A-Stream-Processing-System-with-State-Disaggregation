@@ -11,33 +11,42 @@ import pb.Tm;
 
 class PushMsgClient {
     private final TMServiceGrpc.TMServiceStub asyncStub;
+    private final TMServiceGrpc.TMServiceBlockingStub blockingStub;
 
     private final Logger logger;
 
     private final String target;
 
-    public PushMsgClient(Logger logger, String target) {
+    private final boolean useAsync;
+
+    public PushMsgClient(Logger logger, String target, boolean useAsync) {
+        this.useAsync = useAsync;
         this.logger = logger;
         this.target = target;
         ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create()).build();
         asyncStub = TMServiceGrpc.newStub(channel);
+        blockingStub = TMServiceGrpc.newBlockingStub(channel);
         logger.info("PushMsgClient created for " + target);
     }
 
     public void pushMsg(Tm.Msg msg) {
-        asyncStub.pushMsg(msg, new StreamObserver<>() {
-            @Override
-            public void onNext(Empty empty) {}
+        if(useAsync){
+            asyncStub.pushMsg(msg, new StreamObserver<>() {
+                @Override
+                public void onNext(Empty empty) {}
 
-            @Override
-            public void onError(Throwable t) {
-                logger.error("TM: pushClient: Failed to push message to TM at " + target
-                        + "-->"+ t.getMessage());
-            }
+                @Override
+                public void onError(Throwable t) {
+                    logger.error("TM: pushClient: Failed to push message to TM at " + target
+                            + "-->"+ t.getMessage());
+                }
 
-            @Override
-            public void onCompleted() {
-            }
-        });
+                @Override
+                public void onCompleted() {
+                }
+            });
+        } else {
+            blockingStub.pushMsg(msg);
+        }
     }
 }

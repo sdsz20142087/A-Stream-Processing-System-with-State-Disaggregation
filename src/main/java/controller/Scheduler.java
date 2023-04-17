@@ -135,6 +135,7 @@ public class Scheduler extends Thread {
                 assert poll_element != null;
                 TMClient tmClient = poll_element.getThird(); //choose appropriate tmClient
                 Tm.OperatorConfig.Builder parallelConfig = Tm.OperatorConfig.newBuilder()
+                        .setLogicalStage(item.getCfg().getLogicalStage())
                         .setName(item.getCfg().getName())
                         .setPartitionStrategy(item.getCfg().getPartitionStrategy())
                         .setBufferSize(item.getCfg().getBufferSize())

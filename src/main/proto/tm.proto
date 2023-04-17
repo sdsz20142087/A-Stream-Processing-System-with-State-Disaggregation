@@ -85,6 +85,9 @@ message OperatorConfig{
   int32 bufferSize = 5;
   // tells this operator the new partitions it should take care of
   PartitionPlan partitionPlan = 6;
+  int32 logicalStage = 7;
+  repeated string peerTMAddrs = 8;
+  string localTMAddr = 9;
   /* for each TM, we only consider if it needs new partitions from other TMs,
   the TM itself doesn't need to know if it needs to give up some partitions.
   If one TM receives a partition request, it then removes the partition from itself.
@@ -99,9 +102,24 @@ service TMService{
   rpc GetOperatorStatus(OPStatusRequest) returns (OperatorStatus);
   rpc RemoveState(RemoveStateRequest) returns (google.protobuf.Empty);
   rpc GetState(GetStateRequest) returns (GetStateResponse);
+  rpc PullStates(PullStatesRequest) returns (PullStatesResponse);
   rpc UpdateState(UpdateStateRequest) returns (google.protobuf.Empty);
   rpc ClearState(ClearStateRequest) returns (google.protobuf.Empty);
   rpc ListStateKeys(ListKeysRequest) returns (ListKeysResponse);
+}
+
+message PullStatesRequest{
+  int32 logicalStage = 1;
+  PartitionPlan partitionPlan = 2;
+}
+
+message PullStatesResponse{
+  repeated StateKV stateKVs = 1;
+}
+
+message StateKV{
+  string key = 1;
+  bytes obj = 2;
 }
 
 // TM should calculate config diff based on this

@@ -263,7 +263,7 @@ public class OperatorLoadBalancer{
     public Tm.OperatorConfig.Builder scaleUpOp(Tm.OperatorConfig.Builder cfg, TMClient tmClient) {
         String op_name = cfg.getName();
         String generalName = op_name.substring(0, op_name.length() - 2);
-        Tm.OperatorConfig.Builder newCfg = Tm.OperatorConfig.newBuilder();
+        Tm.OperatorConfig.Builder newCfg = Tm.OperatorConfig.newBuilder().setLogicalStage(cfg.getLogicalStage());
         List<OperatorTaskStatus> op_instances = operators_distribution.get(generalName);
         int instance_size = op_instances.size();
         newCfg.setName(generalName + "-" + instance_size).setBufferSize(cfg.getBufferSize()).setPartitionStrategy(cfg.getPartitionStrategy());
