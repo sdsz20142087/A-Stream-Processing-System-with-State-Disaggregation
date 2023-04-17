@@ -2,6 +2,9 @@ package operators;
 
 import com.google.protobuf.ByteString;
 import kotlin.Triple;
+import config.CPConfig;
+import config.Config;
+import kotlin.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,19 +18,21 @@ import utils.SerDe;
 
 public abstract class BaseOperator extends Thread implements Serializable {
     protected transient LinkedBlockingQueue<Tm.Msg> inputQueue;
-    private transient LinkedBlockingQueue<Triple<String,ByteString,Integer>> outputQueue;
+    private transient LinkedBlockingQueue<Triple<String, ByteString, Pair<Integer, Tm.Msg.MsgType>>> outputQueue;
     protected transient Logger logger = LogManager.getLogger();
     private Tm.OperatorConfig config;
     private int bufferSize = 1000; // UDF buffer size, can change in runtime
     private static int paritionID = 0; // use for Round Robin
-
+    protected transient CPConfig cpcfg;
     protected StateDescriptorProvider stateDescriptorProvider;
 
     private String opName;
-
     protected SerDe serdeIn, serdeOut;
 
     private IKeySelector keySelector = new DefaultKeySelector();
+    protected Tm.Msg currentInputMsg;
+    protected long startTimeStamp = (long) (System.currentTimeMillis() / 1000.0);
+    protected boolean firstElementFlag = true;
 
     public String getOpName() {
     	return opName;
@@ -40,10 +45,11 @@ public abstract class BaseOperator extends Thread implements Serializable {
     public BaseOperator(SerDe serdeIn, SerDe serdeOut) {
         this.serdeIn = serdeIn;
         this.serdeOut = serdeOut;
+        this.cpcfg = Config.getInstance().controlPlane;
     }
 
     public final void init(Tm.OperatorConfig config, LinkedBlockingQueue<Tm.Msg> inputQueue,
-                           LinkedBlockingQueue<Triple<String,ByteString,Integer>> outputQueue,
+                           LinkedBlockingQueue<Triple<String, ByteString, Pair<Integer, Tm.Msg.MsgType>>> outputQueue,
                            StateDescriptorProvider stateDescriptorProvider){
         this.config = config;
         this.opName = config.getName();
@@ -89,12 +95,31 @@ public abstract class BaseOperator extends Thread implements Serializable {
             if(o instanceof ByteString){
                 FatalUtil.fatal("Output is ByteString",null);
             }
-            outputQueue.add(new Triple<>(config.getName(), serdeOut.serializeOut(o), key));
+            outputQueue.add(new Triple<>(config.getName(), serdeOut.serializeOut(o), new Pair<>(key, BaseOperator.this.currentInputMsg.getType())));
+        }
+        public long getIngestTime() {
+            return ingestTime;
         }
     }
 
     // emitting output is done in the processElement method
     protected abstract void processElement(ByteString in, OutputSender outputSender);
+
+    //TODO: we need to implement TIME_WINDOW operator (override processWatermark() function), which could apply watermark info, e.g. if time window
+    //TODO: is 5, if it receives watermark = 5, it can process it and pass to downstream operator.
+    protected void processWatermark(ByteString in, OutputSender outputSender) {
+        Object obj = serdeIn.deserializeIn(in);
+        outputSender.sendOutput(obj);
+        logger.info("(WATERMARK MESSAGE): " + outputSender.getIngestTime());
+    }
+
+    protected void processDataFlow(ByteString in, Tm.Msg.MsgType type, OutputSender outputSender) {
+        switch (type) {
+            case DATA: processElement(in, outputSender); break;
+            case CONTROL: break;
+            case WATERMARK: processWatermark(in, outputSender); break;
+        }
+    }
     @Override
     public void run() {
         if(config==null){
@@ -104,7 +129,9 @@ public abstract class BaseOperator extends Thread implements Serializable {
         try {
             while (true) {
                 Tm.Msg input = inputQueue.take();
-                processElement(input.getData(), new BaseOutputSender(input.getIngestTime()));
+                this.currentInputMsg = input;
+//                processElement(input.getData(), new BaseOutputSender(input.getIngestTime()));
+                processDataFlow(input.getData(), input.getType(), new BaseOutputSender(input.getIngestTime()));
             }
         } catch (Exception e) {
             FatalUtil.fatal(getOpName()+": Exception in sender thread",e);

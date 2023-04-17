@@ -45,6 +45,7 @@ message Msg{
   enum MsgType {
     DATA = 0;
     CONTROL = 1;
+    WATERMARK = 2;
   }
   MsgType type = 1;
   optional string operatorName = 2;

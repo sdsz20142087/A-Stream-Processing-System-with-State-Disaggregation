@@ -44,7 +44,7 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
         // 本地更新state
         m.put("123",345);
 
-        // 把本地的状态更新到kvprovider
+        // update local state to kvprovider
         someMapStateAccessor.update(m);
 
         IN data = (IN) this.serdeIn.deserializeIn(in);

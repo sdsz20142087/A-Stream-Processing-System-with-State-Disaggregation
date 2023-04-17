@@ -29,7 +29,6 @@ public class HybridKVProvider implements KVProvider {
         this.localKVProvider = localKVProvider;
         this.migrate = migrate;
     }
-
     private String getStateAddr(String prefix) {
         String addr = this.cpClient.getStateAddr(prefix);
         if (addr == null) {

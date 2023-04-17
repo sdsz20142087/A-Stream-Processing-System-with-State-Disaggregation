@@ -4,7 +4,9 @@
     "test_etcd_conn": false,
     "cp_grpc_port": 8008,
     "scale_up_portion": 0.75,
-    "control_port": 9008
+    "control_port": 9008,
+    "watermark_interval": 2,
+    "out_of_order_grace_period": 2
   },
   "taskManager": {
     "cp_host": "127.0.0.1",
