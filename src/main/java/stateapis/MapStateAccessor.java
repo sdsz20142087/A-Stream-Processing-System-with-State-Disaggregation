@@ -11,9 +11,9 @@ import org.apache.logging.log4j.Logger;
 public class MapStateAccessor<V> extends BaseStateAccessor<IDataflowMap<V>> {
     private MapProxy<V> mapProxy;
 
-    public MapStateAccessor(java.lang.String descriptorName, KVProvider kvProvider) {
-        super(descriptorName, kvProvider);
-        mapProxy = new MapProxy<>(descriptorName, kvProvider);
+    public MapStateAccessor(java.lang.String descriptorName, KVProvider kvProvider, IKeyGetter keyGetter) {
+        super(descriptorName, kvProvider, keyGetter);
+        mapProxy = new MapProxy<>(descriptorName, kvProvider, keyGetter);
     }
 
     @Override
@@ -30,8 +30,9 @@ public class MapStateAccessor<V> extends BaseStateAccessor<IDataflowMap<V>> {
     update re-writes the entire new map, equivalent to PUT
      */
     public void update(IDataflowMap<V> value) {
-        for(String key: value.keys()){
-            this.mapProxy.put(key, value.get(key));
+        MapProxy<V> targetProxy = (MapProxy<V>) this.value();
+        for (String key : value.keys()) {
+            targetProxy.put(key, value.get(key));
         }
     }
 
@@ -40,7 +41,8 @@ public class MapStateAccessor<V> extends BaseStateAccessor<IDataflowMap<V>> {
      */
     @Override
     public void clear() {
-        this.mapProxy.clear();
+        MapProxy<V> targetProxy = (MapProxy<V>) this.value();
+        targetProxy.clear();
     }
 }
 
@@ -51,23 +53,19 @@ class MapProxy<V> implements IDataflowMap<V> {
 
     private final String keyBase;
     private final KVProvider kvProvider;
-    private String sizeKey;
     private final Logger logger = LogManager.getLogger();
-    private String makeKey(String key){
-        return this.keyBase + ":" + key;
+
+    private IKeyGetter keyGetter;
+
+    private String makeKey(String key) {
+        String currentKey = keyGetter.getCurrentKey();
+        return this.keyBase + ":" + key + (currentKey==null?"":":"+currentKey);
     }
 
-    public MapProxy(String keyBase, KVProvider kvProvider) {
+    public MapProxy(String keyBase, KVProvider kvProvider, IKeyGetter keyGetter) {
         this.keyBase = keyBase;
         this.kvProvider = kvProvider;
-        this.sizeKey = keyBase + ".size";
-        if (kvProvider.listKeys(keyBase).size() == 0) {
-            kvProvider.put(sizeKey, 0);
-        }
-    }
-
-    private void setSize(int size) {
-        kvProvider.put(sizeKey, size);
+        this.keyGetter = keyGetter;
     }
 
     @Override
@@ -88,35 +86,33 @@ class MapProxy<V> implements IDataflowMap<V> {
             throw new RuntimeException("Cannot remove from an empty map");
         }
 
-        String k = makeKey(key);
-        this.kvProvider.delete(k);
-        setSize(size() - 1);
+        this.kvProvider.delete(makeKey(key));
     }
 
     @Override
     public void clear() {
-        this.kvProvider.clear(this.keyBase);
+        this.kvProvider.clear(makeKey(""));
     }
 
     @Override
     public List<String> keys() {
-        return this.kvProvider.listKeys(this.keyBase);
+        return this.kvProvider.listKeys(makeKey(""));
     }
 
     @Override
     public boolean isEmpty() {
-        return this.keys().size()==0;
+        return this.keys().size() == 0;
     }
 
     @Override
     public boolean containsKey(String key) {
         String k = makeKey(key);
-        return this.kvProvider.listKeys(keyBase).contains(k);
+        return this.kvProvider.get(k, null) != null;
     }
 
     @Override
     public int size() {
-        return kvProvider.listKeys(keyBase).size();
+        return kvProvider.listKeys(makeKey("")).size();
     }
 }
 

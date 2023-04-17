@@ -3,13 +3,20 @@ package stateapis;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
+
 public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
 
     private DequeProxy<T> dequeProxy;
+    private HashMap<String, DequeProxy> proxies;
 
-    public ListStateAccessor(String descriptorName, KVProvider kvProvider) {
-        super(descriptorName, kvProvider);
-        this.dequeProxy = new DequeProxy<>(descriptorName, kvProvider);
+    public ListStateAccessor(String descriptorName, KVProvider kvProvider,IKeyGetter keyGetter) {
+        super(descriptorName, kvProvider,keyGetter);
+        if(keyGetter.hasKeySelector()){
+            proxies = new HashMap<>();
+        } else {
+            this.dequeProxy = new DequeProxy<>(descriptorName, kvProvider);
+        }
     }
 
     /*
@@ -17,7 +24,15 @@ public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
      */
     @Override
     public IDataflowDeque<T> value() {
-        return this.dequeProxy;
+        if(keyGetter.hasKeySelector()){
+            String key = keyGetter.getCurrentKey();
+            if(!proxies.containsKey(key)){
+                proxies.put(key, new DequeProxy<>(descriptorName, kvProvider));
+            }
+            return proxies.get(key);
+        } else {
+            return this.dequeProxy;
+        }
     }
 
     @Override
@@ -25,15 +40,17 @@ public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
     update consumes the value, re-writes the entire new list, equivalent to PUT
      */
     public void update(IDataflowDeque<T> value) {
-        this.dequeProxy.clear();
+        IDataflowDeque<T> targetProxy = this.value();
+        targetProxy.clear();
         for (int i = 0; i < value.size(); i++) {
-            this.dequeProxy.addLast(value.removeFirst());
+            targetProxy.addLast(value.removeFirst());
         }
     }
 
     @Override
     public void clear() {
-        this.dequeProxy.clear();
+        IDataflowDeque<T> targetProxy = this.value();
+        targetProxy.clear();
     }
 
 }

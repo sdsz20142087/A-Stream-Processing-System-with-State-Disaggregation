@@ -1,5 +1,7 @@
 package operators;
 
-public interface IKeySelector {
+import java.io.Serializable;
+
+public interface IKeySelector extends Serializable {
     int getKey(Object o);
 }

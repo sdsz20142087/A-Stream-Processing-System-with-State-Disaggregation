@@ -20,7 +20,7 @@ public interface KVProvider {
 
     void handleReconfig(Tm.ReconfigMsg msg);
 
-    void addInvolvedOp(String opId);
+    void addInvolvedOp(String opId, boolean hasKey);
     void removeInvolvedOp(String opId);
 
     void setLocalAddr(String addr);

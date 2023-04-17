@@ -9,6 +9,7 @@ import pb.Tm;
 import utils.BytesUtil;
 import utils.FatalUtil;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class LocalKVProvider implements KVProvider {
     private RocksDB db;
     private final Logger logger = LogManager.getLogger();
 
-    private final HashSet<String> involvedOps = new HashSet<>();
+    private final HashMap<String,Boolean> involvedOps = new HashMap<>();
 
     private String localAddr;
 
@@ -112,7 +113,7 @@ public class LocalKVProvider implements KVProvider {
         For the localkvprovider, reconfig should migrate everything for that operator.
          */
         for(String opName: msg.getConfigMap().keySet()){
-            if(!involvedOps.contains(opName)){
+            if(involvedOps.get(opName)==null || !involvedOps.get(opName)){
                 continue;
             }
             /*
@@ -139,8 +140,8 @@ public class LocalKVProvider implements KVProvider {
     }
 
     @Override
-    public void addInvolvedOp(String opId) {
-        this.involvedOps.add(opId);
+    public void addInvolvedOp(String opId, boolean hasKey) {
+        this.involvedOps.put(opId,hasKey);
     }
 
     @Override

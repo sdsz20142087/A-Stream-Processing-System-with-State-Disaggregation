@@ -3,24 +3,33 @@ package stateapis;
 
 public class ValueStateAccessor<T> extends BaseStateAccessor<T> {
 
-    public ValueStateAccessor(String descriptorName, KVProvider kvProvider, T defaultValue) {
-        super(descriptorName, kvProvider);
+    private T defaultValue;
+
+    public ValueStateAccessor(String descriptorName, KVProvider kvProvider, T defaultValue, IKeyGetter keyGetter) {
+        super(descriptorName, kvProvider, keyGetter);
+        this.defaultValue = defaultValue;
     }
 
     @Override
     public T value() {
-        T value = (T) kvProvider.get(descriptorName, 0);
+        String key = keyGetter.getCurrentKey();
+        String stateKey = descriptorName + ":" + (key == null ? "" : key);
+        T value = (T) kvProvider.get(stateKey, defaultValue);
         return value;
     }
 
     @Override
     public void update(T value) {
-        kvProvider.put(descriptorName, value);
+        String key = keyGetter.getCurrentKey();
+        String stateKey = descriptorName + ":" + (key == null ? "" : key);
+        kvProvider.put(stateKey, value);
     }
 
     @Override
     public void clear() {
-        kvProvider.delete(descriptorName);
+        String key = keyGetter.getCurrentKey();
+        String stateKey = descriptorName + ":" + (key == null ? "" : key);
+        kvProvider.delete(stateKey);
     }
 
 }

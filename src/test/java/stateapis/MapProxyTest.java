@@ -15,7 +15,17 @@ public class MapProxyTest {
     @BeforeEach
     void setUp() {
         kvProvider = new LocalKVProvider("test.db");
-        m = new MapProxy<>("testKeyBase", kvProvider);
+        m = new MapProxy<>("testKeyBase", kvProvider, new IKeyGetter() {
+            @Override
+            public String getCurrentKey() {
+                return null;
+            }
+
+            @Override
+            public boolean hasKeySelector() {
+                return false;
+            }
+        });
         m.clear();
     }
 

@@ -25,7 +25,7 @@ public class HybridKVProvider implements KVProvider {
     // map<TM ADDRESS, RemoteStateClient>
     private final HashMap<String, RemoteStateClient> remoteStateClientMap = new HashMap<>();
 
-    private final HashSet<String> involvedOps = new HashSet<>();
+    private final HashMap<String,Boolean> involvedOps = new HashMap<>();
 
     private final HashMap<String, Object> localMigratedCache = new HashMap<>();
 
@@ -121,8 +121,8 @@ public class HybridKVProvider implements KVProvider {
     }
 
     @Override
-    public void addInvolvedOp(String opId) {
-        this.involvedOps.add(opId);
+    public void addInvolvedOp(String opId, boolean hasKey) {
+        this.involvedOps.put(opId, hasKey);
     }
 
     @Override

@@ -96,7 +96,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
 
     // the control plane sends over serialized operator,
     // we can just deserialize it and add it to the operators map
-    private void initOperator(Tm.AddOperatorRequest request) throws IOException, ClassNotFoundException {
+    private BaseOperator initOperator(Tm.AddOperatorRequest request) throws IOException, ClassNotFoundException {
         byte[] bytes = request.getObj().toByteArray();
         BaseOperator op = (BaseOperator) BytesUtil.checkedObjectFromBytes(bytes);
         LinkedBlockingQueue<Tm.Msg> inputQueue = new LinkedBlockingQueue<>();
@@ -125,6 +125,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
                 pushMsgClients.put(meta.getAddress(), new PushMsgClient(logger, meta.getAddress(), false));
             }
         }
+        return op;
     }
 
     @Override
@@ -146,8 +147,8 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         }
         logger.info(String.format("adding operator %d/%d", this.operators.size() + 1, this.operatorQuota));
         try {
-            initOperator(request);
-            kvProvider.addInvolvedOp(request.getConfig().getName());
+            BaseOperator o = initOperator(request);
+            kvProvider.addInvolvedOp(request.getConfig().getName(),o.hasKeySelector());
         } catch (IOException | ClassNotFoundException e) {
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("failed to initialize operator")));
             return;
@@ -260,6 +261,17 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     }
 
     @Override
+    public void pullStates(Tm.PullStatesRequest req, StreamObserver<Tm.PullStatesResponse> responseObserver){
+        String opName = req.getOperatorName();
+        BaseOperator op = operators.get(opName);
+        List<Tm.StateKV> result = new ArrayList<>();
+        List<String> keys = kvProvider.listKeys(opName);
+        for(String key:keys){
+
+        }
+    }
+
+    @Override
     public void removeState(Tm.RemoveStateRequest request, StreamObserver<Empty> responseObserver) {
         try {
             String stateKey = request.getStateKey();
@@ -326,19 +338,31 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     public ValueStateAccessor getValueStateAccessor(BaseOperator op, String stateName, Object defaultValue) {
         checkStateName(stateName);
         String stateDescriptor = op.getOpName() + "." + stateName;
-        return new ValueStateAccessor(stateDescriptor, this.kvProvider, defaultValue);
+        if(op.hasKeySelector()){
+            stateDescriptor += ":keyed";
+        }
+        // 如果有keyselector则对每个key单独保存状态
+        return new ValueStateAccessor(stateDescriptor, this.kvProvider, defaultValue, op);
     }
 
     @Override
     public MapStateAccessor getMapStateAccessor(BaseOperator op, String stateName) {
         checkStateName(stateName);
-        return new MapStateAccessor(op.getOpName() + "." + stateName, this.kvProvider);
+        String stateDescriptor = op.getOpName() + "." + stateName;
+        if(op.hasKeySelector()){
+            stateDescriptor += ":keyed";
+        }
+        return new MapStateAccessor(stateDescriptor, this.kvProvider, op);
     }
 
     @Override
     public ListStateAccessor getListStateAccessor(BaseOperator op, String stateName) {
         checkStateName(stateName);
-        return new ListStateAccessor(op.getOpName() + "." + stateName, this.kvProvider);
+        String stateDescriptor = op.getOpName() + "." + stateName;
+        if(op.hasKeySelector()){
+            stateDescriptor += ":keyed";
+        }
+        return new ListStateAccessor(stateDescriptor, this.kvProvider,op);
     }
 
     private void checkStateName(String name) {

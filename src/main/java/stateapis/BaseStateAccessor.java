@@ -7,10 +7,12 @@ package stateapis;
 public abstract class BaseStateAccessor<T> {
     protected String descriptorName;
     protected KVProvider kvProvider;
+    protected IKeyGetter keyGetter;
 
-    public BaseStateAccessor(String descriptorName, KVProvider kvProvider) {
+    public BaseStateAccessor(String descriptorName, KVProvider kvProvider, IKeyGetter keyGetter) {
         this.descriptorName = descriptorName;
         this.kvProvider = kvProvider;
+        this.keyGetter = keyGetter;
     }
 
     public abstract T value();
