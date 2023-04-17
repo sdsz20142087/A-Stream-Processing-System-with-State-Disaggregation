@@ -23,11 +23,16 @@ public class SingleCountOperator extends BaseOperator implements Serializable {
     }
 
     @Override
-    protected void processElement(ByteString in, OutputSender outputSender) {
+    protected void processElement(Tm.Msg msg, OutputSender outputSender) {
         //logger.info("cntAccesor.value() = " + cntAccesor.value());
+        ByteString in = msg.getData();
         Integer cntVal = cntAccesor.value() + 1;
         cntAccesor.update(cntVal);
         String outMsg = "Count: " + (cntVal);
-        outputSender.sendOutput(outMsg);
+        ByteString bs = serdeOut.serializeOut(outMsg);
+        Tm.Msg.Builder builder = Tm.Msg.newBuilder();
+        builder.mergeFrom(msg);
+        builder.setData(bs);
+        outputSender.sendOutput(builder.build());
     }
 }

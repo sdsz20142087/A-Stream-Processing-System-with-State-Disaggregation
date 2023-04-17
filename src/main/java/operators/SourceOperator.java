@@ -47,7 +47,7 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
                 Tm.Msg msg = Tm.Msg.newBuilder()
                         .setType(Tm.Msg.MsgType.DATA)
                         .setData(bs)
-                        .setOperatorName("DATA SOURCE")
+                        .setSenderOperatorName("DATA SOURCE")
                         .setIngestTime((long) (System.currentTimeMillis() / 1000.0) - startTimeStamp)
                         .build();
                 inputQueue.add(msg);
@@ -75,7 +75,7 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
                 Tm.Msg msg = Tm.Msg.newBuilder()
                         .setType(Tm.Msg.MsgType.WATERMARK)
                         .setData(bs)
-                        .setOperatorName("DATA SOURCE")
+                        .setSenderOperatorName("DATA SOURCE")
                         .setIngestTime(Math.max(0, (long) (System.currentTimeMillis() / 1000.0) - startTimeStamp - this.out_of_order_grace_period))
                         .build();
                 inputQueue.add(msg);
@@ -87,9 +87,9 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
 
     @Override
     // simply move whatever we have in the input queue to the output queue
-    protected void processElement(ByteString in, OutputSender outputSender) {
-        T obj = (T) serdeIn.deserializeIn(in);
-        outputSender.sendOutput(obj);
+    protected void processElement(Tm.Msg msg, OutputSender outputSender) {
+//        T obj = (T) serdeIn.deserializeIn(msg.getData());
+        outputSender.sendOutput(msg);
     }
 
 //    @Override

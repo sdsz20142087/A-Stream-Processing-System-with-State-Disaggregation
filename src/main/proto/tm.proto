@@ -48,9 +48,10 @@ message Msg{
     WATERMARK = 2;
   }
   MsgType type = 1;
-  optional string operatorName = 2;
-  optional bytes data = 3;
-  optional ReconfigMsg reconfigMsg = 4;
+  optional string senderOperatorName = 2;
+  optional string receiverOperatorName = 3;
+  optional bytes data = 4;
+  optional ReconfigMsg reconfigMsg = 5;
   int64 ingestTime = 6;
 }
 
