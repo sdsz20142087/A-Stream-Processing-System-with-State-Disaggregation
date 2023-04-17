@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 
 import com.google.protobuf.ByteString;
 import operators.OutputSender;
+import pb.Tm;
 import utils.SerDe;
 import operators.BaseOperator;
 
@@ -20,10 +21,11 @@ public class Filter<T> extends BaseOperator implements Serializable {
         super.run();
     }
     @Override
-    protected void processElement(ByteString in, OutputSender outputSender) {
+    protected void processElement(Tm.Msg msg, OutputSender outputSender) {
+        ByteString in = msg.getData();
         T data = (T) serdeIn.deserializeIn(in);
         if (predicate.test(data)) {
-            outputSender.sendOutput(data);
+            outputSender.sendOutput(msg);
         }
     }
 }
