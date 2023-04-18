@@ -38,12 +38,24 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
     //key: OperatorName, value: MaxWatermark. Use this to calculate min of the max watermark
     protected ConcurrentHashMap<String, Long> operatorMinWatermarkMap = new ConcurrentHashMap<>();
     protected double watermark_interval;
+    protected long minOfMaxWatermark = Long.MAX_VALUE;
+    protected long reconfigTimestamp = Long.MAX_VALUE;
 
+    public long getMinOfMaxWatermark() {
+        return minOfMaxWatermark;
+    }
     public String getOpName() {
     	return opName;
     }
     public void setOpName(String opName) {
     	this.opName = opName;
+    }
+    public long getReconfigTimestamp() {
+        return reconfigTimestamp;
+    }
+
+    public void setReconfigTimestamp(long reconfigTimestamp) {
+        this.reconfigTimestamp = reconfigTimestamp;
     }
     // There must not be moving parts (e.g. listening to ports, starting new threads)
     // in the constructor because we'll be sending this object over grpc.
@@ -92,6 +104,7 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
         String hexString = Integer.toHexString(keyInt);
         hexString = String.format("%1$" + (desiredLength - 2) + "s", hexString).replace(' ', '0');
         hexString = "0x" + hexString;
+        assert hexString.length() == 10;
         return hexString;
     }
 
@@ -140,8 +153,8 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
     protected void processWatermark(Tm.Msg msg, OutputSender outputSender) {
         long operatorMinWatermark = Math.max(operatorMinWatermarkMap.get(msg.getSenderOperatorName()), outputSender.getIngestTime());
         operatorMinWatermarkMap.put(msg.getSenderOperatorName(), operatorMinWatermark);
+        long minOfMaxWatermark = generateOutPutWatermark();
         if (sendWatermarkOrNot) {
-            long minOfMaxWatermark = generateOutPutWatermark();
             outputSender.setIngestTime(minOfMaxWatermark);
             logger.info("(WATERMARK MESSAGE SEND): " + minOfMaxWatermark);
             outputSender.sendOutput(msg);

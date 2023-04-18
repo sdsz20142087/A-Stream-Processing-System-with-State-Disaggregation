@@ -35,6 +35,21 @@ message OPStatusRequest{
   string name = 1;
 }
 
+message OperatorLowWatermarkRequest{
+  string name = 1;
+  string content = 2;
+}
+
+message OperatorLowWatermarkResponse{
+  int64 lowWatermark = 1;
+}
+
+message OperatorExternalTimestampRequest{
+  string name = 1;
+  string content = 2;
+  int64 reconfigTimestamp = 3;
+}
+
 message ReconfigMsg{
   // only for type=CONTROL, contains map of <operatorName, new config>
   map<string,OperatorConfig> config = 1;
@@ -108,11 +123,12 @@ service TMService{
   rpc UpdateState(UpdateStateRequest) returns (google.protobuf.Empty);
   rpc ClearState(ClearStateRequest) returns (google.protobuf.Empty);
   rpc ListStateKeys(ListKeysRequest) returns (ListKeysResponse);
+  rpc GetOperatorLowWatermark(OperatorLowWatermarkRequest) returns (OperatorLowWatermarkResponse);
+  rpc setOperatorExternalTimestamp(OperatorExternalTimestampRequest) returns (google.protobuf.Empty);
 }
 
 message PullStatesRequest{
   int32 logicalStage = 1;
-  string operatorName = 2;
   PartitionPlan partitionPlan = 3;
 }
 

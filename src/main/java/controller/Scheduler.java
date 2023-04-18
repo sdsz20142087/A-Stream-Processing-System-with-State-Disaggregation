@@ -153,6 +153,7 @@ public class Scheduler extends Thread {
         while (true) {
             try {
                 logger.info("CP: check status");
+                //tmClientName, opCompletedName, inputQueueLength
                 Triple<String, String, Integer> op_request = inputQueue.take();
                 Tm.OperatorConfig.Builder op_config = operators_config.get(new Pair<>(op_request.getFirst(), op_request.getSecond()));
                 int operator_threshold = (int) (op_config.getBufferSize() * scale_up_portion);

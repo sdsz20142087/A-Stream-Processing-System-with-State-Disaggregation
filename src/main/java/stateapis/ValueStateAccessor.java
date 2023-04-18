@@ -10,26 +10,26 @@ public class ValueStateAccessor<T> extends BaseStateAccessor<T> {
         this.defaultValue = defaultValue;
     }
 
+    private String makeKey(){
+        String key = keyGetter.getCurrentKey();
+        String stateKey = descriptorName + (key == null ? "" : ":keyed:"+key);
+        return stateKey;
+    }
+
     @Override
     public T value() {
-        String key = keyGetter.getCurrentKey();
-        String stateKey = descriptorName + ":" + (key == null ? "" : key);
-        T value = (T) kvProvider.get(stateKey, defaultValue);
+        T value = (T) kvProvider.get(makeKey(), defaultValue);
         return value;
     }
 
     @Override
     public void update(T value) {
-        String key = keyGetter.getCurrentKey();
-        String stateKey = descriptorName + ":" + (key == null ? "" : key);
-        kvProvider.put(stateKey, value);
+        kvProvider.put(makeKey(), value);
     }
 
     @Override
     public void clear() {
-        String key = keyGetter.getCurrentKey();
-        String stateKey = descriptorName + ":" + (key == null ? "" : key);
-        kvProvider.delete(stateKey);
+        kvProvider.delete(makeKey());
     }
 
 }

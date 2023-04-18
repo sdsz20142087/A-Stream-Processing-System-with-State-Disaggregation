@@ -6,7 +6,8 @@
     "scale_up_portion": 0.75,
     "control_port": 9008,
     "watermark_interval": 0.8,
-    "out_of_order_grace_period": 2
+    "out_of_order_grace_period": 2,
+    "consistent_control_grace_period": 0.2
   },
   "taskManager": {
     "cp_host": "127.0.0.1",

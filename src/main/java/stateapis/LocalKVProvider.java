@@ -116,6 +116,7 @@ public class LocalKVProvider implements KVProvider {
             if(involvedOps.get(opName)==null || !involvedOps.get(opName)){
                 continue;
             }
+            // the opName is now guaranteed to be in this TM
             /*
             get the operator's stage,
              loop through all the changed configs,
@@ -132,7 +133,13 @@ public class LocalKVProvider implements KVProvider {
 
                 List<Tm.StateKV> newKVs = client.pullStates(stage, msg.getConfigMap().get(opName).getPartitionPlan());
                 for(Tm.StateKV kv:newKVs){
-                    this.put(kv.getKey(), kv.getKeyBytes().toByteArray());
+                    String oldKey = kv.getKey();
+                    String[] parts = oldKey.split(":");
+                    String newKey = opName;
+                    for(int i=1;i<stage;i++){
+                        newKey += ":"+parts[i];
+                    }
+                    this.put(newKey, kv.getKeyBytes().toByteArray());
                 }
                 logger.info("Pulled " + newKVs.size() + " states from " + targetAddr + " for " + opName);
             }

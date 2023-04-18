@@ -6,8 +6,6 @@ import config.TMConfig;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import kotlin.Pair;
-import kotlin.Triple;
 import operators.BaseOperator;
 import operators.OutputMessage;
 import operators.StateDescriptorProvider;
@@ -220,6 +218,53 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         if (op == null) {
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator " + opName + " not found")));
             return;
+
+    }
+
+    @Override
+    public void getOperatorLowWatermark(Tm.OperatorLowWatermarkRequest request,
+                                                            StreamObserver<Tm.OperatorLowWatermarkResponse> responseObserver) {
+        String opName = request.getName();
+        String content = request.getContent();
+        if(!operators.containsKey(opName)){
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator " + opName + " not found")));
+            return;
+        }
+        BaseOperator op = operators.get(opName);
+        Tm.OperatorLowWatermarkResponse.Builder b = Tm.OperatorLowWatermarkResponse.newBuilder();
+        logger.info("GET LOW WATERMARK: " + op.getMinOfMaxWatermark() + " for " + opName);
+        b.setLowWatermark(op.getMinOfMaxWatermark());
+        responseObserver.onNext(b.build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void setOperatorExternalTimestamp(Tm.OperatorExternalTimestampRequest request,
+                                             StreamObserver<Empty> responseObserver) {
+        String opName = request.getName();
+        long reconfigTimestamp = request.getReconfigTimestamp();
+        if(!operators.containsKey(opName)){
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator " + opName + " not found")));
+            return;
+        }
+        BaseOperator op = operators.get(opName);
+        logger.info("RECONFIG TIMESTAMP: " + reconfigTimestamp + " for "+ opName);
+        op.setReconfigTimestamp(reconfigTimestamp);
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void reConfigOperator(Tm.ReConfigOperatorRequest request,
+                                 StreamObserver<Empty> responseObserver) {
+        Tm.OperatorConfig config = request.getConfig();
+        try {
+            operators.get(config.getName()).setConfig(config);
+
+        } catch (Exception e) {
+            String msg = "invalid op name.";
+            logger.error(msg);
+            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
         }
         this.roundRobinCounter.remove(op);
         this.operators.remove(opName);
@@ -251,13 +296,38 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
 
     @Override
     public void pullStates(Tm.PullStatesRequest req, StreamObserver<Tm.PullStatesResponse> responseObserver){
-        String opName = req.getOperatorName();
-        BaseOperator op = operators.get(opName);
         List<Tm.StateKV> result = new ArrayList<>();
-        List<String> keys = kvProvider.listKeys(opName);
-        for(String key:keys){
+        for(String opName:operators.keySet()){
+            if(operators.get(opName).getConfig().getLogicalStage()!=req.getLogicalStage()){
+                continue;
+            }
 
+            List<String> keys = kvProvider.listKeys(getStdStatePrefix(operators.get(opName)));
+            /*
+            valuestateaccessor: nokey: "countoperator-0:1.cntVal", keyed: "countoperator-0:1.cntVal:keyed:0xffffffff"
+             */
+            for(String key:keys){
+                String[] keyParts = key.split(".");
+                assert keyParts.length==2;
+                assert keyParts[1].contains("keyed");
+                // we are certain that the keyed value has length 10
+                String keyData = keyParts[1].split(":keyed:")[1];
+                assert keyData.startsWith("0x");
+                // extract the key
+                String actualKey = keyData.substring(0,10);
+                // convert "0xffffffff" to integer
+                int keyInt = Integer.parseInt(actualKey,16);
+                if(keyInt<req.getPartitionPlan().getPartitionStart() || keyInt>=req.getPartitionPlan().getPartitionEnd()){
+                    continue;
+                }
+                Object state = kvProvider.get(key, null);
+                ByteString obj = ByteString.copyFrom(BytesUtil.ObjectToBytes(state));
+                result.add(Tm.StateKV.newBuilder().setKey(key).setObj(obj).build());
+            }
         }
+        Tm.PullStatesResponse response = Tm.PullStatesResponse.newBuilder().addAllStateKVs(result).build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
     }
 
     @Override
@@ -337,35 +407,26 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         }
     }
 
+    private String getStdStatePrefix(BaseOperator op){
+        return op.getOpName() + ":" + op.getConfig().getLogicalStage() + ".";
+    }
+
     @Override
     public ValueStateAccessor getValueStateAccessor(BaseOperator op, String stateName, Object defaultValue) {
         checkStateName(stateName);
-        String stateDescriptor = op.getOpName() + "." + stateName;
-        if(op.hasKeySelector()){
-            stateDescriptor += ":keyed";
-        }
-        // 如果有keyselector则对每个key单独保存状态
-        return new ValueStateAccessor(stateDescriptor, this.kvProvider, defaultValue, op);
+        return new ValueStateAccessor(getStdStatePrefix(op), this.kvProvider, defaultValue, op);
     }
 
     @Override
     public MapStateAccessor getMapStateAccessor(BaseOperator op, String stateName) {
         checkStateName(stateName);
-        String stateDescriptor = op.getOpName() + "." + stateName;
-        if(op.hasKeySelector()){
-            stateDescriptor += ":keyed";
-        }
-        return new MapStateAccessor(stateDescriptor, this.kvProvider, op);
+        return new MapStateAccessor(getStdStatePrefix(op),  this.kvProvider, op);
     }
 
     @Override
     public ListStateAccessor getListStateAccessor(BaseOperator op, String stateName) {
         checkStateName(stateName);
-        String stateDescriptor = op.getOpName() + "." + stateName;
-        if(op.hasKeySelector()){
-            stateDescriptor += ":keyed";
-        }
-        return new ListStateAccessor(stateDescriptor, this.kvProvider,op);
+        return new ListStateAccessor(getStdStatePrefix(op), this.kvProvider,op);
     }
 
     private void checkStateName(String name) {

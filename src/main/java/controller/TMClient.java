@@ -85,18 +85,6 @@ public class TMClient implements Serializable {
         return new OperatorLoadBalancer.Pair<>(return_value[0].getInputQueueLength(), return_value[0].getOutputQueueLength());
     }
 
-    public String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public String getAddress(){
-        return host + ":" + port;
-    }
-
     public void removeState(String stateKey) throws IOException, ClassNotFoundException{
         logger.info("remove state from TM at " + host + ":" + port);
 
@@ -123,4 +111,49 @@ public class TMClient implements Serializable {
         blockingStub.updateState(req);
     }
 
+    public long getOperatorLowWatermark(String receiverOpName, String content) {
+        Tm.OperatorLowWatermarkRequest req = Tm.OperatorLowWatermarkRequest.newBuilder().setName(receiverOpName).setContent(content).build();
+        final Tm.OperatorLowWatermarkResponse[] return_value = new Tm.OperatorLowWatermarkResponse[1];
+        asyncStub.getOperatorLowWatermark(req, new StreamObserver<>() {
+            @Override
+            public void onNext(Tm.OperatorLowWatermarkResponse value) {
+                return_value[0] = value;
+                logger.info("Got response lowWatermark: " + value.getLowWatermark());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                logger.fatal("Failed to get lowWatermark");
+                System.exit(1);
+
+            }
+
+            @Override
+            public void onCompleted() {
+                logger.info("get operator lowWatermark completed");
+            }
+        });
+        return return_value[0].getLowWatermark();
+    }
+
+    public void sendExternalControlMessage(String receiverOpName, long consistentTimeStamp, String content) {
+        Tm.OperatorExternalTimestampRequest req = Tm.OperatorExternalTimestampRequest.newBuilder()
+                .setName(receiverOpName)
+                .setContent(content)
+                .setReconfigTimestamp(consistentTimeStamp)
+                .build();
+        blockingStub.setOperatorExternalTimestamp(req);
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public String getAddress(){
+        return host + ":" + port;
+    }
 }

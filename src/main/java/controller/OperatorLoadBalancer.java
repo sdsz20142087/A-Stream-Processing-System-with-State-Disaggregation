@@ -260,12 +260,36 @@ public class OperatorLoadBalancer{
 //        return operatorTaskStatuses;
     }
 
+    public long generateConsistentTimeStamp(List<OperatorTaskStatus> op_instances) {
+        long low_watermark = Long.MIN_VALUE;
+        int n = op_instances.size();
+        for (int i = 0; i < n; i++) {
+            String receiverOpName = op_instances.get(i).getOpName();
+            TMClient tmClient = new TMClient(op_instances.get(i).getTmAddr());
+            long watermark = tmClient.getOperatorLowWatermark(receiverOpName, "scaleUp");
+            low_watermark = Math.max(low_watermark, watermark);
+        }
+        return (long) (low_watermark * (1 + cpcfg.consistent_control_grace_period));
+    }
+
+    public void sendExternalControlMessage(List<OperatorTaskStatus> op_instances) {
+        int n = op_instances.size();
+        long consistentTimeStamp = generateConsistentTimeStamp(op_instances);
+        for (int i = 0; i < n; i++) {
+            String receiverOpName = op_instances.get(i).getOpName();
+            TMClient tmClient = new TMClient(op_instances.get(i).getTmAddr());
+            tmClient.sendExternalControlMessage(receiverOpName, consistentTimeStamp, "scaleUp");
+
+        }
+    }
+
     public Tm.OperatorConfig.Builder scaleUpOp(Tm.OperatorConfig.Builder cfg, TMClient tmClient) {
         String op_name = cfg.getName();
         String generalName = op_name.substring(0, op_name.length() - 2);
         Tm.OperatorConfig.Builder newCfg = Tm.OperatorConfig.newBuilder().setLogicalStage(cfg.getLogicalStage());
         List<OperatorTaskStatus> op_instances = operators_distribution.get(generalName);
         int instance_size = op_instances.size();
+        sendExternalControlMessage(op_instances);
         newCfg.setName(generalName + "-" + instance_size).setBufferSize(cfg.getBufferSize()).setPartitionStrategy(cfg.getPartitionStrategy());
         newCfg.addAllOutputMetadata(cfg.getOutputMetadataList());
         upstream_operators.put(newCfg.getName(), upstream_operators.get(cfg.getName()));
