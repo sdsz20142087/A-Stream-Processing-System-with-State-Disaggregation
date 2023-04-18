@@ -9,10 +9,12 @@ class DequeProxyTest {
     private DequeProxy<String> d;
     private LocalKVProvider kvProvider;
 
+    private IKeyGetter keyGetter = new ValidKeyGetter();
+
     @BeforeEach
     void setUp() {
         kvProvider = new LocalKVProvider("test.db");
-        d = new DequeProxy<>("test-keybase", kvProvider);
+        d = new DequeProxy<>("test-keybase", kvProvider, keyGetter);
         d.clear();
     }
 

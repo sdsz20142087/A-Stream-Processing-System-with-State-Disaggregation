@@ -1,31 +1,24 @@
 package stateapis;
+
 import operators.stateless.Map;
 import org.junit.jupiter.api.*;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class MapProxyTest {
 
     private MapProxy<String> m;
     private LocalKVProvider kvProvider;
 
+    private IKeyGetter keyGetter = new ValidKeyGetter();
+
     @BeforeEach
     void setUp() {
         kvProvider = new LocalKVProvider("test.db");
-        m = new MapProxy<>("testKeyBase", kvProvider, new IKeyGetter() {
-            @Override
-            public String getCurrentKey() {
-                return null;
-            }
-
-            @Override
-            public boolean hasKeySelector() {
-                return false;
-            }
-        });
+        m = new MapProxy<>("testKeyBase", kvProvider, keyGetter);
         m.clear();
     }
 
@@ -44,7 +37,10 @@ public class MapProxyTest {
     @Test
     void testPut() {
         m.put("testKey", "testValue");
-        assertEquals("testValue", kvProvider.get("testKeyBase:testKey",null));
+        String currentKey = keyGetter.getCurrentKey();
+        assertEquals("testValue", kvProvider.get(
+                "testKeyBase" + (currentKey == null ? "" : ":" + currentKey)+":testKey"
+                , null));
     }
 
     @Test
@@ -66,9 +62,11 @@ public class MapProxyTest {
         m.put("testKey1", "testValue1");
         m.put("testKey2", "testValue2");
         List<String> keys = m.keys();
+        System.out.println(keys);
         assertEquals(2, keys.size());
-        assertTrue(keys.contains("testKeyBase:testKey1"));
-        assertTrue(keys.contains("testKeyBase:testKey2"));
+        String currentKey = keyGetter.getCurrentKey();
+        assertTrue(keys.contains("testKeyBase"+(currentKey==null?"":":"+currentKey)+":testKey1"));
+        assertTrue(keys.contains("testKeyBase"+(currentKey==null?"":":"+currentKey)+":testKey2"));
     }
 
     @Test

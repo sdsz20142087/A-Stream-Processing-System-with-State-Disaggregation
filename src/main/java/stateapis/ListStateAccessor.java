@@ -11,7 +11,7 @@ public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
 
     public ListStateAccessor(String descriptorName, KVProvider kvProvider, IKeyGetter keyGetter) {
         super(descriptorName, kvProvider, keyGetter);
-        this.dequeProxy = new DequeProxy<>(descriptorName, kvProvider);
+        this.dequeProxy = new DequeProxy<>(descriptorName, kvProvider, keyGetter);
     }
 
     /*
@@ -47,32 +47,48 @@ class DequeProxy<T> implements IDataflowDeque<T> {
     private String keyBase;
     private KVProvider kvProvider;
 
-    private String frontIndexKey;
-    private String sizeKey;
-    private T sum;
+    private IKeyGetter keyGetter;
     private final Logger logger = LogManager.getLogger();
 
-    public DequeProxy(String keyBase, KVProvider kvProvider) {
-        this.keyBase = keyBase;
-        this.kvProvider = kvProvider;
-        this.frontIndexKey = keyBase + ".front";
-        this.sizeKey = keyBase + ".size";
-        if (kvProvider.listKeys(keyBase).size() == 0) {
-            kvProvider.put(frontIndexKey, 0);
-            kvProvider.put(sizeKey, 0);
+    private String makeFrontIndexKey() {
+        String k = keyGetter.getCurrentKey();
+        String kval = ":keyed:"+k;
+        createIfNull(keyBase+kval);
+        String frontIndex = keyBase + (k==null?"":kval)+".front";
+        return frontIndex;
+    }
+
+    private String makeSizeKey() {
+        String k = keyGetter.getCurrentKey();
+        String kval = ":keyed:"+k;
+        createIfNull(keyBase+kval);
+        String res = keyBase + (k==null?"":kval)+".size";
+        return res;
+    }
+
+    private void createIfNull(String prefix){
+        if(kvProvider.listKeys(prefix).size()==0){
+            kvProvider.put(prefix+".front", 0);
+            kvProvider.put(prefix+".size", 0);
         }
     }
 
+    public DequeProxy(String keyBase, KVProvider kvProvider, IKeyGetter keyGetter) {
+        this.keyBase = keyBase;
+        this.kvProvider = kvProvider;
+        this.keyGetter = keyGetter;
+    }
+
     private int getFrontIndex() {
-        return (int) kvProvider.get(frontIndexKey, 0);
+        return (int) kvProvider.get(makeFrontIndexKey(), 0);
     }
 
     private void setFrontIndex(int index) {
-        kvProvider.put(frontIndexKey, index);
+        kvProvider.put(makeFrontIndexKey(), index);
     }
 
     private void setSize(int size) {
-        kvProvider.put(sizeKey, size);
+        kvProvider.put(makeSizeKey(), size);
     }
 
     private String makeIndex(int idx) {
@@ -156,6 +172,6 @@ class DequeProxy<T> implements IDataflowDeque<T> {
 
     @Override
     public int size() {
-        return (int) kvProvider.get(sizeKey, 0);
+        return (int) kvProvider.get(makeSizeKey(), 0);
     }
 }

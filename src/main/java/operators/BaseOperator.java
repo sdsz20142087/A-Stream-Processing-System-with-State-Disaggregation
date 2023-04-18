@@ -184,7 +184,6 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
         try {
             while (true) {
                 Tm.Msg input = inputQueue.take();
-                this.currentInputMsg = input;
                 if (!operatorMinWatermarkMap.containsKey(input.getSenderOperatorName())) {
                     operatorMinWatermarkMap.put(input.getSenderOperatorName(), 0L);
                 }

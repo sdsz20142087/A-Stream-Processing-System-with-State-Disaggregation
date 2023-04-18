@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import utils.FatalUtil;
 
 
 public class MapStateAccessor<V> extends BaseStateAccessor<IDataflowMap<V>> {
@@ -58,8 +59,12 @@ class MapProxy<V> implements IDataflowMap<V> {
     private IKeyGetter keyGetter;
 
     private String makeKey(String key) {
+        if(key.equals("keyed")){
+            FatalUtil.fatal("keyed is a reserved word",null);
+        }
         String currentKey = keyGetter.getCurrentKey();
-        return this.keyBase + ":" + key + (currentKey==null?"":":"+currentKey);
+        String r = this.keyBase + (currentKey==null?"":":keyed:"+currentKey)+ ":" + key;
+        return r;
     }
 
     public MapProxy(String keyBase, KVProvider kvProvider, IKeyGetter keyGetter) {
