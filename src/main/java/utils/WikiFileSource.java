@@ -56,7 +56,7 @@ public class WikiFileSource implements ISource<String>, Serializable {
 
         new Thread(() -> {
             while (dataIter.hasNext()) {
-                System.out.println("read from dataiter:------------");
+//                System.out.println("read from dataiter:------------");
                 try {
                     String data = dataIter.next();
                     queue.add(data);

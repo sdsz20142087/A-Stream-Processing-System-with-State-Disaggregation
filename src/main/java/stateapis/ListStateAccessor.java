@@ -8,15 +8,10 @@ import java.util.HashMap;
 public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
 
     private DequeProxy<T> dequeProxy;
-    private HashMap<String, DequeProxy> proxies;
 
-    public ListStateAccessor(String descriptorName, KVProvider kvProvider,IKeyGetter keyGetter) {
-        super(descriptorName, kvProvider,keyGetter);
-        if(keyGetter.hasKeySelector()){
-            proxies = new HashMap<>();
-        } else {
-            this.dequeProxy = new DequeProxy<>(descriptorName, kvProvider);
-        }
+    public ListStateAccessor(String descriptorName, KVProvider kvProvider, IKeyGetter keyGetter) {
+        super(descriptorName, kvProvider, keyGetter);
+        this.dequeProxy = new DequeProxy<>(descriptorName, kvProvider);
     }
 
     /*
@@ -24,15 +19,7 @@ public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
      */
     @Override
     public IDataflowDeque<T> value() {
-        if(keyGetter.hasKeySelector()){
-            String key = keyGetter.getCurrentKey();
-            if(!proxies.containsKey(key)){
-                proxies.put(key, new DequeProxy<>(descriptorName, kvProvider));
-            }
-            return proxies.get(key);
-        } else {
-            return this.dequeProxy;
-        }
+        return this.dequeProxy;
     }
 
     @Override
@@ -135,7 +122,7 @@ class DequeProxy<T> implements IDataflowDeque<T> {
 
     @Override
     public T peekFirst() {
-        if(size()==0){
+        if (size() == 0) {
             return null;
         }
         int frontIndex = getFrontIndex();
@@ -144,7 +131,7 @@ class DequeProxy<T> implements IDataflowDeque<T> {
 
     @Override
     public T peekLast() {
-        if(size()==0){
+        if (size() == 0) {
             return null;
         }
         int lastIndex = getFrontIndex() + size() - 1;
@@ -166,12 +153,6 @@ class DequeProxy<T> implements IDataflowDeque<T> {
     public boolean isEmpty() {
         return size() == 0;
     }
-
-    @Override
-    public T getSum() {
-        return sum;
-    }
-
 
     @Override
     public int size() {

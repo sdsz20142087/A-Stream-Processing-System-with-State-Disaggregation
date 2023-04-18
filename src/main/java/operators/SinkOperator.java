@@ -1,11 +1,10 @@
 package operators;
-
 import com.google.protobuf.ByteString;
 import pb.Tm;
-
 import java.io.Serializable;
 
 public class SinkOperator extends BaseOperator implements Serializable {
+    private Prometheus prometheus;
     public SinkOperator() {
         super(null, null);
         this.setName("SinkOperator");
@@ -16,8 +15,17 @@ public class SinkOperator extends BaseOperator implements Serializable {
     protected void processElement(Tm.Msg msg, OutputSender outputSender) {
         ByteString in = msg.getData();
         System.out.println("-->DATA "+in.toStringUtf8());
+//        System.out.println("Ingest time: "+msg.getIngestTime());
+//        System.out.println("SINK startTimeStamp"+startTimeStamp);
+//        System.out.println("SINK OPERATOR TIME STAMP"+(System.currentTimeMillis() - startTimeStamp));
+        prometheus.setIngestTimestampGauge((System.currentTimeMillis() - startTimeStamp)-msg.getIngestTime());
     }
 
+    @Override
+    public void postInit() {
+        super.postInit();
+        prometheus = new Prometheus(9091);
+    }
     @Override
     protected void processWatermark(Tm.Msg msg, OutputSender outputSender) {
         ByteString in = msg.getData();

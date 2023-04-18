@@ -29,6 +29,7 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
     @Override
     public void run(){
 
+
         new Thread(() -> {
             try {
                 source.init();
@@ -38,17 +39,23 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
             }
             while (true) {
                 if (firstElementFlag) {
-                    startTimeStamp = (long) (System.currentTimeMillis() / 1000.0);
+                    startTimeStamp = System.currentTimeMillis();
                     firstElementFlag = false;
+                    System.out.println("SOURCE startTimeStamp"+startTimeStamp);
                 }
                 T data = source.next();
                 watermarkContent = data;
                 ByteString bs = serdeIn.serializeOut(data);
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    throw new RuntimeException(e);
+//                }
+                System.out.println("SOURCE OPERATOR setIngestTime:"+(System.currentTimeMillis() - startTimeStamp));
                 Tm.Msg msg = Tm.Msg.newBuilder()
                         .setType(Tm.Msg.MsgType.DATA)
                         .setData(bs)
                         .setSenderOperatorName("DATA SOURCE")
-                        .setIngestTime((long) (System.currentTimeMillis() / 1000.0) - startTimeStamp)
                         .build();
                 inputQueue.add(msg);
             }
@@ -76,7 +83,7 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
                         .setType(Tm.Msg.MsgType.WATERMARK)
                         .setData(bs)
                         .setSenderOperatorName("DATA SOURCE")
-                        .setIngestTime(Math.max(0, (long) (System.currentTimeMillis() / 1000.0) - startTimeStamp - this.out_of_order_grace_period))
+                        .setIngestTime(Math.max(0, (System.currentTimeMillis()) - startTimeStamp - this.out_of_order_grace_period))
                         .build();
                 inputQueue.add(msg);
             }
@@ -89,7 +96,8 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
     // simply move whatever we have in the input queue to the output queue
     protected void processElement(Tm.Msg msg, OutputSender outputSender) {
 //        T obj = (T) serdeIn.deserializeIn(msg.getData());
-        outputSender.sendOutput(msg);
+        Tm.Msg newMsg=msg.toBuilder().setIngestTime((System.currentTimeMillis() - startTimeStamp)).build();
+        outputSender.sendOutput(newMsg);
     }
 
 //    @Override
