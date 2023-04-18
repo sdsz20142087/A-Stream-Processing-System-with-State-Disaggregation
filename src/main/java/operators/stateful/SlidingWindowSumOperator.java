@@ -3,7 +3,8 @@ package operators.stateful;
 import com.google.protobuf.ByteString;
 import operators.BaseOperator;
 import operators.OutputSender;
-import stateapis.DequeProxy;
+import pb.Tm;
+import stateapis.IDataflowDeque;
 import stateapis.ListStateAccessor;
 import utils.SerDe;
 
@@ -18,8 +19,10 @@ public class SlidingWindowSumOperator extends BaseOperator implements Serializab
     }
 
     @Override
-    protected void processElement(ByteString in, OutputSender outputSender) {
-        DequeProxy<Double> window = (DequeProxy<Double>) windowStateAccessor.value();
+    protected void processElement(Tm.Msg msg, OutputSender outputSender) {
+        IDataflowDeque<Double> window = (IDataflowDeque<Double>) windowStateAccessor.value();
+
+        ByteString in = msg.getData();
 
         // Convert ByteString to Double
         Double input = Double.parseDouble(in.toStringUtf8());
@@ -41,6 +44,6 @@ public class SlidingWindowSumOperator extends BaseOperator implements Serializab
 
         // Convert sum to ByteString and send it as output
         ByteString out = ByteString.copyFromUtf8(Double.toString(sum));
-        outputSender.sendOutput(out);
+        outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(out).build());
     }
 }

@@ -25,8 +25,8 @@ public class FrequencyCountOperator extends BaseOperator implements Serializable
     }
 
     @Override
-    protected void processElement(ByteString in, OutputSender outputSender) {
-        String inputElement = in.toStringUtf8();
+    protected void processElement(Tm.Msg msg, OutputSender outputSender) {
+        String inputElement = msg.getData().toStringUtf8();
 
         // Get the current frequency count
         Integer currentCount = frequencyMapStateAccessor.value().get(inputElement);
@@ -48,7 +48,7 @@ public class FrequencyCountOperator extends BaseOperator implements Serializable
         // Send output message
         outputSender.sendOutput(Tm.Msg.newBuilder()
                 .setType(Tm.Msg.MsgType.DATA)
-                .setData(ByteString.copyFromUtf8(outMsg))
+                .setData(ByteString.copyFromUtf8(outMsg)).build()
         );
     }
 
