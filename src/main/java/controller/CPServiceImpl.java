@@ -30,7 +30,6 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         Cp.RegisterTMResponse.Builder b = Cp.RegisterTMResponse.newBuilder();
         TMClient tmClient = new TMClient(request.getAddress(), request.getPort());
         tmClients.put(request.getName(),tmClient);
-        logger.info("a");
 
         try{
             logger.info("status:"+tmClient.getStatus());

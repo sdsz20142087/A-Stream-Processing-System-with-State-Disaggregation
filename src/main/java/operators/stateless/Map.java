@@ -15,11 +15,15 @@ public class Map<Tin, Tout> extends BaseOperator implements Serializable {
     }
 
     @Override
-    protected void processElement(ByteString in, OutputSender outputSender) {
+    protected void processElement(Tm.Msg msg, OutputSender outputSender) {
+        ByteString in = msg.getData();
         Tin data = (Tin) serdeIn.deserializeIn(in);
         Tout output= UDFmap(data);
         ByteString bs = serdeOut.serializeOut(output);
-        outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs));
+        Tm.Msg.Builder builder = Tm.Msg.newBuilder();
+        builder.mergeFrom(msg);
+        builder.setData(bs);
+        outputSender.sendOutput(builder.build());
     }
 
 

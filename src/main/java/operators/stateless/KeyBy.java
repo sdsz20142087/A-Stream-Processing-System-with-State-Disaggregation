@@ -3,6 +3,7 @@ package operators.stateless;
 import com.google.protobuf.ByteString;
 import kotlin.NotImplementedError;
 import operators.OutputSender;
+import pb.Tm;
 import utils.SerDe;
 import operators.BaseOperator;
 
@@ -22,7 +23,8 @@ public class KeyBy<T,K> extends BaseOperator implements Serializable {
     }
 
     @Override
-    protected void processElement(ByteString in, OutputSender outputSender) {
+    protected void processElement(Tm.Msg msg, OutputSender outputSender) {
+        ByteString in = msg.getData();
         T data = (T) serdeIn.deserializeIn(in);
         throw new NotImplementedError("Not implemented yet");
     }

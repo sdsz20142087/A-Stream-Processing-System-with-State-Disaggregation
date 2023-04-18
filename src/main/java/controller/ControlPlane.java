@@ -35,6 +35,7 @@ public class ControlPlane extends NodeBase {
         // read the config file
         Config.LoadConfig(configPath);
         cpcfg = Config.getInstance().controlPlane;
+        logger.info("Config file loaded");
         tmClientCnt = 0;
         // initialize the etcd client
         ETCDHelper.init(cpcfg.etcd_endpoints, cpcfg.test_etcd_conn);

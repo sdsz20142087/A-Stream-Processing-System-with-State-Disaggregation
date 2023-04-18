@@ -21,12 +21,16 @@ public class FlatMap<T> extends BaseOperator implements Serializable{
         super.run();
     }
     @Override
-    protected void processElement(ByteString in, OutputSender outputSender) {
+    protected void processElement(Tm.Msg msg, OutputSender outputSender) {
+        ByteString in = msg.getData();
         T data = (T) serdeIn.deserializeIn(in);
         output= UDFflatmap(data);
         for (T t: output){
             ByteString bs = serdeOut.serializeOut(t);
-            outputSender.sendOutput(Tm.Msg.newBuilder().setType(Tm.Msg.MsgType.DATA).setData(bs));
+            Tm.Msg.Builder builder = Tm.Msg.newBuilder();
+            builder.mergeFrom(msg);
+            builder.setData(bs);
+            outputSender.sendOutput(builder.build());
         }
     }
     private List<T> UDFflatmap(T t){
