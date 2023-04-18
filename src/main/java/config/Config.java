@@ -8,16 +8,21 @@ import java.nio.file.Paths;
 public class Config {
     public CPConfig controlPlane;
     public TMConfig taskManager;
+
+    public PrometheusConfig prometheus;
     private static Config instance;
 
-    public static void LoadConfig(String configPath) {
+    public static Config LoadConfig(String configPath) {
         try {
+            if(instance != null)
+                return instance;
             // read from file
             String data = new String(Files.readAllBytes(Paths.get(configPath)));
             //instance = new Config();
             // parse json
             Gson gson = new Gson();
             instance = gson.fromJson(data, Config.class);
+            return instance;
         } catch (Exception e) {
             throw new RuntimeException("Failed to load " + configPath, e);
         }

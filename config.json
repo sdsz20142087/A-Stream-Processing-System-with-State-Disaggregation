@@ -18,5 +18,9 @@
     "useMigration": false,
     "useCache": false,
     "rocksDBPath": "data.db"
+  },
+  "prometheus": {
+    "prometheus_port": 9091,
+    "prometheus_host": "127.0.0.1"
   }
 }
