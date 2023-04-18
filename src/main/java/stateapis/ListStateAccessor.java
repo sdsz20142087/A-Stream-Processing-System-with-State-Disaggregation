@@ -56,7 +56,7 @@ public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
 }
 
 // dequeproxy translates the deque interface to the kvprovider interface
-public class DequeProxy<T> implements IDataflowDeque<T> {
+class DequeProxy<T> implements IDataflowDeque<T> {
     private String keyBase;
     private KVProvider kvProvider;
 
