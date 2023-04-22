@@ -40,6 +40,8 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
     protected ConcurrentHashMap<String, Long> operatorMinWatermarkMap = new ConcurrentHashMap<>();
     protected double watermark_interval;
     protected long minOfMaxWatermark = Long.MAX_VALUE;
+    //reconfigTimestamp: consistent reconfig timestamp, e.g. if reconfigTimeStamp = 35, before 35,
+    // use original configuration, after 35, use updated configuration
     protected long reconfigTimestamp = Long.MAX_VALUE;
 
     public long getMinOfMaxWatermark() {

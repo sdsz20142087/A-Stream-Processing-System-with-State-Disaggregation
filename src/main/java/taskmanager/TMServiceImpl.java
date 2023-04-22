@@ -177,6 +177,13 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         responseObserver.onCompleted();
     }
 
+    public void pushReconfigMsg(Tm.ReconfigMsg request, StreamObserver<Empty> responseObserver){
+        logger.info("got pushReconfigMsg request");
+        pendingReconfigMsgs.add(request);
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
+    }
+
     private synchronized void handleReconfigMsg(Tm.ReconfigMsg msg) {
         logger.info("got reconfig message: " + msg);
         for (Tm.OperatorConfig config : msg.getConfigMap().values()) {

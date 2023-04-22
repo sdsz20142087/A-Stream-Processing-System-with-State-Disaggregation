@@ -260,6 +260,12 @@ public class OperatorLoadBalancer{
 //        return operatorTaskStatuses;
     }
 
+    /**
+     * get max of the min watermark from operator instances at the same type
+     * @param op_instances
+     * @return max of the min watermark
+     */
+
     public long generateConsistentTimeStamp(List<OperatorTaskStatus> op_instances) {
         long low_watermark = Long.MIN_VALUE;
         int n = op_instances.size();
@@ -274,6 +280,7 @@ public class OperatorLoadBalancer{
 
     public void sendExternalControlMessage(List<OperatorTaskStatus> op_instances) {
         int n = op_instances.size();
+        // produce watermark
         long consistentTimeStamp = generateConsistentTimeStamp(op_instances);
         for (int i = 0; i < n; i++) {
             String receiverOpName = op_instances.get(i).getOpName();
@@ -290,6 +297,12 @@ public class OperatorLoadBalancer{
         List<OperatorTaskStatus> op_instances = operators_distribution.get(generalName);
         int instance_size = op_instances.size();
         sendExternalControlMessage(op_instances);
+
+        // TODO: sendReconfigControlMessage
+        long consistentTimeStamp = generateConsistentTimeStamp(op_instances);
+        //tmClient.sendReconfigControlMessage( ,consistentTimeStamp);
+
+
         newCfg.setName(generalName + "-" + instance_size).setBufferSize(cfg.getBufferSize()).setPartitionStrategy(cfg.getPartitionStrategy());
         newCfg.addAllOutputMetadata(cfg.getOutputMetadataList());
         upstream_operators.put(newCfg.getName(), upstream_operators.get(cfg.getName()));

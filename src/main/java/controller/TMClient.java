@@ -14,6 +14,7 @@ import utils.BytesUtil;
 
 import java.io.*;
 import java.io.Serializable;
+import java.util.Map;
 
 public class TMClient implements Serializable {
     private final Logger logger = LogManager.getLogger();
@@ -155,5 +156,19 @@ public class TMClient implements Serializable {
 
     public String getAddress(){
         return host + ":" + port;
+    }
+
+    public void sendReconfigControlMessage(Map<String, Tm.OperatorConfig> operatorConfigMap, long watermark) throws IOException, ClassNotFoundException{
+        // construct reconfig message
+        Tm.ReconfigMsg.Builder reconfigMsgBuilder = Tm.ReconfigMsg.newBuilder();
+        for (Map.Entry<String, Tm.OperatorConfig> entry : operatorConfigMap.entrySet()) {
+            reconfigMsgBuilder.putConfig(entry.getKey(), entry.getValue());
+        }
+
+        reconfigMsgBuilder.setEffectiveWaterMark(watermark);
+        Tm.ReconfigMsg reconfigMsg = reconfigMsgBuilder.build();
+        // put reconfigMsg into pendingReconfigMsgs
+        blockingStub.pushReconfigMsg(reconfigMsg);
+
     }
 }

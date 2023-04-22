@@ -50,6 +50,16 @@ message OperatorExternalTimestampRequest{
   int64 reconfigTimestamp = 3;
 }
 
+//send to upstream operator, map<string,OperatorConfig>: <downStreamOp1,
+// downStreamOp1 - OperatorConfig(future start and end area)>
+//todo: currentOp = map1-0, original filter1-0: start = 1, end = 6
+//todo:       ---filter1-0
+//todo: map1-0
+//todo: map1-1
+//todo:       ---filter1-1
+//todo: <filter1-0, OperatorConfig(... start = 1, end = 3, ...)>
+//todo: <filter1-1, OperatorConfig(... start = 4, end = 6, ...)>
+//todo: <4, timstamp-> ---> filter1-0
 message ReconfigMsg{
   // only for type=CONTROL, contains map of <operatorName, new config>
   map<string,OperatorConfig> config = 1;
@@ -117,6 +127,7 @@ service TMService{
   rpc AddOperator(AddOperatorRequest) returns (google.protobuf.Empty);
   rpc RemoveOperator(RemoveOperatorRequest) returns (google.protobuf.Empty);
   rpc PushMsg(Msg) returns (google.protobuf.Empty);
+  rpc PushReconfigMsg(ReconfigMsg) returns (google.protobuf.Empty);
   rpc GetOperatorStatus(OPStatusRequest) returns (OperatorStatus);
   rpc RemoveState(RemoveStateRequest) returns (google.protobuf.Empty);
   rpc GetState(GetStateRequest) returns (GetStateResponse);
