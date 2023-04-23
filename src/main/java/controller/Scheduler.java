@@ -165,6 +165,7 @@ public class Scheduler extends Thread {
                     operators_config.put(new Pair<>(target_element.getSecond(), scaledOpConfig.getName()), scaledOpConfig);
                     target_element = new Triple<>(target_element.getFirst() + 1, target_element.getSecond(), target_element.getThird());
                     pq.offer(target_element);
+
                     logger.info("scale up successfully, new scaled op is " + scaledOpConfig.getName());
                 }
                 Thread.sleep(1000);
@@ -173,4 +174,5 @@ public class Scheduler extends Thread {
             }
         }
     }
+
 }

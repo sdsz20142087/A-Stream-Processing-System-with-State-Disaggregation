@@ -290,6 +290,22 @@ public class OperatorLoadBalancer{
         }
     }
 
+    public void sendReconfigControlMessage(ConcurrentHashMap<String, Tm.OperatorConfig.Builder> op_configs,
+                                           List<OperatorLoadBalancer.OperatorTaskStatus> op_instances, TMClient tmClient){
+        int n = op_instances.size();
+        long consistentTimeStamp = generateConsistentTimeStamp(op_instances);
+
+        Map<String, Tm.OperatorConfig> operatorConfigMap = new HashMap<>();
+        for (Map.Entry<String, Tm.OperatorConfig.Builder> entry : op_configs.entrySet()) {
+            String key = entry.getKey();
+            Tm.OperatorConfig.Builder valueBuilder = entry.getValue();
+            Tm.OperatorConfig value = valueBuilder.build();
+            operatorConfigMap.put(key, value);
+        }
+
+        tmClient.sendReconfigControlMessage(operatorConfigMap ,consistentTimeStamp);
+    }
+
     public Tm.OperatorConfig.Builder scaleUpOp(Tm.OperatorConfig.Builder cfg, TMClient tmClient) {
         String op_name = cfg.getName();
         String generalName = op_name.substring(0, op_name.length() - 2);
@@ -297,11 +313,6 @@ public class OperatorLoadBalancer{
         List<OperatorTaskStatus> op_instances = operators_distribution.get(generalName);
         int instance_size = op_instances.size();
         sendExternalControlMessage(op_instances);
-
-        // TODO: sendReconfigControlMessage
-        long consistentTimeStamp = generateConsistentTimeStamp(op_instances);
-        //tmClient.sendReconfigControlMessage( ,consistentTimeStamp);
-
 
         newCfg.setName(generalName + "-" + instance_size).setBufferSize(cfg.getBufferSize()).setPartitionStrategy(cfg.getPartitionStrategy());
         newCfg.addAllOutputMetadata(cfg.getOutputMetadataList());
@@ -316,6 +327,10 @@ public class OperatorLoadBalancer{
             throw new RuntimeException(e);
         }
         op_configs.put(newCfg.getName(), newCfg);
+
+        // TODO: new way to sendReconfigControlMessage
+        sendReconfigControlMessage(op_configs, op_instances, tmClient);
+
 //        reRouteOperator(cfg.getName(), routeTable.get(cfg.getName()));
         List<Tm.OperatorConfig.Builder> builders = upstream_operators.get(op_name); //get upstreamOperators
         int reConfigCnt = builders.size(); //reRoute half upstream operators to new op

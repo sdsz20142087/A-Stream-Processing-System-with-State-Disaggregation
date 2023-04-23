@@ -158,7 +158,7 @@ public class TMClient implements Serializable {
         return host + ":" + port;
     }
 
-    public void sendReconfigControlMessage(Map<String, Tm.OperatorConfig> operatorConfigMap, long watermark) throws IOException, ClassNotFoundException{
+    public void sendReconfigControlMessage(Map<String, Tm.OperatorConfig> operatorConfigMap, long watermark){
         // construct reconfig message
         Tm.ReconfigMsg.Builder reconfigMsgBuilder = Tm.ReconfigMsg.newBuilder();
         for (Map.Entry<String, Tm.OperatorConfig> entry : operatorConfigMap.entrySet()) {
