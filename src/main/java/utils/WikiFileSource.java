@@ -40,6 +40,7 @@ public class WikiFileSource implements ISource<String>, Serializable {
         dataIter = data.listIterator();
         System.out.println("Wikifilesource: read " + data.size() + " lines from " + path);
         startPeriodicWriting();
+
     }
 
     @Override

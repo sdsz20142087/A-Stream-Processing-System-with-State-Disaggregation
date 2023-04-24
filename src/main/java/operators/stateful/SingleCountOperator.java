@@ -9,11 +9,11 @@ import utils.SerDe;
 
 import java.io.Serializable;
 
-public class SingleCountOperator extends BaseOperator implements Serializable {
+public class SingleCountOperator<T> extends BaseOperator implements Serializable {
     private transient ValueStateAccessor<Integer> cntAccesor;
 
-    public SingleCountOperator(SerDe<String> out){
-        super(null, out);
+    public SingleCountOperator(SerDe<T> in, SerDe<String> out){
+        super(in, out);
         this.setOpName("CountOperator");
     }
 

@@ -17,6 +17,9 @@ public class WikiInfoSerde implements SerDe<WikiInfo>, Serializable {
 
     @Override
     public ByteString serializeOut(WikiInfo wikiInfo) {
-        return ByteString.copyFrom(BytesUtil.ObjectToBytes(wikiInfo));
+        // convert to json, then to ByteString
+        Gson gson = new Gson();
+        String json = gson.toJson(wikiInfo);
+        return ByteString.copyFromUtf8(json);
     }
 }

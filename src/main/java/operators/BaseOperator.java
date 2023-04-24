@@ -168,8 +168,8 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
         switch (msg.getType()) {
             case DATA: 
                 currentObj = serdeIn.deserializeIn(msg.getData());
-            processElement(msg, outputSender);
-             break;
+                processElement(msg, outputSender);
+                break;
             case CONTROL: break;
             case WATERMARK: processWatermark(msg, outputSender); break;
         }
