@@ -110,15 +110,26 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
 
     class BaseOutputSender implements OutputSender{
         private long ingestTime;
-        public BaseOutputSender(long ingestTime){
+        private final long extIngestTime;
+        public BaseOutputSender(long ingestTime, long extIngestTime){
             this.ingestTime = ingestTime;
+            this.extIngestTime = extIngestTime;
         }
 
         public void sendOutput(Tm.Msg msg){
             Object o = serdeOut.deserializeIn(msg.getData());
             int key = keySelector!=null?keySelector.getKey(o):-1;
             Tm.Msg.Builder msgBuilder = Tm.Msg.newBuilder();
-            msgBuilder.setType(msg.getType()).setIngestTime(ingestTime).setData(serdeOut.serializeOut(o)).setSenderOperatorName(config.getName());
+            msgBuilder
+                    .setType(msg.getType())
+                    .setIngestTime(ingestTime)
+                    .setData(msg.getData())
+                    .setSenderOperatorName(config.getName());
+            if(extIngestTime==0){
+                msgBuilder.setExtIngestTime(System.currentTimeMillis());
+            } else {
+                msgBuilder.setExtIngestTime(extIngestTime);
+            }
             outputQueue.add(new OutputMessage(config.getName(), msgBuilder, key));
         }
         public long getIngestTime() {
@@ -200,7 +211,7 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
                 if (!operatorMinWatermarkMap.containsKey(input.getSenderOperatorName())) {
                     operatorMinWatermarkMap.put(input.getSenderOperatorName(), 0L);
                 }
-                processDataFlow(input, new BaseOutputSender(input.getIngestTime()));
+                processDataFlow(input, new BaseOutputSender(input.getIngestTime(), input.getExtIngestTime()));
             }
         } catch (Exception e) {
             FatalUtil.fatal(getOpName()+": Exception in sender thread",e);

@@ -3,6 +3,7 @@ package controller;
 import config.Config;
 import config.TMConfig;
 import operators.stateful.SingleCountOperator;
+import operators.stateful.StatefulCPUHeavyOperator;
 import operators.stateless.Filter;
 import utils.*;
 import operators.SinkOperator;
@@ -29,20 +30,24 @@ public class App {
         // TODO: build the query plan here
         // FIXME: the stages should actually be topologically sorted
         // 1: source
-        SourceOperator<String> source = new SourceOperator<>(new WikiFileSource("data2.txt",0), new StringSerde());
+        SourceOperator<String> source = new SourceOperator<>(new WikiFileSource("data3.txt",7), new StringSerde());
         this.queryPlan.addStage(0, source, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         // 2: filter: wikiInfo.id % 4 != 0;
         Filter<WikiInfo> filter = new Filter<>(new WikiInfoSerde(), (Predicate<WikiInfo>& Serializable) wikiInfo -> wikiInfo.id % 4 != 0 );
         this.queryPlan.addStage(1, filter, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
-        // 3: count
-        SingleCountOperator count = new SingleCountOperator<>(new WikiInfoSerde(), new StringSerde());
-        this.queryPlan.addStage(2, count, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
+        // 3: stateful cpu heavy operator
+        StatefulCPUHeavyOperator<WikiInfo> statefulCPUHeavyOperator = new StatefulCPUHeavyOperator<>(new WikiInfoSerde(), 5);
+        this.queryPlan.addStage(2, statefulCPUHeavyOperator, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
-        // 4: sink
+        // 4: count
+        SingleCountOperator<WikiInfo> count = new SingleCountOperator<>(new WikiInfoSerde(), new StringSerde());
+        this.queryPlan.addStage(3, count, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
+
+        // 5: sink
         SinkOperator sink = new SinkOperator(new StringSerde());
-        this.queryPlan.addStage(3, sink, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
+        this.queryPlan.addStage(4, sink, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
     }
 
     public QueryPlan getQueryPlan() {

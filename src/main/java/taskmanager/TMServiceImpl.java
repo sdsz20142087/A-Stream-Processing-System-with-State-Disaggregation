@@ -159,7 +159,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
     @Override
     public void pushMsg(Tm.Msg request, StreamObserver<Empty> responseObserver) {
         String opName = request.getReceiverOperatorName();
-        logger.info("got pushMsg request for "+opName);
+        //logger.info("got pushMsg request for "+opName);
         if(!operators.containsKey(opName)){
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator "+opName+" not found")));
             return;

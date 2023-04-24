@@ -68,6 +68,7 @@ message Msg{
   optional bytes data = 4;
   optional ReconfigMsg reconfigMsg = 5;
   int64 ingestTime = 6;
+  int64 extIngestTime = 7;
 }
 
 enum PartitionStrategy{

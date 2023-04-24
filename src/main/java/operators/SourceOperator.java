@@ -54,12 +54,6 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
             }
         }).start();
 
-//        try {
-//            Thread.sleep(100);
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
-
         new Thread(() -> {
             while (true) {
                 long startTime = System.currentTimeMillis();
