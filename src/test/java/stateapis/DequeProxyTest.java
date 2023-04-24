@@ -9,7 +9,7 @@ class DequeProxyTest {
     private DequeProxy<String> d;
     private LocalKVProvider kvProvider;
 
-    private IKeyGetter keyGetter = new ValidKeyGetter();
+    private ValidKeyGetter keyGetter = new ValidKeyGetter();
 
     @BeforeEach
     void setUp() {
@@ -119,5 +119,22 @@ class DequeProxyTest {
         assertEquals(d.size(), 3);
         d.clear();
         assertEquals(d.size(), 0);
+    }
+
+    @Test
+    void testManyObj(){
+        d.addLast("a");
+        d.addLast("b");
+        d.addLast("c");
+        assertEquals(d.size(), 3);
+        assertEquals(d.peekLast(), "c");
+
+        keyGetter.setObj(new String("test-3"));
+        assertEquals(d.size(), 0);
+        d.addLast("d");
+        assertEquals(d.size(), 1);
+
+        keyGetter.setObj(new String("test"));
+        assertEquals(d.size(), 3);
     }
 }

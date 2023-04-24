@@ -13,7 +13,7 @@ public class MapProxyTest {
     private MapProxy<String> m;
     private LocalKVProvider kvProvider;
 
-    private IKeyGetter keyGetter = new ValidKeyGetter();
+    private ValidKeyGetter keyGetter = new ValidKeyGetter();
 
     @BeforeEach
     void setUp() {
@@ -39,7 +39,7 @@ public class MapProxyTest {
         m.put("testKey", "testValue");
         String currentKey = keyGetter.getCurrentKey();
         assertEquals("testValue", kvProvider.get(
-                "testKeyBase" + (currentKey == null ? "" : ":" + currentKey)+":testKey"
+                "testKeyBase" + currentKey+":testKey"
                 , null));
     }
 
@@ -65,8 +65,8 @@ public class MapProxyTest {
         System.out.println(keys);
         assertEquals(2, keys.size());
         String currentKey = keyGetter.getCurrentKey();
-        assertTrue(keys.contains("testKeyBase"+(currentKey==null?"":":"+currentKey)+":testKey1"));
-        assertTrue(keys.contains("testKeyBase"+(currentKey==null?"":":"+currentKey)+":testKey2"));
+        assertTrue(keys.contains("testKeyBase"+currentKey+":testKey1"));
+        assertTrue(keys.contains("testKeyBase"+currentKey+":testKey2"));
     }
 
     @Test
@@ -88,5 +88,28 @@ public class MapProxyTest {
         assertEquals(0, m.size());
         m.put("testKey", "testValue");
         assertEquals(1, m.size());
+    }
+
+    @Test
+    void testManyObj(){
+        m.put("testKey", "testValue");
+        String currentKey = keyGetter.getCurrentKey();
+        assertEquals("testValue", kvProvider.get(
+                "testKeyBase" + currentKey+":testKey"
+                , null));
+
+
+        keyGetter.setObj(new String("test-2"));
+        m.put("testKey", "testValue2");
+        currentKey = keyGetter.getCurrentKey();
+        assertEquals("testValue2", kvProvider.get(
+                "testKeyBase" + currentKey+":testKey"
+                , null));
+
+        keyGetter.setObj(new String("test"));
+        currentKey = keyGetter.getCurrentKey();
+        assertEquals("testValue", kvProvider.get(
+                "testKeyBase" + currentKey+":testKey"
+                , null));
     }
 }

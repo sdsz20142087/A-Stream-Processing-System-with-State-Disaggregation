@@ -51,19 +51,17 @@ class DequeProxy<T> implements IDataflowDeque<T> {
     private final Logger logger = LogManager.getLogger();
 
     private String makeFrontIndexKey() {
-        String k = keyGetter.getCurrentKey();
-        String kval = ":keyed:"+k;
-        createIfNull(keyBase+kval);
-        String frontIndex = keyBase + (k==null?"":kval)+".front";
+        String k = keyBase + keyGetter.getCurrentKey();
+        createIfNull(k);
+        String frontIndex = k +".front";
         return frontIndex;
     }
 
     private String makeSizeKey() {
-        String k = keyGetter.getCurrentKey();
-        String kval = ":keyed:"+k;
-        createIfNull(keyBase+kval);
-        String res = keyBase + (k==null?"":kval)+".size";
-        return res;
+        String k = keyBase + keyGetter.getCurrentKey();
+        createIfNull(k);
+        String sizeKey = k +".size";
+        return sizeKey;
     }
 
     private void createIfNull(String prefix){
@@ -92,7 +90,7 @@ class DequeProxy<T> implements IDataflowDeque<T> {
     }
 
     private String makeIndex(int idx) {
-        return keyBase + "." + idx;
+        return keyBase + keyGetter.getCurrentKey() + "." + idx;
     }
 
     @Override

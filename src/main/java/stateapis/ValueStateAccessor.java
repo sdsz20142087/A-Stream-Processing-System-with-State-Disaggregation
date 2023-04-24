@@ -12,7 +12,7 @@ public class ValueStateAccessor<T> extends BaseStateAccessor<T> {
 
     private String makeKey(){
         String key = keyGetter.getCurrentKey();
-        String stateKey = descriptorName + (key == null ? "" : ":keyed:"+key);
+        String stateKey = descriptorName + key;
         return stateKey;
     }
 

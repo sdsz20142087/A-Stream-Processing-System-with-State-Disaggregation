@@ -1,6 +1,9 @@
 package stateapis;
 
 
+import operators.IKeySelector;
+import utils.KeyUtil;
+
 class NullKeyGetter implements IKeyGetter {
     @Override
     public String getCurrentKey() {
@@ -14,9 +17,27 @@ class NullKeyGetter implements IKeyGetter {
 }
 
 class ValidKeyGetter implements IKeyGetter {
+
+    public ValidKeyGetter() {
+        currentObj = new String("test");
+    }
+
+    private Object currentObj;
+
+    public void setObj(Object o) {
+        currentObj = o;
+    }
+
     @Override
     public String getCurrentKey() {
-        return "0x0000ffff";
+        Object o = currentObj;
+        String hashed = KeyUtil.objToKey(o, new IKeySelector() {
+            @Override
+            public String getUniqueKey(Object o) {
+                return o.toString();
+            }
+        });
+        return hashed;
     }
 
     @Override

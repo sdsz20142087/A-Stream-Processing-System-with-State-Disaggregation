@@ -1,6 +1,5 @@
 package stateapis;
 
-import java.util.HashMap;
 import java.util.List;
 
 
@@ -54,7 +53,6 @@ class MapProxy<V> implements IDataflowMap<V> {
 
     private final String keyBase;
     private final KVProvider kvProvider;
-    private final Logger logger = LogManager.getLogger();
 
     private IKeyGetter keyGetter;
 
@@ -63,8 +61,19 @@ class MapProxy<V> implements IDataflowMap<V> {
             FatalUtil.fatal("keyed is a reserved word",null);
         }
         String currentKey = keyGetter.getCurrentKey();
-        String r = this.keyBase + (currentKey==null?"":":keyed:"+currentKey)+ ":" + key;
+        String r = this.keyBase + currentKey+ ":" + key;
         return r;
+    }
+    private void createSizeIfNull(String key){
+        String sizeKey = key+".size";
+        if(kvProvider.listKeys(sizeKey).size()==0){
+            kvProvider.put(sizeKey, 0);
+        }
+    }
+    private String makeSizeKey(){
+        String k = keyBase + keyGetter.getCurrentKey();
+        createSizeIfNull(k);
+        return k+".size";
     }
 
     public MapProxy(String keyBase, KVProvider kvProvider, IKeyGetter keyGetter) {
@@ -82,6 +91,9 @@ class MapProxy<V> implements IDataflowMap<V> {
     @Override
     public void put(String key, V value) {
         String k = makeKey(key);
+        if(!this.containsKey(key)){
+            setSize(this.size()+1);
+        }
         this.kvProvider.put(k, value);
     }
 
@@ -90,13 +102,14 @@ class MapProxy<V> implements IDataflowMap<V> {
         if (this.isEmpty()) {
             throw new RuntimeException("Cannot remove from an empty map");
         }
-
         this.kvProvider.delete(makeKey(key));
+        setSize(this.size()-1);
     }
 
     @Override
     public void clear() {
         this.kvProvider.clear(makeKey(""));
+        setSize(0);
     }
 
     @Override
@@ -114,10 +127,13 @@ class MapProxy<V> implements IDataflowMap<V> {
         String k = makeKey(key);
         return this.kvProvider.get(k, null) != null;
     }
-
+    private void setSize(int newSize){
+        String sizeKey = makeSizeKey();
+        kvProvider.put(sizeKey, newSize);
+    }
     @Override
     public int size() {
-        return kvProvider.listKeys(makeKey("")).size();
+        return (int) kvProvider.get(makeSizeKey(), null);
     }
 }
 

@@ -15,6 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import pb.Tm;
 import stateapis.IKeyGetter;
 import utils.FatalUtil;
+import utils.KeyUtil;
 import utils.SerDe;
 
 public abstract class BaseOperator extends Thread implements Serializable, IKeyGetter {
@@ -96,16 +97,10 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
     }
 
     public String getCurrentKey(){
-        if(!this.hasKeySelector()){
-            return null;
+        if(keySelector == null){
+            return "";
         }
-        int keyInt = keySelector.getKey(currentObj);
-        int desiredLength = 8;
-        String hexString = Integer.toHexString(keyInt);
-        hexString = String.format("%1$" + (desiredLength - 2) + "s", hexString).replace(' ', '0');
-        hexString = "0x" + hexString;
-        assert hexString.length() == 10;
-        return hexString;
+        return KeyUtil.objToKey(currentObj, keySelector);
     }
 
     class BaseOutputSender implements OutputSender{
@@ -118,7 +113,7 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
 
         public void sendOutput(Tm.Msg msg){
             Object o = serdeOut.deserializeIn(msg.getData());
-            int key = keySelector!=null?keySelector.getKey(o):-1;
+            int key = keySelector!=null?KeyUtil.hashStringToInt(keySelector.getUniqueKey(o)):-1;
             Tm.Msg.Builder msgBuilder = Tm.Msg.newBuilder();
             msgBuilder
                     .setType(msg.getType())
