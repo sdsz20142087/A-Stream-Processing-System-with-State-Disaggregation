@@ -11,49 +11,51 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class QueryPlan {
-    static class OperatorInfo{
-    public OperatorInfo(int stageIdx, int parallelism, Tm.OperatorConfig.Builder cfg, BaseOperator op) {
-        this.stageIdx = stageIdx;
-        this.parallelism = parallelism;
-        this.cfg = cfg;
-        this.op = op;
-    }
-    public int getStageIdx() {
-        return stageIdx;
-    }
+    static class OperatorInfo {
+        public OperatorInfo(int stageIdx, int parallelism, Tm.OperatorConfig.Builder cfg, BaseOperator op) {
+            this.stageIdx = stageIdx;
+            this.parallelism = parallelism;
+            this.cfg = cfg;
+            this.op = op;
+        }
 
-    public void setStageIdx(int stageIdx) {
-        this.stageIdx = stageIdx;
-    }
+        public int getStageIdx() {
+            return stageIdx;
+        }
 
-    public int getParallelism() {
-        return parallelism;
-    }
+        public void setStageIdx(int stageIdx) {
+            this.stageIdx = stageIdx;
+        }
 
-    public void setParallelism(int parallelism) {
-        this.parallelism = parallelism;
-    }
+        public int getParallelism() {
+            return parallelism;
+        }
 
-    public Tm.OperatorConfig.Builder getCfg() {
-        return cfg;
-    }
+        public void setParallelism(int parallelism) {
+            this.parallelism = parallelism;
+        }
 
-    public void setCfg(Tm.OperatorConfig.Builder cfg) {
-        this.cfg = cfg;
-    }
+        public Tm.OperatorConfig.Builder getCfg() {
+            return cfg;
+        }
 
-    public BaseOperator getOp() {
-        return op;
-    }
+        public void setCfg(Tm.OperatorConfig.Builder cfg) {
+            this.cfg = cfg;
+        }
 
-    public void setOp(BaseOperator op) {
-        this.op = op;
+        public BaseOperator getOp() {
+            return op;
+        }
+
+        public void setOp(BaseOperator op) {
+            this.op = op;
+        }
+
+        private int stageIdx;
+        private int parallelism;
+        private Tm.OperatorConfig.Builder cfg;
+        private BaseOperator op;
     }
-    private int stageIdx;
-    private int parallelism;
-    private Tm.OperatorConfig.Builder cfg;
-    private BaseOperator op;
-}
 
     public HashMap<Class<? extends BaseOperator>, Integer> getOperatorIdMap() {
         return operatorIdMap;
@@ -70,9 +72,9 @@ public class QueryPlan {
     // We are assuming that the first item of the planConfig is source, and last is sink
     // The outputAddress and bufferSize are adjusted by the scheduler after the plan is submitted
     public QueryPlan addStage(int stageIdx, BaseOperator op, int parallelism, int parallelMax, Tm.PartitionStrategy partitionStrategy, int bufferSize) {
-        logger.info("add "+ op.getOpName() + "to query plan");
+        logger.info("add " + op.getOpName() + "to query plan");
         this.operatorIdMap.put(op.getClass(), this.operatorIdMap.getOrDefault(op.getClass(), 0) + 1);
-        String realName = op.getOpName()+"_"+this.operatorIdMap.get(op.getClass());
+        String realName = op.getOpName() + "_" + this.operatorIdMap.get(op.getClass());
         op.setOpName(realName);
         Tm.OperatorConfig.Builder cfg = Tm.OperatorConfig.newBuilder()
                 .setLogicalStage(stageIdx)

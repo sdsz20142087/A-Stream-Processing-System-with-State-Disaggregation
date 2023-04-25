@@ -9,13 +9,13 @@ import utils.WikiInfo;
 
 public class ServerCountOperator extends BaseOperator {
 
-    private int emitEvery;
+    private final int emitEvery;
     // map < server-name, count >
     private transient MapStateAccessor<Integer> mapAccesor;
 
     public ServerCountOperator(SerDe<WikiInfo> serdeIn, SerDe<String> serdeOut, int emitEvery) {
         super(serdeIn, serdeOut);
-        setOpName("StrLenOperator");
+        setOpName("SvCountOperator");
         this.emitEvery = emitEvery;
     }
 
@@ -34,7 +34,7 @@ public class ServerCountOperator extends BaseOperator {
         int newVal = oldVal==null?1:oldVal + 1;
         mapAccesor.value().put(wi.server_name, newVal);
 
-        if(newVal % emitEvery == 1){
+        if(emitEvery==1 || newVal % emitEvery == 1){
             String outMsg = String.format("Count for server-name: <%s>: [%d]", wi.server_name, newVal);
             Tm.Msg.Builder builder = Tm.Msg.newBuilder();
             builder.mergeFrom(msg);

@@ -3,9 +3,14 @@ package controller;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
+import operators.BaseOperator;
+import operators.stateful.ServerCountOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import pb.Tm;
 import utils.FatalUtil;
+import utils.StringSerde;
+import utils.WikiInfoSerde;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -89,6 +94,83 @@ class ScaleHandler implements HttpHandler {
             OutputStream outputStream = exchange.getResponseBody();
             outputStream.write(response.getBytes());
             outputStream.close();
+        }
+    }
+
+    private void tryScale(int stage) {
+        try {
+            // find the right TM with the source
+            TMClient sourceTMClient = svc.tmClients.values().stream().findFirst().get();
+            assert sourceTMClient != null;
+            BaseOperator newOp = new ServerCountOperator(new WikiInfoSerde(), new StringSerde(), 1);
+
+            // config for new operator
+            Tm.OperatorConfig.Builder newOpCfgBuilder = Tm.OperatorConfig.newBuilder()
+                    .setLogicalStage(4)
+                    .setName("SvCountOperator_1-1")
+                    .setPartitionStrategy(Tm.PartitionStrategy.ROUND_ROBIN)
+                    .setPartitionPlan(
+                            Tm.PartitionPlan.newBuilder()
+                                    .setPartitionStart(Integer.MIN_VALUE)
+                                    .setPartitionEnd(-1)
+                                    .build())
+                    .setOutputMetadata(0, Tm.OutputMetadata.newBuilder()
+                            .setName("SinkOperator_1-0")
+                            .setAddress("192.168.1.19:8018")
+                    );
+
+            // config for old operator in this stage
+            Tm.OperatorConfig.Builder oldOpCfgBuilder = Tm.OperatorConfig.newBuilder()
+                    .setLogicalStage(4)
+                    .setName("SvCountOperator_1-0")
+                    .setPartitionStrategy(Tm.PartitionStrategy.ROUND_ROBIN)
+                    .setOutputMetadata(0, Tm.OutputMetadata.newBuilder()
+                            .setName("SinkOperator_1-0")
+                            .setAddress("192.168.1.19:8018")
+                    ).setPartitionPlan(
+                            Tm.PartitionPlan.newBuilder()
+                                    .setPartitionStart(0)
+                                    .setPartitionEnd(Integer.MAX_VALUE)
+                                    .build()
+                    );
+
+            // new config for previous stage
+            Tm.OperatorConfig.Builder prevStageOpCfg = Tm.OperatorConfig.newBuilder()
+                    .setLogicalStage(3)
+                    .setName("StatefulCPUHeavyOperator_1-0")
+                    .setPartitionStrategy(Tm.PartitionStrategy.HASH)
+                    .setOutputMetadata(0, Tm.OutputMetadata.newBuilder()
+                            .setName("SvCountOperator_1-0")
+                            .setAddress("192.168.1.19:8018")
+                            .setPartitionPlan(
+                                    Tm.PartitionPlan.newBuilder()
+                                            .setPartitionStart(0)
+                                            .setPartitionEnd(Integer.MAX_VALUE)
+                                            .build()
+                            ))
+                    .setOutputMetadata(1, Tm.OutputMetadata.newBuilder()
+                            .setName("SvCountOperator_1-1")
+                            .setAddress("192.168.1.19:8018")
+                            .setPartitionPlan(
+                                    Tm.PartitionPlan.newBuilder()
+                                            .setPartitionStart(Integer.MIN_VALUE)
+                                            .setPartitionEnd(-1)
+                                            .build()
+                            ));
+
+            Tm.ReconfigMsg.Builder reconfigMsgBuilder = Tm.ReconfigMsg.newBuilder()
+                    .putConfig(prevStageOpCfg.getName(), prevStageOpCfg.build())
+                    .putConfig(oldOpCfgBuilder.getName(), oldOpCfgBuilder.build())
+                    .putConfig(newOpCfgBuilder.getName(), newOpCfgBuilder.build())
+                    .setEffectiveWaterMark(-1);
+            sourceTMClient.sendReconfigControlMessage(
+                    reconfigMsgBuilder.build().getConfigMap(),
+                    reconfigMsgBuilder.build().getEffectiveWaterMark()
+            );
+
+
+        } catch (Exception e) {
+            FatalUtil.fatal("tryScale", e);
         }
     }
 }

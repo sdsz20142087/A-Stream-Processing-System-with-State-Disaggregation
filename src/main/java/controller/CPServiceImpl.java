@@ -15,7 +15,7 @@ import java.util.Random;
 
 class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
     private final Logger logger = LogManager.getLogger();
-    private HashMap<String, TMClient> tmClients = new HashMap<>();
+    public HashMap<String, TMClient> tmClients = new HashMap<>();
 
     public HashMap<String, TMClient> getTMClients(){
         return tmClients;
