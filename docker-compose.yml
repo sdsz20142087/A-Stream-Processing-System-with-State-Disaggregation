@@ -19,6 +19,11 @@ services:
       - controlplane
     deploy:
         replicas: 2
+  pushgateway:
+    image: prom/pushgateway
+    ports:
+      - '9091:9091'
+    container_name: pushgateway
 
 
 volumes:

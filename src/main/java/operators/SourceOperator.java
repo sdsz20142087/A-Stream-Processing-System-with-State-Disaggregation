@@ -75,7 +75,6 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
                 inputQueue.add(msg);
             }
         }).start();
-
         super.run();
     }
 
@@ -83,6 +82,12 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
     // simply move whatever we have in the input queue to the output queue
     protected void processElement(Tm.Msg msg, OutputSender outputSender) {
 //        T obj = (T) serdeIn.deserializeIn(msg.getData());
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         outputSender.sendOutput(msg);
     }
 
