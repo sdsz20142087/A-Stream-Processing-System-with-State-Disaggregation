@@ -1,6 +1,7 @@
 package stateapis;
 
 import java.util.List;
+import java.util.Map;
 
 
 import org.apache.logging.log4j.LogManager;
@@ -8,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import utils.FatalUtil;
 
 
-public class MapStateAccessor<V> extends BaseStateAccessor<IDataflowMap<V>> {
+public class MapStateAccessor<V> extends BaseStateAccessor<IDataflowMap<V>,Map<String, V> > {
     private MapProxy<V> mapProxy;
 
     public MapStateAccessor(java.lang.String descriptorName, KVProvider kvProvider, IKeyGetter keyGetter) {
@@ -29,9 +30,10 @@ public class MapStateAccessor<V> extends BaseStateAccessor<IDataflowMap<V>> {
     /*
     update re-writes the entire new map, equivalent to PUT
      */
-    public void update(IDataflowMap<V> value) {
+    public void update(Map<String, V> value) {
         MapProxy<V> targetProxy = (MapProxy<V>) this.value();
-        for (String key : value.keys()) {
+        targetProxy.clear();
+        for (String key : value.keySet()) {
             targetProxy.put(key, value.get(key));
         }
     }

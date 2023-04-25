@@ -4,18 +4,18 @@ import operators.BaseOperator;
 import operators.OutputSender;
 import pb.Tm;
 import stateapis.MapStateAccessor;
-import stateapis.ValueStateAccessor;
 import utils.SerDe;
 import utils.WikiInfo;
 
-public class StrLenOperator extends BaseOperator {
+public class ServerCountOperator extends BaseOperator {
 
     private int emitEvery;
     // map < server-name, count >
     private transient MapStateAccessor<Integer> mapAccesor;
 
-    public StrLenOperator(SerDe<WikiInfo> serdeIn, SerDe<String> serdeOut, int emitEvery) {
+    public ServerCountOperator(SerDe<WikiInfo> serdeIn, SerDe<String> serdeOut, int emitEvery) {
         super(serdeIn, serdeOut);
+        setOpName("StrLenOperator");
         this.emitEvery = emitEvery;
     }
 
@@ -28,11 +28,13 @@ public class StrLenOperator extends BaseOperator {
     protected void processElement(Tm.Msg msg, OutputSender outputSender) {
 
         WikiInfo wi = (WikiInfo) serdeIn.deserializeIn(msg.getData());
-        int oldVal = mapAccesor.value().get(wi.server_name);
-        int newVal = oldVal + 1;
+        logger.info("wi: {}", wi);
+        Integer oldVal = mapAccesor.value().get(wi.server_name);
+
+        int newVal = oldVal==null?1:oldVal + 1;
         mapAccesor.value().put(wi.server_name, newVal);
 
-        if(newVal % emitEvery == 0){
+        if(newVal % emitEvery == 1){
             String outMsg = String.format("Count for server-name: <%s>: [%d]", wi.server_name, newVal);
             Tm.Msg.Builder builder = Tm.Msg.newBuilder();
             builder.mergeFrom(msg);

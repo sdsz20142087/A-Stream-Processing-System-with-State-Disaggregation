@@ -3,9 +3,10 @@ package stateapis;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Deque;
 import java.util.HashMap;
 
-public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
+public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>, Deque<T>> {
 
     private DequeProxy<T> dequeProxy;
 
@@ -26,7 +27,7 @@ public class ListStateAccessor<T> extends BaseStateAccessor<IDataflowDeque<T>> {
     /*
     update consumes the value, re-writes the entire new list, equivalent to PUT
      */
-    public void update(IDataflowDeque<T> value) {
+    public void update(Deque<T> value) {
         IDataflowDeque<T> targetProxy = this.value();
         targetProxy.clear();
         for (int i = 0; i < value.size(); i++) {

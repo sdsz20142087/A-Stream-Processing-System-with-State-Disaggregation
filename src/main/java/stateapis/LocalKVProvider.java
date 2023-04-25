@@ -34,7 +34,7 @@ public class LocalKVProvider implements KVProvider {
         try {
             byte[] value = db.get(stateKey.getBytes());
             if (value == null) {
-                logger.info("Key not found in RocksDB, returning default value: " + defaultValue);
+                logger.info("Key {} not found in RocksDB, returning default value: " + defaultValue, stateKey);
                 return defaultValue;
             }
             // deserialize the value into an object

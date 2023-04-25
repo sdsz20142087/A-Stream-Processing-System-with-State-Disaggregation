@@ -2,10 +2,8 @@ package controller;
 
 import config.Config;
 import config.TMConfig;
-import operators.IKeySelector;
-import operators.stateful.SingleCountOperator;
+import operators.stateful.ServerCountOperator;
 import operators.stateful.StatefulCPUHeavyOperator;
-import operators.stateful.StrLenOperator;
 import operators.stateless.Filter;
 import utils.*;
 import operators.SinkOperator;
@@ -32,7 +30,7 @@ public class App {
         // TODO: build the query plan here
         // FIXME: the stages should actually be topologically sorted
         // 1: source
-        SourceOperator<String> source = new SourceOperator<>(new WikiFileSource("data2.txt",7), new StringSerde());
+        SourceOperator<String> source = new SourceOperator<>(new WikiFileSource("data.txt",7), new StringSerde());
         this.queryPlan.addStage(0, source, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         // 2: filter: wikiInfo.id % 4 != 0;
@@ -42,11 +40,11 @@ public class App {
 
         // 3: stateful cpu heavy operator
         StatefulCPUHeavyOperator<WikiInfo> statefulCPUHeavyOperator = new StatefulCPUHeavyOperator<>(new WikiInfoSerde(), 5);
-        this.queryPlan.addStage(2, statefulCPUHeavyOperator, 2, 2, Tm.PartitionStrategy.HASH, tmcfg.operator_bufferSize);
+        this.queryPlan.addStage(2, statefulCPUHeavyOperator, 1, 1, Tm.PartitionStrategy.HASH, tmcfg.operator_bufferSize);
 
         // 4: count
-        StrLenOperator strLenOperator = new StrLenOperator(new WikiInfoSerde(), new StringSerde(), 1);
-        this.queryPlan.addStage(3, strLenOperator, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
+        ServerCountOperator serverCountOperator = new ServerCountOperator(new WikiInfoSerde(), new StringSerde(), 1);
+        this.queryPlan.addStage(3, serverCountOperator, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         // 5: sink
         SinkOperator sink = new SinkOperator(new StringSerde());

@@ -34,17 +34,6 @@ public class TimeSlidingWindow<IN,OUT> extends BaseOperator implements Serializa
     @Override
     protected void processElement(Tm.Msg msg, OutputSender outputSender) {
         ByteString in = msg.getData();
-        IDataflowMap m = someMapStateAccessor.value();
-
-        // pull state from stateAccessor, return value of value() WILL NOT BE NULL
-        // THE STATE ACCESSOR is responsible for creating a new one
-        Object o = m.get("999");
-
-        // update local state
-        m.put("123",345);
-
-        // update local state to kvprovider
-        someMapStateAccessor.update(m);
 
         IN data = (IN) this.serdeIn.deserializeIn(in);
         long timestamp = getDataTimestamp(data);

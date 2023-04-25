@@ -1,7 +1,7 @@
 package stateapis;
 
 
-public class ValueStateAccessor<T> extends BaseStateAccessor<T> {
+public class ValueStateAccessor<T> extends BaseStateAccessor<T, T> {
 
     private T defaultValue;
 
