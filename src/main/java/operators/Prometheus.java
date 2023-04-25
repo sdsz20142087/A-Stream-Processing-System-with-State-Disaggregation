@@ -27,8 +27,9 @@ public class Prometheus {
 //            .register();
     public Prometheus(){
         PrometheusConfig pc = Config.LoadConfig(config_path).prometheus;
+        // "pushgateway_host"  --->  "pushgateway", the same as the name of container pushgateway
         this.gateway= new PushGateway(pc.pushgateway_host+":"+pc.pushgateway_port);
-        this.job="pushgateway";
+        this.job="pushgateway"; // must be  same as the job_name in prometheus.yml
         this.cnt=++cnt;
         this.metric = Gauge.build()
                 .name("latency_Gauge_pushgateway")
