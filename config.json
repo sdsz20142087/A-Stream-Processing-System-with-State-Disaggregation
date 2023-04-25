@@ -12,7 +12,7 @@
   "taskManager": {
     "cp_host": "127.0.0.1",
     "cp_port": 8008,
-    "operator_quota": 6,
+    "operator_quota": 8,
     "tm_port": 8018,
     "operator_bufferSize": 20,
     "useHybrid": false,

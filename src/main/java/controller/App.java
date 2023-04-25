@@ -2,8 +2,10 @@ package controller;
 
 import config.Config;
 import config.TMConfig;
+import operators.IKeySelector;
 import operators.stateful.SingleCountOperator;
 import operators.stateful.StatefulCPUHeavyOperator;
+import operators.stateful.StrLenOperator;
 import operators.stateless.Filter;
 import utils.*;
 import operators.SinkOperator;
@@ -35,15 +37,16 @@ public class App {
 
         // 2: filter: wikiInfo.id % 4 != 0;
         Filter<WikiInfo> filter = new Filter<>(new WikiInfoSerde(), (Predicate<WikiInfo>& Serializable) wikiInfo -> wikiInfo.id % 4 != 0 );
-        this.queryPlan.addStage(1, filter, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
+        filter.setKeySelector(new WikiKeySelector());
+        this.queryPlan.addStage(1, filter, 1, 1, Tm.PartitionStrategy.HASH, tmcfg.operator_bufferSize);
 
         // 3: stateful cpu heavy operator
         StatefulCPUHeavyOperator<WikiInfo> statefulCPUHeavyOperator = new StatefulCPUHeavyOperator<>(new WikiInfoSerde(), 5);
-        this.queryPlan.addStage(2, statefulCPUHeavyOperator, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
+        this.queryPlan.addStage(2, statefulCPUHeavyOperator, 2, 2, Tm.PartitionStrategy.HASH, tmcfg.operator_bufferSize);
 
         // 4: count
-        SingleCountOperator<WikiInfo> count = new SingleCountOperator<>(new WikiInfoSerde(), new StringSerde());
-        this.queryPlan.addStage(3, count, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
+        StrLenOperator strLenOperator = new StrLenOperator(new WikiInfoSerde(), new StringSerde(), 1);
+        this.queryPlan.addStage(3, strLenOperator, 1, 1, Tm.PartitionStrategy.ROUND_ROBIN, tmcfg.operator_bufferSize);
 
         // 5: sink
         SinkOperator sink = new SinkOperator(new StringSerde());
