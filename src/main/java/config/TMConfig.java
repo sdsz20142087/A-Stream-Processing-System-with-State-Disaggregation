@@ -15,4 +15,6 @@ public class TMConfig {
     public boolean useCache;
 
     public String rocksDBPath;
+
+    public int batch_size;
 }

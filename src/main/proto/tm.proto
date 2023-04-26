@@ -82,6 +82,10 @@ message Msg{
   int64 extIngestTime = 7;
 }
 
+message MsgList{
+  repeated Msg msgs = 1;
+}
+
 enum PartitionStrategy{
   HASH = 0;
   ROUND_ROBIN = 1;
@@ -128,7 +132,8 @@ service TMService{
   rpc GetStatus(TMStatusRequest) returns (TMStatusResponse);
   rpc AddOperator(AddOperatorRequest) returns (google.protobuf.Empty);
   rpc RemoveOperator(RemoveOperatorRequest) returns (google.protobuf.Empty);
-  rpc PushMsg(Msg) returns (google.protobuf.Empty);
+  rpc PushMsgList(MsgList) returns (google.protobuf.Empty);
+  rpc PushReconfigMsg(ReconfigMsg) returns (google.protobuf.Empty);
   rpc GetOperatorStatus(OPStatusRequest) returns (OperatorStatus);
   rpc RemoveState(RemoveStateRequest) returns (google.protobuf.Empty);
   rpc GetState(GetStateRequest) returns (GetStateResponse);

@@ -9,6 +9,8 @@ import org.apache.logging.log4j.Logger;
 import pb.TMServiceGrpc;
 import pb.Tm;
 
+import java.util.List;
+
 class PushMsgClient {
     private final TMServiceGrpc.TMServiceStub asyncStub;
     private final TMServiceGrpc.TMServiceBlockingStub blockingStub;
@@ -29,9 +31,9 @@ class PushMsgClient {
         logger.info("PushMsgClient created for " + target);
     }
 
-    public void pushMsg(Tm.Msg msg) {
+    public void pushMsgList(Tm.MsgList msgs) {
         if(useAsync){
-            asyncStub.pushMsg(msg, new StreamObserver<>() {
+            asyncStub.pushMsgList(msgs, new StreamObserver<>() {
                 @Override
                 public void onNext(Empty empty) {}
 
@@ -46,7 +48,7 @@ class PushMsgClient {
                 }
             });
         } else {
-            blockingStub.pushMsg(msg);
+            blockingStub.pushMsgList(msgs);
         }
     }
 }

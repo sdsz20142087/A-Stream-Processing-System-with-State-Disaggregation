@@ -5,4 +5,5 @@ public class PrometheusConfig {
     public String prometheus_host;
     public String pushgateway_host;
     public int pushgateway_port;
+    public String job_name;
 }

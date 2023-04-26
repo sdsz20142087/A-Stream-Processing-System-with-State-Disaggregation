@@ -32,7 +32,7 @@ public class Prometheus {
         this.job="pushgateway"; // must be  same as the job_name in prometheus.yml
         this.cnt=++cnt;
         this.metric = Gauge.build()
-                .name("latency_Gauge_pushgateway")
+                .name(pc.job_name)
                 .help("Latency of processing in milliseconds.")
                 .labelNames("id")
                 .register(registry);

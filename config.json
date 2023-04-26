@@ -10,7 +10,7 @@
     "consistent_control_grace_period": 0.2
   },
   "taskManager": {
-    "cp_host": "127.0.0.1",
+    "cp_host": "controlplane",
     "cp_port": 8008,
     "operator_quota": 5,
     "tm_port": 8018,
@@ -18,12 +18,14 @@
     "useHybrid": true,
     "useMigration": false,
     "useCache": false,
-    "rocksDBPath": "data.db"
+    "rocksDBPath": "data.db",
+    "batch_size": 5
   },
   "prometheus": {
     "prometheus_port": 9089,
     "prometheus_host": "127.0.0.1",
     "pushgateway_host": "pushgateway",
-    "pushgateway_port": 9091
+    "pushgateway_port": 9091,
+    "job_name": "latency_pushgateway"
   }
 }
