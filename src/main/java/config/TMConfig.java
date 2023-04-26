@@ -17,4 +17,6 @@ public class TMConfig {
     public String rocksDBPath;
 
     public int batch_size;
+
+    public long batch_timeout_ms;
 }

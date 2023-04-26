@@ -6,3 +6,4 @@ log
 target
 dataflow.iml
 *.db/
+sink*.txt

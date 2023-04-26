@@ -19,7 +19,8 @@
     "useMigration": false,
     "useCache": false,
     "rocksDBPath": "data.db",
-    "batch_size": 5
+    "batch_size": 5,
+    "batch_timeout_ms": 1000
   },
   "prometheus": {
     "prometheus_port": 9089,

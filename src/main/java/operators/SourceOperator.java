@@ -83,11 +83,6 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
     protected void processElement(Tm.Msg msg, OutputSender outputSender) {
 //        T obj = (T) serdeIn.deserializeIn(msg.getData());
 
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
         outputSender.sendOutput(msg);
     }
 
