@@ -64,6 +64,7 @@ message ReconfigMsg{
   // only for type=CONTROL, contains map of <operatorName, new config>
   map<string,OperatorConfig> config = 1;
   int64 effectiveWaterMark = 2;
+  int32 version = 3;
 }
 
 message Msg{
@@ -120,6 +121,7 @@ message OperatorConfig{
   the TM itself doesn't need to know if it needs to give up some partitions.
   If one TM receives a partition request, it then removes the partition from itself.
   */
+  optional bool noOverride = 10;
 }
 
 service TMService{
@@ -127,7 +129,6 @@ service TMService{
   rpc AddOperator(AddOperatorRequest) returns (google.protobuf.Empty);
   rpc RemoveOperator(RemoveOperatorRequest) returns (google.protobuf.Empty);
   rpc PushMsg(Msg) returns (google.protobuf.Empty);
-  rpc PushReconfigMsg(ReconfigMsg) returns (google.protobuf.Empty);
   rpc GetOperatorStatus(OPStatusRequest) returns (OperatorStatus);
   rpc RemoveState(RemoveStateRequest) returns (google.protobuf.Empty);
   rpc GetState(GetStateRequest) returns (GetStateResponse);

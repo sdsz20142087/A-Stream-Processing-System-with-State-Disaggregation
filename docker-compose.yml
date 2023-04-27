@@ -1,26 +1,12 @@
 version: '3'
 name: "dataflow"
 services:
-  etcd:
-    image: docker.io/bitnami/etcd:3.5
-    environment:
-      - ALLOW_NONE_AUTHENTICATION=yes
-      - ETCD_LOG_LEVEL=warn
-    volumes:
-      - etcd_data:/bitnami/etcd
-    ports:
-        - '8179:2379'
-        - '8180:2380'
   controlplane:
     build:
         context: .
         dockerfile: ControlPlaneDockerfile
     ports:
         - '8008:8008'
-    links:
-      - etcd
-    depends_on:
-      - etcd
   taskmanager:
     build:
         context: .
@@ -33,6 +19,7 @@ services:
       - controlplane
     deploy:
         replicas: 2
+
 
 volumes:
   etcd_data:

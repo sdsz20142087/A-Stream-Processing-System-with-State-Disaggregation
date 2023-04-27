@@ -10,6 +10,7 @@ public class Config {
     public TMConfig taskManager;
 
     public PrometheusConfig prometheus;
+    public String fileName;
     private static Config instance;
 
     public static Config LoadConfig(String configPath) {

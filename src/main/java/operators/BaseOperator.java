@@ -9,11 +9,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import pb.Tm;
 import stateapis.IKeyGetter;
+import taskmanager.IStateMigration;
 import utils.FatalUtil;
 import utils.KeyUtil;
 import utils.SerDe;
@@ -43,7 +46,7 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
     //reconfigTimestamp: consistent reconfig timestamp, e.g. if reconfigTimeStamp = 35, before 35,
     // use original configuration, after 35, use updated configuration
     protected long reconfigTimestamp = Long.MAX_VALUE;
-
+    private IStateMigration kvMigrator;
     public long getMinOfMaxWatermark() {
         return minOfMaxWatermark;
     }
@@ -71,13 +74,15 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
 
     public final void init(Tm.OperatorConfig config, LinkedBlockingQueue<Tm.Msg> inputQueue,
                            LinkedBlockingQueue<OutputMessage> outputQueue,
-                           StateDescriptorProvider stateDescriptorProvider){
+                           StateDescriptorProvider stateDescriptorProvider,
+                           IStateMigration kvMigrator){
         this.config = config;
         this.opName = config.getName();
         this.inputQueue = inputQueue;
         this.outputQueue = outputQueue;
         this.stateDescriptorProvider = stateDescriptorProvider;
         this.logger = LogManager.getLogger();
+        this.kvMigrator = kvMigrator;
     }
 
     public void postInit(){}
@@ -87,6 +92,7 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
     }
 
     public void setConfig(Tm.OperatorConfig config) {
+        logger.info("{} setConfig: " + config.getName(), this.getOpName());
         this.config = config;
     }
 
@@ -114,13 +120,17 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
         }
 
         public void sendOutput(Tm.Msg msg){
-            Object o = serdeOut.deserializeIn(msg.getData());
-            int key = keySelector!=null?KeyUtil.hashStringToInt(keySelector.getUniqueKey(o)):-1;
+            int key = -1;
+            if(msg.getType() == Tm.Msg.MsgType.DATA && getConfig().getPartitionStrategy()== Tm.PartitionStrategy.HASH){
+                Object o = serdeOut.deserializeIn(msg.getData());
+                key = keySelector!=null?KeyUtil.hashStringToInt(keySelector.getUniqueKey(o)):-1;
+            }
             Tm.Msg.Builder msgBuilder = Tm.Msg.newBuilder();
             msgBuilder
                     .setType(msg.getType())
                     .setIngestTime(ingestTime)
                     .setData(msg.getData())
+                    .setReconfigMsg(msg.getReconfigMsg())
                     .setSenderOperatorName(config.getName());
             if(extIngestTime==0){
                 msgBuilder.setExtIngestTime(System.currentTimeMillis());
@@ -164,11 +174,11 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
         long minOfMaxWatermark = generateOutPutWatermark();
         if (sendWatermarkOrNot) {
             outputSender.setIngestTime(minOfMaxWatermark);
-            logger.info("(WATERMARK MESSAGE SEND): " + minOfMaxWatermark);
+            //logger.info("(WATERMARK MESSAGE SEND): " + minOfMaxWatermark);
             outputSender.sendOutput(msg);
             sendWatermarkOrNot = false;
         } else {
-            logger.info("(WATERMARK MESSAGE STASHED): " + outputSender.getIngestTime());
+            //logger.info("(WATERMARK MESSAGE STASHED): " + outputSender.getIngestTime());
         }
     }
 
@@ -178,7 +188,23 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
                 currentObj = serdeIn.deserializeIn(msg.getData());
                 processElement(msg, outputSender);
                 break;
-            case CONTROL: break;
+            case CONTROL:
+                //this.kvMigrator.handleStageMigration();
+                Tm.OperatorConfig newConfig = msg.getReconfigMsg().getConfigMap().get(this.getOpName());
+                logger.info("{} seeing newConfig: {}, {}",getOpName(), newConfig, msg.getReconfigMsg().getConfigMap())   ;
+                if(newConfig != null){
+                    this.setConfig(newConfig);
+                    List<Tm.OperatorConfig> cfgs = new ArrayList<>();
+                    for(Tm.OperatorConfig cfg: msg.getReconfigMsg().getConfigMap().values()){
+                        if(this.getConfig().getLogicalStage()==cfg.getLogicalStage()){
+                            cfgs.add(cfg);
+                        }
+                    }
+                    this.kvMigrator.handleStageMigration(cfgs);
+                }
+                // pass the message downstream as broadcast
+                outputSender.sendOutput(msg);
+                break;
             case WATERMARK: processWatermark(msg, outputSender); break;
         }
     }
@@ -211,6 +237,7 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
                 processDataFlow(input, new BaseOutputSender(input.getIngestTime(), input.getExtIngestTime()));
             }
         } catch (Exception e) {
+            logger.error("Exception in sender thread",e);
             FatalUtil.fatal(getOpName()+": Exception in sender thread",e);
         }
         logger.info("Operator " + config.getName() + " started");

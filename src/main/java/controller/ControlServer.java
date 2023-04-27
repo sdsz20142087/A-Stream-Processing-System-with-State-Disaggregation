@@ -7,18 +7,19 @@ import operators.BaseOperator;
 import operators.stateful.ServerCountOperator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.checkerframework.checker.units.qual.A;
 import pb.Tm;
 import utils.FatalUtil;
 import utils.StringSerde;
 import utils.WikiInfoSerde;
+import utils.WikiKeySelector;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.URLDecoder;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /*
 Usage: curl http://localhost:9008/scale?stage=1
@@ -66,6 +67,7 @@ class ControlServer {
 
 class ScaleHandler implements HttpHandler {
     private CPServiceImpl svc;
+    private Logger logger = LogManager.getLogger();
 
     public ScaleHandler(CPServiceImpl svc) {
         this.svc = svc;
@@ -82,6 +84,8 @@ class ScaleHandler implements HttpHandler {
             String response = "Received 'stage' parameter with value: " + stageVal;
 
             // TODO: call the CPServiceImpl to scale the pipeline
+
+            tryScale(stageVal);
 
             exchange.sendResponseHeaders(200, response.length());
             OutputStream outputStream = exchange.getResponseBody();
@@ -100,13 +104,17 @@ class ScaleHandler implements HttpHandler {
     private void tryScale(int stage) {
         try {
             // find the right TM with the source
-            TMClient sourceTMClient = svc.tmClients.values().stream().findFirst().get();
+            TMClient sourceTMClient = svc.tmClients.get("192.168.1.19:8018");
+            TMClient newOpTMClient = svc.tmClients.get("192.168.1.19:8028");
+            logger.info("tmClients:{}", svc.tmClients);
             assert sourceTMClient != null;
-            BaseOperator newOp = new ServerCountOperator(new WikiInfoSerde(), new StringSerde(), 1);
-
+            assert newOpTMClient != null;
+            BaseOperator newOp = new ServerCountOperator(new WikiInfoSerde(), new StringSerde(), 1, 12);
+            newOp.setKeySelector(new WikiKeySelector());
             // config for new operator
             Tm.OperatorConfig.Builder newOpCfgBuilder = Tm.OperatorConfig.newBuilder()
-                    .setLogicalStage(4)
+                    .setNoOverride(true)
+                    .setLogicalStage(3)
                     .setName("SvCountOperator_1-1")
                     .setPartitionStrategy(Tm.PartitionStrategy.ROUND_ROBIN)
                     .setPartitionPlan(
@@ -114,19 +122,24 @@ class ScaleHandler implements HttpHandler {
                                     .setPartitionStart(Integer.MIN_VALUE)
                                     .setPartitionEnd(-1)
                                     .build())
-                    .setOutputMetadata(0, Tm.OutputMetadata.newBuilder()
-                            .setName("SinkOperator_1-0")
-                            .setAddress("192.168.1.19:8018")
-                    );
+                    .addAllOutputMetadata(List.of(new Tm.OutputMetadata[]{
+                            Tm.OutputMetadata.newBuilder()
+                                    .setName("SinkOperator_1-0")
+                                    .setAddress("192.168.1.19:8018").build()
+                    }));
+            newOpTMClient.addOperator(newOpCfgBuilder.build(), newOp);
 
             // config for old operator in this stage
             Tm.OperatorConfig.Builder oldOpCfgBuilder = Tm.OperatorConfig.newBuilder()
                     .setLogicalStage(4)
                     .setName("SvCountOperator_1-0")
                     .setPartitionStrategy(Tm.PartitionStrategy.ROUND_ROBIN)
-                    .setOutputMetadata(0, Tm.OutputMetadata.newBuilder()
-                            .setName("SinkOperator_1-0")
-                            .setAddress("192.168.1.19:8018")
+                    .addAllOutputMetadata(List.of(new Tm.OutputMetadata[]{
+                                    Tm.OutputMetadata.newBuilder()
+                                            .setName("SinkOperator_1-0")
+                                            .setAddress("192.168.1.19:8018")
+                                            .build()
+                            })
                     ).setPartitionPlan(
                             Tm.PartitionPlan.newBuilder()
                                     .setPartitionStart(0)
@@ -139,24 +152,26 @@ class ScaleHandler implements HttpHandler {
                     .setLogicalStage(3)
                     .setName("StatefulCPUHeavyOperator_1-0")
                     .setPartitionStrategy(Tm.PartitionStrategy.HASH)
-                    .setOutputMetadata(0, Tm.OutputMetadata.newBuilder()
-                            .setName("SvCountOperator_1-0")
-                            .setAddress("192.168.1.19:8018")
-                            .setPartitionPlan(
+                    .addAllOutputMetadata(List.of(new Tm.OutputMetadata[]{
+                            Tm.OutputMetadata.newBuilder()
+                                    .setName("SvCountOperator_1-0")
+                                    .setAddress("192.168.1.19:8018")
+                                    .setPartitionPlan(
                                     Tm.PartitionPlan.newBuilder()
                                             .setPartitionStart(0)
                                             .setPartitionEnd(Integer.MAX_VALUE)
                                             .build()
-                            ))
-                    .setOutputMetadata(1, Tm.OutputMetadata.newBuilder()
-                            .setName("SvCountOperator_1-1")
-                            .setAddress("192.168.1.19:8018")
-                            .setPartitionPlan(
+                            ).build(),
+                            Tm.OutputMetadata.newBuilder()
+                                    .setName("SvCountOperator_1-1")
+                                    .setAddress("192.168.1.19:8028")
+                                    .setPartitionPlan(
                                     Tm.PartitionPlan.newBuilder()
                                             .setPartitionStart(Integer.MIN_VALUE)
                                             .setPartitionEnd(-1)
                                             .build()
-                            ));
+                            ).build()
+                    }));
 
             Tm.ReconfigMsg.Builder reconfigMsgBuilder = Tm.ReconfigMsg.newBuilder()
                     .putConfig(prevStageOpCfg.getName(), prevStageOpCfg.build())
@@ -170,6 +185,7 @@ class ScaleHandler implements HttpHandler {
 
 
         } catch (Exception e) {
+            logger.error("tryScale", e);
             FatalUtil.fatal("tryScale", e);
         }
     }

@@ -30,7 +30,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
         Cp.RegisterTMResponse.Builder b = Cp.RegisterTMResponse.newBuilder();
         TMClient tmClient = new TMClient(request.getAddress(), request.getPort());
         tmClients.put(request.getName(),tmClient);
-
+        b.setExternalAddress(request.getName());
         try{
             logger.info("status:"+tmClient.getStatus());
             b.setStatus("ok");
@@ -64,12 +64,13 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
     public void findRemoteStateAddress(Cp.FindRemoteStateAddressRequest req,
                                          StreamObserver<Cp.FindRemoteStateAddressResponse> responseObserver){
         Cp.FindRemoteStateAddressResponse.Builder b = Cp.FindRemoteStateAddressResponse.newBuilder();
-        if(!RoutingTable.containsKey(req.getStateKey())){
-            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state address not found")));
-            return;
-        }
+//        if(!RoutingTable.containsKey(req.getStateKey())){
+//            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state address not found")));
+//            return;
+//        }
         try {
-            String address = RoutingTable.get(req.getStateKey());
+            //String address = RoutingTable.get(req.getStateKey());
+            String address = "192.168.1.19:8018";
             b.setAddress(address);
         } catch (Exception e) {
             String msg = String.format("can not find state address in routing table");
@@ -77,6 +78,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
             return;
         }
+        //logger.info("findRemoteStateAddress: " + req.getStateKey() + " -> " + b.getAddress());
         Cp.FindRemoteStateAddressResponse response = b.build();
         responseObserver.onNext(response);
         responseObserver.onCompleted();

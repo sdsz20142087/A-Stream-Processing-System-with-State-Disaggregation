@@ -168,7 +168,14 @@ public class TMClient implements Serializable {
         reconfigMsgBuilder.setEffectiveWaterMark(watermark);
         Tm.ReconfigMsg reconfigMsg = reconfigMsgBuilder.build();
         // put reconfigMsg into pendingReconfigMsgs
-        blockingStub.pushReconfigMsg(reconfigMsg);
+        Tm.Msg msg = Tm.Msg.newBuilder()
+                .setType(Tm.Msg.MsgType.CONTROL)
+                .setReconfigMsg(reconfigMsg)
+                .setIngestTime(-1)
+                .setExtIngestTime(-1)
+                .setReceiverOperatorName("SourceOperator_1-0")
+                .build();
+        blockingStub.pushMsg(msg);
 
     }
 }

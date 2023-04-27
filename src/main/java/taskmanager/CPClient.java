@@ -9,6 +9,7 @@ import pb.CPServiceGrpc;
 import pb.Cp;
 
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class CPClient {
     private final Logger logger = LogManager.getLogger();
@@ -21,7 +22,7 @@ public class CPClient {
 
     // routing table cache
     // FIXME: we probably need a trie tree for this
-    private HashMap<String, String> RTCache = new HashMap<>();
+    public ConcurrentHashMap<String, String> RTCache = new ConcurrentHashMap<>();
 
     public CPClient(String host, int cp_port, int tm_port, boolean cached) {
         this.cached = cached;
@@ -37,7 +38,7 @@ public class CPClient {
         logger.info("Registering TM at Control Plane");
         Cp.RegisterTMRequest req = Cp.RegisterTMRequest.newBuilder()
                 .setAddress(localAddress)
-                .setName(name)
+                .setName(name+":"+this.tm_port)
                 .setPort(this.tm_port)
                 .build();
         Cp.RegisterTMResponse resp = blockingStub.registerTM(req);
@@ -50,7 +51,7 @@ public class CPClient {
             return RTCache.get(keyPrefix);
         }
         // TODO: IMPLEMENT THIS
-        logger.info("Getting state TM addr from Control Plane");
+        //logger.info("Getting state TM addr from Control Plane");
         Cp.FindRemoteStateAddressRequest req = Cp.FindRemoteStateAddressRequest.
                 newBuilder().setStateKey(keyPrefix).build();
         Cp.FindRemoteStateAddressResponse res = blockingStub.findRemoteStateAddress(req);

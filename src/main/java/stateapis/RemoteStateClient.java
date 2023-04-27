@@ -39,6 +39,11 @@ public class RemoteStateClient {
     }
 
     public List<Tm.StateKV> pullStates(int stage, Tm.PartitionPlan plan){
+        try{
+            Thread.sleep(500);
+        }catch (Exception e) {
+            e.printStackTrace();
+        }
         Tm.PullStatesResponse res = blockingStub.pullStates(
                 Tm.PullStatesRequest.newBuilder().setLogicalStage(stage).setPartitionPlan(plan).build());
         return res.getStateKVsList();

@@ -27,10 +27,21 @@ public class TaskManager extends NodeBase {
 
     }
 
-    public void init() {
+    public void init(String[] args) {
 
         try {
             int actualPort = tmcfg.tm_port;
+            // parse cmdline args for -port=xxxx
+            for (String arg : args) {
+                if (arg.startsWith("-port=")) {
+                    actualPort = Integer.parseInt(arg.substring(6));
+                    logger.warn("TM: overriding port to " + actualPort + " from cmdline");
+                    tmcfg.tm_port = actualPort;
+                    tmcfg.rocksDBPath = "data-" + actualPort + ".db";
+                    break;
+                }
+            }
+
 
             logger.info("tm_port=" + actualPort);
             cpClient = new CPClient(tmcfg.cp_host, tmcfg.cp_port, actualPort, tmcfg.useCache);
@@ -67,6 +78,6 @@ public class TaskManager extends NodeBase {
 
 
     public static void main(String[] args) {
-        TaskManager.getInstance().init();
+        TaskManager.getInstance().init(args);
     }
 }

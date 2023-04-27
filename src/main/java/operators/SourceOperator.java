@@ -64,7 +64,7 @@ public class SourceOperator<T> extends BaseOperator implements Serializable {
                 }
                 long endTime = System.currentTimeMillis();
                 double elapsedTime = (endTime - startTime) / 1000.0;
-                logger.info("Elapsed time: " + elapsedTime + " seconds");
+                //logger.info("Elapsed time: " + elapsedTime + " seconds");
                 ByteString bs = serdeIn.serializeOut(watermarkContent);
                 Tm.Msg msg = Tm.Msg.newBuilder()
                         .setType(Tm.Msg.MsgType.WATERMARK)

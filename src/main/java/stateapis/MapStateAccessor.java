@@ -68,7 +68,7 @@ class MapProxy<V> implements IDataflowMap<V> {
     }
     private void createSizeIfNull(String key){
         String sizeKey = key+".size";
-        if(kvProvider.listKeys(sizeKey).size()==0){
+        if(kvProvider.get(sizeKey,null)!=null){
             kvProvider.put(sizeKey, 0);
         }
     }
@@ -135,7 +135,11 @@ class MapProxy<V> implements IDataflowMap<V> {
     }
     @Override
     public int size() {
-        return (int) kvProvider.get(makeSizeKey(), null);
+        Integer res = (Integer) kvProvider.get(makeSizeKey(), null);
+        if(res==null){
+            return 0;
+        }
+        return res;
     }
 }
 

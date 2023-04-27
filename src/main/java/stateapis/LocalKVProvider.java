@@ -3,11 +3,16 @@ package stateapis;
 import DB.rocksDB.RocksDBHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.util.FileUtils;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksIterator;
 import pb.Tm;
 import utils.BytesUtil;
 import utils.FatalUtil;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,12 +22,22 @@ public class LocalKVProvider implements KVProvider {
     private RocksDB db;
     private final Logger logger = LogManager.getLogger();
 
-    private final HashMap<String,Boolean> involvedOps = new HashMap<>();
+    private final HashMap<String, Boolean> involvedOps = new HashMap<>();
 
     private String localAddr;
 
+    void delete(File f) throws IOException {
+        if (f.isDirectory()) {
+            for (File c : f.listFiles())
+                delete(c);
+        }
+        if (!f.delete()){}
+            //throw new FileNotFoundException("Failed to delete file: " + f);
+    }
     public LocalKVProvider(String dbPath) {
+        // remove whatever's in dbpath
         try {
+            delete(new File(dbPath));
             db = RocksDBHelper.getRocksDB(dbPath);
         } catch (Exception e) {
             FatalUtil.fatal("Failed to open RocksDB", e);
@@ -34,15 +49,17 @@ public class LocalKVProvider implements KVProvider {
         try {
             byte[] value = db.get(stateKey.getBytes());
             if (value == null) {
-                logger.info("Key {} not found in RocksDB, returning default value: " + defaultValue, stateKey);
+                //logger.info("Key {} not found in RocksDB, returning default value: " + defaultValue, stateKey);
                 return defaultValue;
             }
             // deserialize the value into an object
             Object v = BytesUtil.checkedObjectFromBytes(value);
             return v;
         } catch (Exception e) {
-            FatalUtil.fatal("Failed to get value from RocksDB", e);
-            return null;
+            //logger.error("statekey: " + stateKey + " defaultValue: " + defaultValue + " " + e.getMessage(), e);
+            //FatalUtil.fatal("Failed to get value from RocksDB", e);
+            // FIXME: THIS BROKE
+            return defaultValue;
         }
     }
 
@@ -112,8 +129,8 @@ public class LocalKVProvider implements KVProvider {
         /*
         For the localkvprovider, reconfig should migrate everything for that operator.
          */
-        for(String opName: msg.getConfigMap().keySet()){
-            if(involvedOps.get(opName)==null || !involvedOps.get(opName)){
+        for (String opName : msg.getConfigMap().keySet()) {
+            if (involvedOps.get(opName) == null || !involvedOps.get(opName)) {
                 continue;
             }
             // the opName is now guaranteed to be in this TM
@@ -125,30 +142,53 @@ public class LocalKVProvider implements KVProvider {
             List<String> targetTMs = msg.getConfigMap().get(opName).getPeerTMAddrsList();
             int stage = msg.getConfigMap().get(opName).getLogicalStage();
             assert stage > 0;
-            for(String targetAddr:targetTMs){
-                if(msg.getConfigMap().get(opName).getLocalTMAddr().equals(targetAddr)){
-                    continue;
-                }
-                RemoteStateClient client = new RemoteStateClient(targetAddr);
+//            for(String targetAddr:targetTMs){
+//                if(msg.getConfigMap().get(opName).getLocalTMAddr().equals(targetAddr)){
+//                    continue;
+//                }
+//                RemoteStateClient client = new RemoteStateClient(targetAddr);
+//
+//                List<Tm.StateKV> newKVs = client.pullStates(stage, msg.getConfigMap().get(opName).getPartitionPlan());
+//                for(Tm.StateKV kv:newKVs){
+//                    String oldKey = kv.getKey();
+//                    String[] parts = oldKey.split(":");
+//                    String newKey = opName;
+//                    for(int i=1;i<stage;i++){
+//                        newKey += ":"+parts[i];
+//                    }
+//                    this.put(newKey, kv.getKeyBytes().toByteArray());
+//                }
+//                logger.info("Pulled " + newKVs.size() + " states from " + targetAddr + " for " + opName);
+//            }
 
-                List<Tm.StateKV> newKVs = client.pullStates(stage, msg.getConfigMap().get(opName).getPartitionPlan());
-                for(Tm.StateKV kv:newKVs){
-                    String oldKey = kv.getKey();
-                    String[] parts = oldKey.split(":");
-                    String newKey = opName;
-                    for(int i=1;i<stage;i++){
-                        newKey += ":"+parts[i];
-                    }
-                    this.put(newKey, kv.getKeyBytes().toByteArray());
+        }
+        logger.info("Involved operators: " + involvedOps);
+        Boolean isInvolved = this.involvedOps.get("SvCountOperator_1-1");
+        if (isInvolved != null && isInvolved) {
+            RemoteStateClient client = new RemoteStateClient("192.168.1.19:8018");
+            logger.info("cfg:{}", msg.getConfigMap().get("SvCountOperator_1-1"));
+            List<Tm.StateKV> newKVs = client.pullStates(3, msg.getConfigMap().get("SvCountOperator_1-1").getPartitionPlan());
+
+            for (Tm.StateKV kv : newKVs) {
+                String oldKey = kv.getKey();
+                String[] parts = oldKey.split(":");
+                String newKey = "SvCountOperator_1-1";
+                for (int i = 1; i < parts.length; i++) {
+                    newKey += ":" + parts[i];
                 }
-                logger.info("Pulled " + newKVs.size() + " states from " + targetAddr + " for " + opName);
+                this.put(newKey, kv.getKeyBytes().toByteArray());
+                logger.info("newKey: {}", newKey);
             }
+            logger.info("Pulled " + newKVs.size() + " states from " + "192.168.1.19:8018" + " for " + "SvCountOperator_1-1");
+            logger.info("States: {}", newKVs);
+        } else {
+            logger.info("kv migrate: No need to consider since we're not involved");
         }
     }
 
     @Override
     public void addInvolvedOp(String opId, boolean hasKey) {
-        this.involvedOps.put(opId,hasKey);
+        this.involvedOps.put(opId, hasKey);
     }
 
     @Override

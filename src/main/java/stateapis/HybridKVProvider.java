@@ -7,6 +7,7 @@ import pb.Tm;
 import taskmanager.CPClient;
 import utils.BytesUtil;
 import utils.FatalUtil;
+import utils.KeyUtil;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,7 +28,7 @@ public class HybridKVProvider implements KVProvider {
 
     private final HashMap<String,Boolean> involvedOps = new HashMap<>();
 
-    private final HashMap<String, Object> localMigratedCache = new HashMap<>();
+    private final HashSet<Integer> localMigratedCache = new HashSet<>();
 
     // The only difference between hybridNoMgr/hybridMgr is that whether they attempt to migrate,
     // this means hybridNoMgr has a subset of functions of hybridMgr
@@ -41,6 +42,7 @@ public class HybridKVProvider implements KVProvider {
         if (addr == null) {
             FatalUtil.fatal("Failed to get state addr from CP", null);
         }
+        //logger.info("<{}> Got state addr: " + addr, this.localAddr);
         if (addr.equals(this.localAddr)) {
             return addr;
         }
@@ -56,7 +58,15 @@ public class HybridKVProvider implements KVProvider {
         if (addr.equals(this.localAddr)) {
             return localKVProvider.get(stateKey, defaultValue);
         }
+        int hash = KeyUtil.getHashFromKey(stateKey);
+        if(this.migrate && localMigratedCache.contains(hash)){
+            return localKVProvider.get(stateKey, defaultValue);
+        }
         Object r = remoteStateClientMap.get(addr).get(stateKey);
+        if(migrate){
+            localMigratedCache.add(hash);
+            localKVProvider.put(stateKey, r);
+        }
         return r == null ? defaultValue : r;
     }
 
@@ -67,8 +77,20 @@ public class HybridKVProvider implements KVProvider {
             localKVProvider.put(stateKey, rawObject);
             return;
         }
-        remoteStateClientMap.get(addr).put(stateKey, BytesUtil.ObjectToBytes(rawObject));
+        int hash = KeyUtil.getHashFromKey(stateKey);
+        if (this.migrate && localMigratedCache.contains(hash)) {
+            localKVProvider.put(stateKey, rawObject);
+            return;
+        }
+        if (this.migrate) {
+            Object r = remoteStateClientMap.get(addr).get(stateKey);
+            localKVProvider.put(stateKey, r);
+            localMigratedCache.add(hash);
+        } else {
+            remoteStateClientMap.get(addr).put(stateKey, BytesUtil.ObjectToBytes(rawObject));
+        }
     }
+
 
     @Override
     public void put(String stateKey, byte[] value) {
@@ -77,7 +99,18 @@ public class HybridKVProvider implements KVProvider {
             localKVProvider.put(stateKey, value);
             return;
         }
-        remoteStateClientMap.get(addr).put(stateKey, value);
+        int hash = KeyUtil.getHashFromKey(stateKey);
+        if(this.migrate && localMigratedCache.contains(hash)){
+            localKVProvider.put(stateKey, value);
+            return;
+        }
+        if(this.migrate){
+            Object r = remoteStateClientMap.get(addr).get(stateKey);
+            localKVProvider.put(stateKey, r);
+            localMigratedCache.add(hash);
+        }else{
+            remoteStateClientMap.get(addr).put(stateKey, value);
+        }
     }
 
     @Override
@@ -86,7 +119,8 @@ public class HybridKVProvider implements KVProvider {
         if (addr.equals(this.localAddr)) {
             return localKVProvider.listKeys(prefix);
         }
-        return remoteStateClientMap.get(addr).listKeys(prefix);
+        List<String> keys = remoteStateClientMap.get(addr).listKeys(prefix);
+        return keys;
     }
 
     @Override
@@ -96,7 +130,12 @@ public class HybridKVProvider implements KVProvider {
             localKVProvider.delete(stateKey);
             return;
         }
-        remoteStateClientMap.get(addr).delete(stateKey);
+        if(this.migrate && this.localMigratedCache.contains(KeyUtil.getHashFromKey(stateKey))){
+            localKVProvider.delete(stateKey);
+            return;
+        } else {
+            remoteStateClientMap.get(addr).delete(stateKey);
+        }
     }
 
     @Override
@@ -116,7 +155,10 @@ public class HybridKVProvider implements KVProvider {
 
     @Override
     public void handleReconfig(Tm.ReconfigMsg msg) {
-        throw new UnsupportedOperationException("HybridKVProvider doesn't support handleMigration");
+        //throw new UnsupportedOperationException("HybridKVProvider doesn't support handleMigration");
+        // reset the table cache
+        this.cpClient.RTCache.clear();
+        this.localMigratedCache.clear();
     }
 
     @Override
