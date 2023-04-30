@@ -140,6 +140,10 @@ It turned out that since there were so many knobs to turn in such a stream proce
 configuration that would work well for all the different stages. We ended up having to tune the parameters for a 
 meaningful operator scale to take place and even then the results were not very conclusive.
 
+Here are some graphs of our experimental results:
+![](./prometheus_result.jpg)
+We use prometheus to collect the overall latency of the system, allowing us to monitor the latency of the entire streaming system in real time.
+
 ## Team Takeaways
 
 The JVM object model is quite interesting, and it's not hard to see why it's so popular. It's much more flexible than we
