@@ -68,6 +68,8 @@ To generate the plots, run `python3 plot.py` in the project root. The plots will
 
 ## System Architecture
 
+We designed and implemented a system that was able to start TaskManagers which could dynamically get assigned operators by the ControlPlane and scale up or down.
+
 The design decisions were arguably correct for a proper system in production, but since we were only making a prototype, 
 many of the parts really should have been simplified in hindsight. Nevertheless, everyone on the team learned a lot about
 the challenges of building a distributed system. The JVM object model itself is quite interesting in that when actually designing
@@ -75,6 +77,10 @@ the deployment scheme, we find ourselves facing similar problems k8s and other c
 While we didn't have to actually address these issues, it was still a good learning experience looking at how Flink does it.
 
 We made some parts of the system more complex than it should have, which caused problems in the later stages of the project.
+
+### Generic Stream Operations
+
+Our APIs for building a query plan as well as making stateful/stateless operators was expressive enough to support ANY stream operators (including window operators, which we made a demo of, but wasn't included in the benchmark script). Theoretically, users can migrate any Flink application to our system with corresponding modifications.
 
 ## System Evaluation
 
@@ -99,44 +105,3 @@ had in mind.
 The team looked into various fields of distributed systems building-blocks: scheduling, container orchestration, embedded KV store, 
 compute & storage separation, consistent hashing, watermarks, mini-batching, metrics monitoring with prometheus and so on.
 These are valuable knowledge that we can apply to future projects.
-
-
-
-[//]: # (## Intro)
-
-[//]: # ()
-[//]: # (In this prototype, we implemented a simple dataflow application that continuously read from Wikipedia edit history stream &#40;either from a URL or a local file&#41;, and count the number of events on each server name.)
-
-[//]: # ()
-[//]: # (Each operator is extended from a [SingleInputOperator]&#40;./dataflow/src/main/java/operators/SingleInputOperator.java&#41; abstract class. Each task is executed by a thread, and will communicate through ConcurrentLinkedQueue.)
-
-[//]: # ()
-[//]: # (- The source operator could be either [WikipediaFileSource]&#40;./dataflow/src/main/java/WikipediaFileSource.java&#41; or [WikipediaSource]&#40;./dataflow/src/main/java/WikipediaSource.java&#41;.)
-
-[//]: # (- Then [JSonParserOperator]&#40;./dataflow/src/main/java/JSonParserOperator.java&#41; will parse the json records and key-by on `server_name` field.)
-
-[//]: # (- Then [CountOperator]&#40;./dataflow/src/main/java/CountOperator.java&#41; count the number of records for each server.)
-
-[//]: # ()
-[//]: # (## How to extend)
-
-[//]: # ()
-[//]: # (Here is an example of the guideline to this project. But you're encouraged to come up with a different design :&#41;)
-
-[//]: # ()
-[//]: # (- Modify it so that operators can be executed by different processes that may be local or distributed. )
-
-[//]: # (  - For example, you may start a TaskManager process on each worker, run the tasks that are scheduled on this worker, and communicate with the control plane in order to know where to forward state/messages.)
-
-[//]: # (- Use a pub-sub system to serve as a control plane. Support scheduling between control plane and tasks.)
-
-[//]: # (- Support parallelism to enable scale up / scale down.)
-
-[//]: # (- Implement some basic operators &#40;like data source, data sink, map, filter, window&#41;.)
-
-[//]: # (  - You can add more abstract class to abstract the common parts if necessary.)
-
-[//]: # (- Enable stateful operators, e.g. by connecting your system with a key-value store.)
-
-[//]: # (- Support event time and windows, if time allows. )
-
