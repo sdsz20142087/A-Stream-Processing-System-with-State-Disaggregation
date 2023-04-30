@@ -144,6 +144,9 @@ Here are some graphs of our experimental results:
 ![](./prometheus_result.jpg)
 We use prometheus to collect the overall latency of the system, allowing us to monitor the latency of the entire streaming system in real time.
 
+![](./result.jpg)
+This is a graph of the results of several comparison experiments, we can see that our system still has many problems, such as bottlenecks in some operators, the overall system latency is too high, etc.
+
 ## Team Takeaways
 
 The JVM object model is quite interesting, and it's not hard to see why it's so popular. It's much more flexible than we
