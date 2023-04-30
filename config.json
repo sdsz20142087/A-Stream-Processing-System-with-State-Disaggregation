@@ -24,5 +24,5 @@
     "prometheus_port": 9091,
     "prometheus_host": "127.0.0.1"
   },
-  "fileName": "datarandom1000.txt"
+  "fileName": "data.txt"
 }

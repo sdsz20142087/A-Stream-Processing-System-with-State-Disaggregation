@@ -9,10 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.units.qual.A;
 import pb.Tm;
-import utils.FatalUtil;
-import utils.StringSerde;
-import utils.WikiInfoSerde;
-import utils.WikiKeySelector;
+import utils.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -104,8 +101,8 @@ class ScaleHandler implements HttpHandler {
     private void tryScale(int stage) {
         try {
             // find the right TM with the source
-            TMClient sourceTMClient = svc.tmClients.get("192.168.1.19:8018");
-            TMClient newOpTMClient = svc.tmClients.get("192.168.1.19:8028");
+            TMClient sourceTMClient = svc.tmClients.get(NodeBase.getHost()+":8018");
+            TMClient newOpTMClient = svc.tmClients.get(NodeBase.getHost()+":8028");
             logger.info("tmClients:{}", svc.tmClients);
             assert sourceTMClient != null;
             assert newOpTMClient != null;
@@ -125,7 +122,7 @@ class ScaleHandler implements HttpHandler {
                     .addAllOutputMetadata(List.of(new Tm.OutputMetadata[]{
                             Tm.OutputMetadata.newBuilder()
                                     .setName("SinkOperator_1-0")
-                                    .setAddress("192.168.1.19:8018").build()
+                                    .setAddress(NodeBase.getHost()+":8018").build()
                     }));
             newOpTMClient.addOperator(newOpCfgBuilder.build(), newOp);
 
@@ -137,7 +134,7 @@ class ScaleHandler implements HttpHandler {
                     .addAllOutputMetadata(List.of(new Tm.OutputMetadata[]{
                                     Tm.OutputMetadata.newBuilder()
                                             .setName("SinkOperator_1-0")
-                                            .setAddress("192.168.1.19:8018")
+                                            .setAddress(NodeBase.getHost()+":8018")
                                             .build()
                             })
                     ).setPartitionPlan(
@@ -155,7 +152,7 @@ class ScaleHandler implements HttpHandler {
                     .addAllOutputMetadata(List.of(new Tm.OutputMetadata[]{
                             Tm.OutputMetadata.newBuilder()
                                     .setName("SvCountOperator_1-0")
-                                    .setAddress("192.168.1.19:8018")
+                                    .setAddress(NodeBase.getHost()+":8018")
                                     .setPartitionPlan(
                                     Tm.PartitionPlan.newBuilder()
                                             .setPartitionStart(0)
@@ -164,7 +161,7 @@ class ScaleHandler implements HttpHandler {
                             ).build(),
                             Tm.OutputMetadata.newBuilder()
                                     .setName("SvCountOperator_1-1")
-                                    .setAddress("192.168.1.19:8028")
+                                    .setAddress(NodeBase.getHost()+":8028")
                                     .setPartitionPlan(
                                     Tm.PartitionPlan.newBuilder()
                                             .setPartitionStart(Integer.MIN_VALUE)

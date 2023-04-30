@@ -24,6 +24,7 @@ public class NodeBase {
             return addr.getHostAddress();
         } catch (Exception e) {
             LogManager.getLogger().fatal("Failed to get host address" ,e);
+            FatalUtil.fatal("Failed to get host address" ,e);
         }
         return null;
     }

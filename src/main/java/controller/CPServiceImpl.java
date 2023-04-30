@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import pb.CPServiceGrpc;
 import pb.Cp;
+import utils.NodeBase;
 
 import java.io.StringBufferInputStream;
 import java.util.HashMap;
@@ -70,7 +71,8 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
 //        }
         try {
             //String address = RoutingTable.get(req.getStateKey());
-            String address = "192.168.1.19:8018";
+            //String address = "192.168.1.19:8018";
+            String address = NodeBase.getHost() + ":8018";
             b.setAddress(address);
         } catch (Exception e) {
             String msg = String.format("can not find state address in routing table");

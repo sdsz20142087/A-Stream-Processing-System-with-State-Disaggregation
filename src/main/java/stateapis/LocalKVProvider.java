@@ -9,6 +9,7 @@ import org.rocksdb.RocksIterator;
 import pb.Tm;
 import utils.BytesUtil;
 import utils.FatalUtil;
+import utils.NodeBase;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -165,7 +166,8 @@ public class LocalKVProvider implements KVProvider {
         logger.info("Involved operators: " + involvedOps);
         Boolean isInvolved = this.involvedOps.get("SvCountOperator_1-1");
         if (isInvolved != null && isInvolved) {
-            RemoteStateClient client = new RemoteStateClient("192.168.1.19:8018");
+            String addr = NodeBase.getHost() + ":8018";
+            RemoteStateClient client = new RemoteStateClient(addr);
             logger.info("cfg:{}", msg.getConfigMap().get("SvCountOperator_1-1"));
             List<Tm.StateKV> newKVs = client.pullStates(3, msg.getConfigMap().get("SvCountOperator_1-1").getPartitionPlan());
 
