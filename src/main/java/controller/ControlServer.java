@@ -82,11 +82,12 @@ class ScaleHandler implements HttpHandler {
 
             // TODO: call the CPServiceImpl to scale the pipeline
 
-            tryScale(stageVal);
+            String resp = tryScale(stageVal);
 
             exchange.sendResponseHeaders(200, response.length());
             OutputStream outputStream = exchange.getResponseBody();
             outputStream.write(response.getBytes());
+            outputStream.write(resp.getBytes());
             outputStream.close();
         } else {
             // 'stage' parameter not found, return error response
@@ -98,7 +99,11 @@ class ScaleHandler implements HttpHandler {
         }
     }
 
-    private void tryScale(int stage) {
+    private String tryScale(int stage) {
+        if(stage != 3){
+            logger.error("Only stage 3 can be scaled");
+            return "\nOnly stage 3 can be scaled";
+        }
         try {
             // find the right TM with the source
             TMClient sourceTMClient = svc.tmClients.get(NodeBase.getHost()+":8018");
@@ -185,5 +190,6 @@ class ScaleHandler implements HttpHandler {
             logger.error("tryScale", e);
             FatalUtil.fatal("tryScale", e);
         }
+        return "\nok";
     }
 }

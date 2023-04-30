@@ -19,6 +19,7 @@ and attempting to scale the bottleneck (The server count operator).
 
 - make sure `config.json` is in the root directory of the project**
 - the following operations *MUST* happen in order, `cwd` should be project root.**
+- To configure TaskManagers to use different state storage strategies, please see "Configuration Options" section below.
 
 1. Run ControlPlane `java -jar target/ControlPlane-jar-with-dependencies.jar`
 2. Run TaskManager1 `java -jar target/TaskManager-jar-with-dependencies.jar` 
@@ -38,11 +39,53 @@ that data generates slower; Optionally also modify `loadMillis` in stage 2 or `c
 2. Edit and run `workgen.py` in project root, and modify `config.json` to properly reflect the desired data source. This 
 generates simulated workload of arbitrary size, and can be used to test the system's scalability, or performance.
 
+## Configuration Options
+
+Please see `config.json` for the configuration options. 
+
+### ControlPlane
+
+- `etcd_endpoints`: deprecated, we were planning to use etcd to store the routing table, but we ended up using memory instead
+- `cp_grpc_port`: the port on which the ControlPlane listens for TaskManagers
+- `watermark_interval`: the interval between each watermark sent
+- `out_of_order_grace_period`: the grace period for out-of-order events
+
+### TaskManager
+
+- `cp_host`: the host of the ControlPlane
+- `cp_port`: the port of the ControlPlane
+- `tm_port`: the port on which the TaskManager grpc server listens
+- `operator_quota`: the number of slots on each TM
+- `operator_bufferSize`: the buffer size of each slot
+- `useHybrid`: whether the TaskManager uses a hybrid (remote+local) key-value store
+- `useCache`: whether the TaskManager caches the routing table
+- `useMigrate`: whether the TaskManager is allowed to do partial state migration
+- `rocksDBPath`: the path to the RocksDB state backend
+- `batch_size`: the batch size of the RocksDB state backend
+- `batch_timeout_ms`: the timeout before a batch message is emitted
+
+### Prometheus
+
+- `prometheus_port`: the port on which the Prometheus server listens
+- `prometheus_host`: the host of the Prometheus server
+- `pushgateway_port`: the port on which the Pushgateway server listens
+- `pushgateway_host`: the host of the Pushgateway server
+- `job_name`: the name of the job in Prometheus
+
+### MISC
+
+- `fileName`: the name of the file from which the source reads
+
 ## System Evaluation
 
 The SinkOperator collects latency metrics and writes them to a file `source*.txt` in `pwd`. Each line of the file contains
 the ingestion time and the latency of a single event. The latency is calculated as the difference between the ingestion 
 time and the time it reaches the sink.
+
+### Experimental Setup
+
+The system was evaluated on a 16-core 32GB machine with 2 TaskManagers, each with 5 slots. The persistent storage is an NVMe SSD,
+and the OS is Windows 10. The system was run on a single node, and the TaskManagers were started on different ports.
 
 ### Data collection
 
