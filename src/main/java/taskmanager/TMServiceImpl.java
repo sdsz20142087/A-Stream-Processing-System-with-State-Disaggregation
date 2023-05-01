@@ -269,12 +269,19 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         if (op == null) {
             responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("operator " + opName + " not found")));
             return;
-
+        }
+        this.roundRobinCounter.remove(op);
+        this.operators.remove(opName);
+        this.opInputQueues.remove(opName);
+        this.kvProvider.removeInvolvedOp(opName);
+        logger.info(String.format("removed operator %s --all: %s", opName, operators.keySet()));
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
     }
 
     @Override
     public void getOperatorLowWatermark(Tm.OperatorLowWatermarkRequest request,
-                                                            StreamObserver<Tm.OperatorLowWatermarkResponse> responseObserver) {
+                                        StreamObserver<Tm.OperatorLowWatermarkResponse> responseObserver) {
         String opName = request.getName();
         String content = request.getContent();
         if(!operators.containsKey(opName)){
@@ -304,28 +311,6 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
         responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
     }
-
-    @Override
-    public void reConfigOperator(Tm.ReConfigOperatorRequest request,
-                                 StreamObserver<Empty> responseObserver) {
-        Tm.OperatorConfig config = request.getConfig();
-        try {
-            operators.get(config.getName()).setConfig(config);
-
-        } catch (Exception e) {
-            String msg = "invalid op name.";
-            logger.error(msg);
-            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription(msg)));
-        }
-        this.roundRobinCounter.remove(op);
-        this.operators.remove(opName);
-        this.opInputQueues.remove(opName);
-        this.kvProvider.removeInvolvedOp(opName);
-        logger.info(String.format("removed operator %s --all: %s", opName, operators.keySet()));
-        responseObserver.onNext(Empty.getDefaultInstance());
-        responseObserver.onCompleted();
-    }
-
 
     @Override
     public void getState(Tm.GetStateRequest request, StreamObserver<Tm.GetStateResponse> responseObserver) {
@@ -413,7 +398,7 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
             long current_startTime = System.currentTimeMillis();
             // operator-name, serialized msg, <partition key, msg type>
             if (msgQueue.size() < tmConfig.batch_size && System.currentTimeMillis() - current_startTime < tmConfig.batch_timeout_ms) {
-                logger.info("sendloop: msg queue size is " + msgQueue.size() + ", waiting for more messages, batch size is " + tmConfig.batch_size + " ...");
+                //logger.info("sendloop: msg queue size is " + msgQueue.size() + ", waiting for more messages, batch size is " + tmConfig.batch_size + " ...");
                 Thread.sleep(10);
                 continue;
             }
@@ -446,8 +431,23 @@ class TMServiceImpl extends TMServiceGrpc.TMServiceImplBase implements StateDesc
                             targetOutput.add(config.getOutputMetadataList().get(val % outputListLen));
                             break;
                         case HASH:
-                            int outputIndex = item.getKey() % config.getOutputMetadataList().size();
-                            targetOutput.add(config.getOutputMetadataList().get(outputIndex));
+                            int key = item.getKey();
+
+                            logger.info("{} got key: "+key, opName);
+                            boolean ok = false;
+                            for(Tm.OutputMetadata outputMetadata:config.getOutputMetadataList()){
+                                if(
+                                        outputMetadata.getPartitionPlan().getPartitionStart()<=key
+                                                && outputMetadata.getPartitionPlan().getPartitionEnd()>=key
+                                ){
+                                    targetOutput.add(outputMetadata);
+                                    ok = true;
+                                    break;
+                                }
+                            }
+                            if(!ok){
+                                FatalUtil.fatal( "no output found for key "+key,null);
+                            }
                             break;
                         case BROADCAST:
                             targetOutput = config.getOutputMetadataList();

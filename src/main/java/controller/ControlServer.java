@@ -159,20 +159,20 @@ class ScaleHandler implements HttpHandler {
                                     .setName("SvCountOperator_1-0")
                                     .setAddress(NodeBase.getHost()+":8018")
                                     .setPartitionPlan(
-                                    Tm.PartitionPlan.newBuilder()
-                                            .setPartitionStart(0)
-                                            .setPartitionEnd(Integer.MAX_VALUE)
-                                            .build()
-                            ).build(),
+                                            Tm.PartitionPlan.newBuilder()
+                                                    .setPartitionStart(0)
+                                                    .setPartitionEnd(Integer.MAX_VALUE)
+                                                    .build()
+                                    ).build(),
                             Tm.OutputMetadata.newBuilder()
                                     .setName("SvCountOperator_1-1")
                                     .setAddress(NodeBase.getHost()+":8028")
                                     .setPartitionPlan(
-                                    Tm.PartitionPlan.newBuilder()
-                                            .setPartitionStart(Integer.MIN_VALUE)
-                                            .setPartitionEnd(-1)
-                                            .build()
-                            ).build()
+                                            Tm.PartitionPlan.newBuilder()
+                                                    .setPartitionStart(Integer.MIN_VALUE)
+                                                    .setPartitionEnd(-1)
+                                                    .build()
+                                    ).build()
                     }));
 
             Tm.ReconfigMsg.Builder reconfigMsgBuilder = Tm.ReconfigMsg.newBuilder()

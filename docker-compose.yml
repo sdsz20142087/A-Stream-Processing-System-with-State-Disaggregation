@@ -3,14 +3,14 @@ name: "dataflow"
 services:
   controlplane:
     build:
-        context: .
-        dockerfile: ControlPlaneDockerfile
+      context: .
+      dockerfile: ControlPlaneDockerfile
     ports:
-        - '8008:8008'
+      - '8008:8008'
   taskmanager:
     build:
-        context: .
-        dockerfile: TaskManagerDockerfile
+      context: .
+      dockerfile: TaskManagerDockerfile
     expose:
       - '8018'
     links:
@@ -18,7 +18,7 @@ services:
     depends_on:
       - controlplane
     deploy:
-        replicas: 2
+      replicas: 2
   pushgateway:
     image: prom/pushgateway
     ports:

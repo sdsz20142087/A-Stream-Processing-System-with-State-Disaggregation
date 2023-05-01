@@ -175,7 +175,8 @@ public class TMClient implements Serializable {
                 .setExtIngestTime(-1)
                 .setReceiverOperatorName("SourceOperator_1-0")
                 .build();
-        blockingStub.pushMsg(msg);
+        Tm.MsgList msgList = Tm.MsgList.newBuilder().addMsgs(msg).build();
+        blockingStub.pushMsgList(msgList);
 
     }
 }

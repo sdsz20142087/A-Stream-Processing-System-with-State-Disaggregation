@@ -63,7 +63,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
 
     @Override
     public void findRemoteStateAddress(Cp.FindRemoteStateAddressRequest req,
-                                         StreamObserver<Cp.FindRemoteStateAddressResponse> responseObserver){
+                                       StreamObserver<Cp.FindRemoteStateAddressResponse> responseObserver){
         Cp.FindRemoteStateAddressResponse.Builder b = Cp.FindRemoteStateAddressResponse.newBuilder();
 //        if(!RoutingTable.containsKey(req.getStateKey())){
 //            responseObserver.onError(new StatusRuntimeException(Status.ABORTED.withDescription("state address not found")));
@@ -88,7 +88,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
 
     @Override
     public void addRemoteStateAddress(Cp.AddRemoteStateAddressRequest req,
-                                        StreamObserver<Cp.AddRemoteStateAddressResponse> responseObserver){
+                                      StreamObserver<Cp.AddRemoteStateAddressResponse> responseObserver){
         Cp.AddRemoteStateAddressResponse.Builder b = Cp.AddRemoteStateAddressResponse.newBuilder();
         // find a random TM
         String[] keys= tmClients.keySet().toArray(new String[0]);
@@ -175,7 +175,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
     }
 
     public void addConsistentNode(Cp.AddConsistentNodeRequest req,
-                                     StreamObserver<Cp.AddConsistentNodeResponse> responseObserver){
+                                  StreamObserver<Cp.AddConsistentNodeResponse> responseObserver){
         Cp.AddConsistentNodeResponse.Builder b = Cp.AddConsistentNodeResponse.newBuilder();
 
         try {
@@ -199,7 +199,7 @@ class CPServiceImpl extends CPServiceGrpc.CPServiceImplBase {
     }
 
     public void removeConsistentNode(Cp.RemoveConsistentNodeRequest req,
-                                        StreamObserver<Cp.RemoveConsistentNodeResponse> responseObserver){
+                                     StreamObserver<Cp.RemoveConsistentNodeResponse> responseObserver){
         Cp.RemoveConsistentNodeResponse.Builder b = Cp.RemoveConsistentNodeResponse.newBuilder();
         try {
             List<Scheduler.Triple<String, Integer, Integer>> range = consistentHash.removeNode(req.getKey());

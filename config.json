@@ -10,7 +10,7 @@
     "consistent_control_grace_period": 0.2
   },
   "taskManager": {
-    "cp_host": "controlplane",
+    "cp_host": "127.0.0.1",
     "cp_port": 8008,
     "operator_quota": 5,
     "tm_port": 8018,
@@ -19,14 +19,16 @@
     "useMigration": false,
     "useCache": false,
     "rocksDBPath": "data.db",
-    "batch_size": 5,
-    "batch_timeout_ms": 1000
+    "batch_size": 1,
+    "batch_timeout_ms": 10
   },
   "prometheus": {
+    "enabled": false,
     "prometheus_port": 9089,
     "prometheus_host": "127.0.0.1",
     "pushgateway_host": "pushgateway",
     "pushgateway_port": 9091,
     "job_name": "latency_pushgateway"
-  }
+  },
+  "fileName": "data.txt"
 }

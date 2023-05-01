@@ -51,10 +51,10 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
         return minOfMaxWatermark;
     }
     public String getOpName() {
-    	return opName;
+        return opName;
     }
     public void setOpName(String opName) {
-    	this.opName = opName;
+        this.opName = opName;
     }
     public long getReconfigTimestamp() {
         return reconfigTimestamp;
@@ -97,11 +97,11 @@ public abstract class BaseOperator extends Thread implements Serializable, IKeyG
     }
 
     public void setKeySelector(IKeySelector keySelector) {
-    	this.keySelector = keySelector;
+        this.keySelector = keySelector;
     }
 
     public boolean hasKeySelector() {
-    	return keySelector != null;
+        return keySelector != null;
     }
 
     public String getCurrentKey(){

@@ -33,7 +33,7 @@ public class LocalKVProvider implements KVProvider {
                 delete(c);
         }
         if (!f.delete()){}
-            //throw new FileNotFoundException("Failed to delete file: " + f);
+        //throw new FileNotFoundException("Failed to delete file: " + f);
     }
     public LocalKVProvider(String dbPath) {
         // remove whatever's in dbpath
