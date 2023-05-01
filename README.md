@@ -107,6 +107,15 @@ cache=yes, migrate=yes, migrate2=1682546002468`
 
 To generate the plots, run `python3 plot.py` in the project root. The plots will be generated in the `plots` directory.
 
+### End result
+
+Here are some graphs of our experimental results:
+![](./prometheus_result.jpg)
+We use prometheus to collect the overall latency of the system, allowing us to monitor the latency of the entire streaming system in real time.
+
+![](./result.jpg)
+This is a graph of the results of several comparison experiments, we can see that our system still has many problems, such as bottlenecks in some operators, the overall system latency is too high, etc.
+
 # Project Post-Mortem
 
 ## System Architecture
@@ -139,13 +148,6 @@ performance degradation, rendering previous test results useless.
 It turned out that since there were so many knobs to turn in such a stream processing system, it wasn't easy to find a
 configuration that would work well for all the different stages. We ended up having to tune the parameters for a 
 meaningful operator scale to take place and even then the results were not very conclusive.
-
-Here are some graphs of our experimental results:
-![](./prometheus_result.jpg)
-We use prometheus to collect the overall latency of the system, allowing us to monitor the latency of the entire streaming system in real time.
-
-![](./result.jpg)
-This is a graph of the results of several comparison experiments, we can see that our system still has many problems, such as bottlenecks in some operators, the overall system latency is too high, etc.
 
 ## Team Takeaways
 
