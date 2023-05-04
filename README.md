@@ -130,6 +130,10 @@ While we didn't have to actually address these issues, it was still a good learn
 
 We made some parts of the system more complex than it should have, which caused problems in the later stages of the project.
 
+### KVProvider
+
+The KVProvider interface is the critical component in our prototype system. Each TaskManager uses one single KVProvider, which would be hybrid or local based on user configuration. The KVProvider hides the details of state migration, routing table access and remote state access from the user, and makes code structure clean. Please see `stateapis/KVProvider` for details
+
 ### Generic Stream Operations
 
 Our APIs for building a query plan as well as making stateful/stateless operators was expressive enough to support ANY stream operators (including window operators, which we made a demo of, but wasn't included in the benchmark script). Theoretically, users can migrate any Flink application to our system with corresponding modifications.
